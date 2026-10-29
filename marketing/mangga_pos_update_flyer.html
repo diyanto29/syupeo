@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mangga POS - Multi-Platform Update Release Flyer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    body {
+      background: #0b1120;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .poster-container {
+      width: 100%;
+      max-width: 860px;
+      aspect-ratio: 3 / 4;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 60%, #f1f5f9 100%);
+      border-radius: 32px;
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Top Platform Pills */
+    .platform-top-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 24px 6px;
+    }
+    .platform-pill {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #334155;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .platform-pill.highlight {
+      background: #ecfdf5;
+      border-color: #6ee7b7;
+      color: #065f46;
+    }
+
+    /* Header */
+    .poster-header {
+      padding: 10px 40px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand-logo {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      box-shadow: 0 10px 20px -5px rgba(245, 124, 0, 0.4);
+    }
+    .brand-text h1 {
+      font-size: 36px;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+    .brand-text p {
+      font-size: 14px;
+      font-weight: 700;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* Main Grid */
+    .poster-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      padding: 10px 40px 20px;
+      gap: 28px;
+      align-items: center;
+    }
+
+    /* Mockups Stack */
+    .mockup-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Laptop Mockup */
+    .laptop-mockup {
+      width: 100%;
+      max-width: 320px;
+      background: #1e293b;
+      border-radius: 12px 12px 0 0;
+      padding: 8px 8px 0;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+      border: 3px solid #334155;
+      border-bottom: none;
+    }
+    .laptop-screen {
+      background: #ffffff;
+      border-radius: 6px 6px 0 0;
+      padding: 10px;
+      font-size: 10px;
+      border: 1px solid #e2e8f0;
+    }
+    .laptop-base {
+      width: 110%;
+      max-width: 350px;
+      height: 10px;
+      background: linear-gradient(180deg, #94a3b8, #64748b);
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+
+    /* Phone Mockup */
+    .phone-mockup {
+      width: 100%;
+      max-width: 260px;
+      background: #0f172a;
+      border: 6px solid #1e293b;
+      border-radius: 32px;
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
+      overflow: hidden;
+      margin-top: -30px;
+      margin-left: 50px;
+      z-index: 2;
+    }
+    .phone-screen {
+      background: #f8fafc;
+      padding: 12px 10px;
+    }
+    .mini-banner {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .mini-card {
+      background: white;
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      border-left: 3px solid #f59e0b;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      font-size: 10px;
+    }
+    .mini-card.success {
+      border-left-color: #10b981;
+    }
+    .mini-card-head {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .mini-badge {
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #fef3c7;
+      color: #b45309;
+    }
+    .mini-badge.green {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    /* Updates Column */
+    .updates-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .release-tag {
+      align-self: flex-start;
+      background: #064e3b;
+      color: #34d399;
+      padding: 6px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(52, 211, 153, 0.4);
+    }
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.35;
+    }
+    .feature-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: #e0f2fe;
+      color: #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .highlight-banner {
+      background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+      color: #fef08a;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 13px;
+      text-align: center;
+      box-shadow: 0 6px 14px -3px rgba(4, 120, 87, 0.3);
+    }
+
+    .play-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: white;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    }
+    .play-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #0f172a;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .play-badge span {
+      display: block;
+      font-size: 8px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    .qr-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .qr-img {
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      padding: 2px;
+    }
+    .qr-text {
+      font-size: 9px;
+      font-weight: 700;
+      color: #475569;
+      line-height: 1.25;
+    }
+
+    /* Footer */
+    .poster-footer {
+      background: #064e3b;
+      color: white;
+      padding: 14px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .footer-left strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      color: #34d399;
+    }
+    .footer-left span {
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+    .footer-url {
+      font-weight: 800;
+      color: #fef08a;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="poster-container">
+    <!-- Top Platforms Bar -->
+    <div class="platform-top-bar">
+      <div class="platform-pill highlight">📱 Android (HP & Tablet)</div>
+      <div class="platform-pill">💻 Windows (PC & Laptop)</div>
+      <div class="platform-pill">🌐 Web Portal Browser</div>
+    </div>
+
+    <!-- Header -->
+    <header class="poster-header">
+      <div class="brand-group">
+        <div class="brand-logo">🥭</div>
+        <div class="brand-text">
+          <h1>Mangga POS</h1>
+          <p>Aplikasi Kasir Pintar Multi-Platform untuk UMKM Indonesia</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Body -->
+    <main class="poster-body">
+      <!-- Mockup Multi-Device -->
+      <div class="mockup-col">
+        <!-- Laptop Windows / Web Dashboard -->
+        <div class="laptop-mockup">
+          <div class="laptop-screen">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:6px; margin-bottom:6px;">
+              <span style="font-weight:800; color:#0f172a;">🖥️ Web & Windows Backoffice</span>
+              <span style="color:#059669; font-weight:700;">app.mudahkan.online</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
+              <div style="background:#f8fafc; padding:6px; border-radius:6px; border:1px solid #e2e8f0;">
+                <div style="font-size:8px; color:#64748b;">Omzet Hari Ini</div>
+                <div style="font-size:11px; font-weight:800; color:#0f172a;">Rp 2.450.000</div>
+              </div>
+              <div style="background:#f0fdf4; padding:6px; border-radius:6px; border:1px solid #bbf7d0;">
+                <div style="font-size:8px; color:#15803d;">Analisis AI Copilot</div>
+                <div style="font-size:11px; font-weight:800; color:#15803d;">Optimal (Burn 4d)</div>
+              </div>
+            </div>
+            <div style="height:28px; background:linear-gradient(90deg, #ecfdf5, #f0fdf4); border-radius:6px; border:1px dashed #86efac; display:flex; align-items:center; justify-content:center; color:#166534; font-weight:700; font-size:9px;">
+              📊 Grafik Penjualan & Laporan Multi-Outlet Real-Time
+            </div>
+          </div>
+        </div>
+        <div class="laptop-base"></div>
+
+        <!-- Phone Mobile Kasir -->
+        <div class="phone-mockup">
+          <div class="phone-screen">
+            <div class="mini-banner">
+              <span>🥭 Kasir POS</span>
+              <span>v1.0.17</span>
+            </div>
+            
+            <div class="mini-card">
+              <div class="mini-card-head">
+                <span>🟢 Shift Kasir Aktif</span>
+                <span class="mini-badge" style="background:#dcfce7; color:#15803d;">LIVE REAL-TIME</span>
+              </div>
+              <div style="color:#64748b; font-size:9px; margin-top:2px;">Omzet Sesi Ini: <strong>Rp 1.450.000</strong> (18 Transaksi)</div>
+            </div>
+
+            <div class="mini-card" style="border-left-color: #ef4444;">
+              <div class="mini-card-head">
+                <span>💸 Mutasi Kas Keluar</span>
+                <span class="mini-badge" style="background:#fee2e2; color:#b91c1c;">AUTO REFUND</span>
+              </div>
+              <div style="color:#64748b; font-size:9px; margin-top:2px;">Retur Tunai INV-892: -Rp 25.000 (Kas Laci Seimbang)</div>
+            </div>
+
+            <div class="mini-card success">
+              <div class="mini-card-head">
+                <span>🔐 Akses Berbasis Peran</span>
+                <span class="mini-badge green">AMAN</span>
+              </div>
+              <div style="color:#64748b; font-size:9px; margin-top:2px;">Kasir: Shift Sendiri • Owner: Semua Kasir Toko</div>
+            </div>
+
+            <div style="background:white; border-radius:8px; padding:6px 8px; border:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:700; color:#0f172a; font-size:9px;">☁️ Supabase Cloud Sync</span>
+              <span style="font-size:8px; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:700;">Presisi WIB/UTC</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Updates Highlights (v1.0.17) -->
+      <div class="updates-col">
+        <div class="release-tag">UPDATE RELEASE v1.0.17</div>
+
+        <ul class="feature-list">
+          <li class="feature-item">
+            <span class="feature-icon">⚡</span>
+            <span>Shift Kasir Real-Time (Transaksi langsung tampil saat shift aktif tanpa tunggu tutup shift)</span>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon">💸</span>
+            <span>Auto Mutasi Refund Kas Tunai (Refund laci otomatis tercatat di arus kas keluar)</span>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon">🔐</span>
+            <span>Privasi Riwayat Shift (Kasir hanya melihat shift miliknya, Owner memantau seluruh toko)</span>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon">☁️</span>
+            <span>Sinkronisasi Cloud & Offline-First (Penyelarasan ISO 8601 UTC/WIB tanpa bentrok)</span>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon">🛡️</span>
+            <span>Pencegahan Human-Error (Pengecekan otomatis saldo laci & batas refund transaksi)</span>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon">🚀</span>
+            <span>Performa Kasir Lebih Cepat, Ringan & Pembukuan Kas Selalu Akurat</span>
+          </li>
+        </ul>
+
+        <div class="highlight-banner">
+          ✨ Update Sekarang di Google Play Store & Rasakan Kelancaran Kasir Anda!
+        </div>
+
+        <div class="play-row">
+          <a href="https://play.google.com/store/apps/details?id=online.mudahkan.manggapos" class="play-badge" target="_blank">
+            <span style="font-size:16px;">▶</span>
+            <div>
+              <span>GET IT ON</span>
+              Google Play
+            </div>
+          </a>
+          <div class="qr-box">
+            <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://play.google.com/store/apps/details?id=online.mudahkan.manggapos" alt="QR Code">
+            <div class="qr-text">
+              Scan untuk<br>Download Gratis
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="poster-footer">
+      <div class="footer-left">
+        <strong>Multi-Device: HP, Tablet, Windows (PC/Laptop), & Web Browser</strong>
+        <span>Didedikasikan untuk Toko Retail, Kelontong, Kuliner, Cafe & UMKM Indonesia</span>
+      </div>
+      <div class="footer-url">pos.mudahkan.online</div>
+    </footer>
+  </div>
+
+</body>
+</html>

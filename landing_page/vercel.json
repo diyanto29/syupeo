@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/order/:path*",
+      "destination": "/order-app"
+    },
+    {
+      "source": "/s/:path*",
+      "destination": "/shop-app"
+    }
+  ]
+}

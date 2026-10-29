@@ -1,0 +1,1858 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Menu Digital | Memuat Toko...">
+  <style is:global>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+    
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --accent: #10b981;
+      --accent-light: #ecfdf5;
+    }
+
+    html {
+      background-color: #0b0f19 !important;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+      -webkit-tap-highlight-color: transparent;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0b0f19 70%) !important;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 520px;
+      background-color: #ffffff;
+      min-height: 100vh;
+      position: relative;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 100px rgba(99, 102, 241, 0.15);
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .glass-header {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    .glass-cart {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.5), 0 0 30px rgba(79, 70, 229, 0.25);
+    }
+
+    .product-card {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .product-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.08);
+    }
+    .product-card:active {
+      transform: scale(0.98);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop {
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes pulseSoft {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .animate-pulse-soft {
+      animation: pulseSoft 2s infinite ease-in-out;
+    }
+
+    .shimmer {
+      background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+  </style>
+
+  <!-- Container App Shell -->
+  <div class="app-shell" id="main-content" class="opacity-0 transition-opacity duration-500 pb-32">
+    
+    <!-- Hero / Store Banner -->
+    <div class="relative h-64 bg-slate-900 overflow-hidden flex-shrink-0">
+      <!-- Background Banner -->
+      <div id="hero-bg" class="absolute inset-0 bg-cover bg-center transition-all duration-700 opacity-60 scale-105"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent"></div>
+      
+      <!-- Top Action Badges -->
+      <div class="absolute top-4 inset-x-4 flex justify-between items-center z-10">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/60 backdrop-blur-md text-[11px] font-bold text-white border border-white/10 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="status-text">Buka • Terima Pesanan</span>
+        </span>
+        <div class="flex items-center gap-2">
+          <button id="btn-track-header" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/60 backdrop-blur-md text-xs font-bold text-white border border-white/10 hover:bg-slate-900 hover:border-indigo-400 transition-all active:scale-95 shadow-sm" title="Lacak Status Pesanan">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>Lacak Pesanan</span>
+          </button>
+          <button id="btn-share" class="w-9 h-9 rounded-full bg-slate-900/60 backdrop-blur-md flex items-center justify-center text-white border border-white/10 hover:bg-slate-900 transition-all active:scale-90" title="Bagikan Menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Store Profile Info Inside Hero -->
+      <div class="absolute bottom-5 inset-x-5 flex items-end gap-3.5 z-10">
+        <!-- Logo -->
+        <div id="shop-logo" class="w-16 h-16 bg-white rounded-2xl shadow-2xl flex items-center justify-center text-2xl font-black text-indigo-600 border-2 border-white/90 overflow-hidden flex-shrink-0">
+          <span id="shop-logo-fallback">-</span>
+          <img id="shop-logo-img" src="" class="w-full h-full object-cover hidden" alt="Logo Toko" />
+        </div>
+        
+        <!-- Info -->
+        <div class="flex-1 min-w-0 pb-0.5">
+          <div class="flex items-center gap-1.5 mb-1">
+            <h1 id="shop-name" class="text-xl font-extrabold text-white leading-tight truncate">Memuat Toko...</h1>
+            <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <p id="shop-desc" class="text-slate-300 text-xs font-medium line-clamp-1">Menu Digital & Pemesanan Mandiri</p>
+          <div class="flex items-center gap-2 mt-1.5 text-[11px] text-slate-300 font-semibold">
+            <span id="shop-address" class="truncate max-w-[200px]">📍 Indonesia</span>
+            <span>•</span>
+            <span class="text-emerald-400 font-bold">Resmi POS</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Order Floating Banner (Rendered dynamically if an order is active) -->
+    <div id="active-order-banner" class="hidden px-4 pt-3 pb-1 bg-slate-900">
+      <div class="p-3 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900 rounded-2xl border border-indigo-500/40 text-white shadow-xl flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center flex-shrink-0 text-base">
+            🛵
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[9px] font-black uppercase tracking-wider text-indigo-300">Pesanan Aktif</span>
+              <span class="text-[10px] text-slate-400">•</span>
+              <span id="banner-order-inv" class="text-[11px] font-extrabold text-white truncate">INV-xxxxxx</span>
+            </div>
+            <p id="banner-order-status" class="text-xs text-amber-300 font-bold truncate">Menunggu Konfirmasi...</p>
+          </div>
+        </div>
+        <button id="btn-banner-view" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex-shrink-0 transition-all shadow-md active:scale-95">
+          Lihat Status
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Store Action Chips -->
+    <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <a id="btn-wa-direct" href="#" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 shadow-2xl hover:border-emerald-500 hover:text-emerald-600 transition-all flex-shrink-0">
+        <svg class="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.073.043.419-.101.825z"/></svg>
+        Hubungi WhatsApp
+      </a>
+      <button id="btn-info-sheet" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 shadow-2xl hover:border-indigo-500 hover:text-indigo-600 transition-all flex-shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        Info Toko
+      </button>
+      <div class="ml-auto text-[10px] font-bold text-slate-400 flex items-center gap-1 flex-shrink-0">
+        <span>Katalog Aktif</span>
+      </div>
+    </div>
+
+    <!-- Sticky Search & Category Bar -->
+    <div class="sticky top-0 z-30 glass-header px-5 pt-3.5 pb-3">
+      <!-- Search Box -->
+      <div class="relative">
+        <input 
+          type="text" 
+          id="search-input" 
+          placeholder="Cari makanan, minuman, menu favorit..." 
+          class="w-full bg-slate-100/80 border border-slate-200/60 rounded-2xl py-3 pl-11 pr-10 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
+        />
+        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+        <button id="search-clear" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Categories Pill Carousel & Layout Switcher -->
+      <div class="flex items-center justify-between gap-2 mt-3">
+        <div id="category-tabs" class="flex gap-2 overflow-x-auto no-scrollbar py-0.5 flex-1">
+          <!-- Rendered dynamically -->
+        </div>
+        
+        <!-- View Toggle (Grid / List) -->
+        <button id="view-toggle" class="p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex-shrink-0" title="Ubah Tampilan Grid/List">
+          <svg id="icon-grid" class="w-4 h-4 hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+          <svg id="icon-list" class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Product Grid Content -->
+    <div class="px-5 py-5 flex-1">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h2 id="section-title" class="text-base font-extrabold text-slate-900 tracking-tight">Semua Menu</h2>
+          <p id="section-count" class="text-[11px] font-semibold text-slate-400">Memuat item...</p>
+        </div>
+      </div>
+
+      <!-- Menu Grid -->
+      <div id="menu-grid" class="grid grid-cols-2 gap-3.5 transition-all">
+        <!-- Skeleton Loaders -->
+        <div class="bg-white rounded-3xl p-3 border border-slate-100 shadow-sm flex flex-col">
+          <div class="w-full aspect-square rounded-2xl shimmer mb-3"></div>
+          <div class="h-4 w-3/4 rounded-md shimmer mb-2"></div>
+          <div class="h-4 w-1/2 rounded-md shimmer mt-auto"></div>
+        </div>
+        <div class="bg-white rounded-3xl p-3 border border-slate-100 shadow-sm flex flex-col">
+          <div class="w-full aspect-square rounded-2xl shimmer mb-3"></div>
+          <div class="h-4 w-3/4 rounded-md shimmer mb-2"></div>
+          <div class="h-4 w-1/2 rounded-md shimmer mt-auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Branding -->
+    <footer class="mt-auto px-5 py-8 text-center bg-slate-50 border-t border-slate-100">
+      <div class="flex items-center justify-center gap-2 mb-2">
+        <div class="w-5 h-5 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-[10px] font-black">M</div>
+        <p class="text-xs font-extrabold text-slate-800">Didukung oleh Mangga POS</p>
+      </div>
+      <p class="text-[11px] text-slate-400 font-medium">Solusi Kasir & Menu Digital UMKM Indonesia</p>
+      <div class="mt-3 flex items-center justify-center gap-3 text-[11px] font-bold text-indigo-600">
+        <a href="https://pos.mudahkan.online" target="_blank" class="hover:underline">Bikin Toko Online Gratis</a>
+        <span>•</span>
+        <a href="https://pos.mudahkan.online/panduan" target="_blank" class="hover:underline">Panduan</a>
+      </div>
+    </footer>
+
+    <!-- ── Floating Cart Bar ──────────────────────────────────────── -->
+    <div id="cart-float" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[460px] glass-cart text-white rounded-[28px] p-3 pl-4 flex items-center justify-between transition-all duration-300 z-50 transform translate-y-32 opacity-0 pointer-events-none cursor-pointer">
+      <div class="flex items-center gap-3">
+        <div class="relative w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/40">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          <span id="cart-badge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900 animate-pop">0</span>
+        </div>
+        <div>
+          <p id="cart-count-text" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">0 Produk</p>
+          <p id="cart-total" class="font-black text-base text-white leading-tight">Rp 0</p>
+        </div>
+      </div>
+      <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-95">
+        <span>Lihat Pesanan</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <!-- ── Variant Selection Bottom Sheet ───────────────────────────── -->
+    <div id="variant-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[110] flex items-end justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+      <div class="bg-white w-full max-w-[520px] rounded-t-[36px] p-6 shadow-2xl transform translate-y-full transition-transform duration-300 max-h-[85vh] overflow-y-auto no-scrollbar">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
+        <div id="variant-content">
+          <!-- Dynamic variant picker injected here -->
+        </div>
+        <button id="add-variant-to-cart" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-extrabold text-sm shadow-xl shadow-indigo-200 mt-6 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tambah ke Keranjang
+        </button>
+        <button onclick="window.closeVariantModal()" class="w-full py-3.5 text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">Batal</button>
+      </div>
+    </div>
+
+    <!-- ── Checkout Modal & WhatsApp Order Sheet ────────────────────── -->
+    <div id="checkout-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[100] flex items-end justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+      <div class="bg-white w-full max-w-[520px] rounded-t-[36px] p-5 sm:p-6 shadow-2xl transform translate-y-full transition-transform duration-300 max-h-[90vh] overflow-y-auto no-scrollbar flex flex-col">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-5"></div>
+        
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900 leading-tight">Konfirmasi Pesanan</h2>
+            <p class="text-xs text-slate-400 font-medium">Periksa kembali item pesanan Anda</p>
+          </div>
+          <button onclick="window.closeCheckout()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <!-- Order Items List -->
+        <div id="cart-items-list" class="space-y-2.5 mb-5 max-h-[35vh] overflow-y-auto no-scrollbar"></div>
+
+        <!-- Tipe Pemesanan (Delivery / Takeaway / Dine In) -->
+        <div class="mb-5">
+          <label class="block text-xs font-extrabold text-slate-700 mb-2">Tipe Pemesanan</label>
+          <div class="grid grid-cols-3 gap-2" id="order-type-group">
+            <button type="button" class="order-type-btn active py-2.5 px-2 rounded-2xl border-2 border-indigo-600 bg-indigo-50/60 text-indigo-700 text-xs font-bold flex flex-col items-center gap-1 transition-all" data-type="Takeaway">
+              <span class="text-base">🛍️</span>
+              <span>Bawa Pulang</span>
+            </button>
+            <button type="button" class="order-type-btn py-2.5 px-2 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-600 text-xs font-bold flex flex-col items-center gap-1 transition-all" data-type="Dine-in">
+              <span class="text-base">🍽️</span>
+              <span>Makan di Sini</span>
+            </button>
+            <button type="button" class="order-type-btn py-2.5 px-2 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-600 text-xs font-bold flex flex-col items-center gap-1 transition-all" data-type="Delivery">
+              <span class="text-base">🛵</span>
+              <span>Pesan Antar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Customer Form Inputs -->
+        <div class="space-y-3 mb-5 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Pemesan <span class="text-rose-500">*</span></label>
+            <input type="text" id="cust-name" placeholder="Misal: Budi Santoso" class="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Nomor WhatsApp <span class="text-slate-400 font-medium">(Opsional)</span></label>
+            <input type="tel" id="cust-phone" placeholder="08xxxxxxxxxx (opsional)" class="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600" />
+          </div>
+          <div id="field-address" class="hidden">
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Alamat Pengiriman</label>
+            <textarea id="cust-address" rows="2" placeholder="Tuliskan alamat lengkap atau patokan jalan..." class="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"></textarea>
+          </div>
+          <div id="field-table" class="hidden">
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Nomor Meja</label>
+            <input type="text" id="cust-table" placeholder="Nomor meja (misal: 04)" class="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Catatan Tambahan (Opsional)</label>
+            <input type="text" id="cust-notes" placeholder="Misal: Es batu dipisah, jangan terlalu manis" class="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600" />
+          </div>
+        </div>
+
+        <!-- Total Calculation -->
+        <div class="border-t border-slate-100 pt-4 mb-5">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Total Pembayaran</p>
+              <p class="text-xs text-slate-500 font-medium">Belum termasuk ongkir (jika antar)</p>
+            </div>
+            <p id="modal-total" class="text-2xl font-black text-indigo-600">Rp 0</p>
+          </div>
+        </div>
+
+        <!-- WhatsApp Checkout Button -->
+        <button id="send-wa-final" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-extrabold text-sm shadow-xl shadow-emerald-200 flex items-center justify-center gap-2.5 active:scale-95 transition-all">
+          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.073.043.419-.101.825z"/></svg>
+          Kirim Pesanan via WhatsApp
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Store Info Modal ─────────────────────────────────────────── -->
+    <div id="info-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[110] flex items-end justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+      <div class="bg-white w-full max-w-[520px] rounded-t-[36px] p-6 shadow-2xl transform translate-y-full transition-transform duration-300 max-h-[80vh] overflow-y-auto no-scrollbar">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-5"></div>
+        <h3 class="text-lg font-black text-slate-900 mb-1">Informasi Toko</h3>
+        <p class="text-xs text-slate-400 font-medium mb-5">Detail operasional dan kontak toko</p>
+        
+        <div class="space-y-3.5 mb-6 text-xs text-slate-700">
+          <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+            <span class="text-base">📍</span>
+            <div>
+              <p class="font-bold text-slate-900">Alamat Toko</p>
+              <p id="info-address" class="text-slate-500 mt-0.5">-</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+            <span class="text-base">📞</span>
+            <div>
+              <p class="font-bold text-slate-900">WhatsApp Penjual</p>
+              <p id="info-phone" class="text-slate-500 mt-0.5">-</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl">
+            <span class="text-base">🕒</span>
+            <div>
+              <p class="font-bold text-slate-900">Status Operasional</p>
+              <p class="text-emerald-600 font-bold mt-0.5">Buka & Melayani Pemesanan Online</p>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="window.closeInfoModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all">
+          Tutup
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Tracking Modal ─────────────────────────────────────────── -->
+    <div id="tracking-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[115] flex items-end justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+      <div class="bg-white w-full max-w-[520px] rounded-t-[36px] p-6 shadow-2xl transform translate-y-full transition-transform duration-300 max-h-[88vh] overflow-y-auto no-scrollbar flex flex-col">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
+        
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-black text-slate-900 flex items-center gap-2">
+              <span>📍 Lacak Status Pesanan</span>
+            </h3>
+            <p class="text-xs text-slate-400 font-medium">Cek status pesanan terkini secara real-time</p>
+          </div>
+          <button onclick="window.closeTrackingModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 active:scale-90">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <!-- Search Order Bar -->
+        <div class="mb-4">
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <input type="text" id="track-search-input" placeholder="No. Invoice (INV-xxxx) atau No. WA..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-2.5 pl-3.5 pr-8 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all uppercase placeholder:normal-case" />
+              <button id="track-clear-btn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+            <button id="btn-do-track" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-95 transition-all">
+              <span>Cari</span>
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1.5 ml-1">Contoh: <span class="font-mono text-indigo-600 font-bold">INV-123456</span> atau nomor WhatsApp yang dipakai saat memesan.</p>
+        </div>
+
+        <!-- Result Container -->
+        <div id="track-result-container" class="space-y-4">
+          <div id="track-empty-state" class="py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <div class="text-3xl mb-2">🔍</div>
+            <p class="text-xs font-bold text-slate-700">Masukkan Nomor Pesanan atau No. HP</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Bisa dicek dari HP atau perangkat apa pun tanpa harus login.</p>
+          </div>
+        </div>
+
+        <!-- Close Button -->
+        <button onclick="window.closeTrackingModal()" class="w-full mt-5 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all">
+          Tutup
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Toast Notification ───────────────────────────────────────── -->
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[200] bg-slate-900/90 backdrop-blur-md text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+      <span id="toast-icon">✓</span>
+      <span id="toast-text">Pesan berhasil disimpan</span>
+    </div>
+
+  </div>
+
+  <!-- Client-side Logic -->
+  <script>
+    import { createClient } from '@supabase/supabase-js';
+
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || 'https://kjekiseloobdxomicolo.supabase.co';
+    const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZWtpc2Vsb29iZHhvbWljb2xvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1OTM3OTMsImV4cCI6MjEwNjE2OTc5M30.csMbrT-zokTlb1SBplh_xRr9_Cpksk46OSJ0BQZTQB0';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    const pathParts = window.location.pathname.split('/').filter(p => p !== "");
+    const rawSlug = decodeURIComponent(pathParts[pathParts.length - 1] || '').trim();
+    const slug = rawSlug.toLowerCase();
+    const slugHyphen = slug.replace(/_/g, '-');
+    const slugUnderscore = slug.replace(/-/g, '_');
+    
+    let allItems = [];
+    let cart = [];
+    let bizData = null;
+    let activeCategory = 'Semua';
+    let searchQuery = '';
+    let isGridView = true;
+    let pendingVariantItem = null;
+    let selectedVariant = null;
+    let variantQuantity = 1;
+    let selectedOrderType = 'Takeaway';
+    let latestOrderWaUrl = '';
+
+    const getStorePhone = (biz) => {
+      if (!biz) return '';
+      // 1. Direct business phone
+      if (biz.phone && String(biz.phone).trim()) return String(biz.phone).trim();
+      // 2. Settings phone / whatsapp
+      if (biz.settings?.phone && String(biz.settings.phone).trim()) return String(biz.settings.phone).trim();
+      if (biz.settings?.whatsapp && String(biz.settings.whatsapp).trim()) return String(biz.settings.whatsapp).trim();
+      if (biz.settings?.business_phone && String(biz.settings.business_phone).trim()) return String(biz.settings.business_phone).trim();
+      
+      // 3. Outlets phone (main outlet first, then active outlet with phone, then any outlet with phone)
+      const outlets = Array.isArray(biz.outlets) ? biz.outlets : [];
+      const mainWithPhone = outlets.find(o => o.code === 'main' && o.phone && String(o.phone).trim());
+      if (mainWithPhone) return String(mainWithPhone.phone).trim();
+      const activeWithPhone = outlets.find(o => o.is_active && o.phone && String(o.phone).trim());
+      if (activeWithPhone) return String(activeWithPhone.phone).trim();
+      
+      const anyWithPhone = outlets.find(o => o.phone && String(o.phone).trim());
+      if (anyWithPhone) return String(anyWithPhone.phone).trim();
+      
+      return '';
+    };
+
+    const formatWhatsAppPhone = (rawPhone) => {
+      if (!rawPhone) return '';
+      let phone = String(rawPhone).replace(/[^0-9]/g, '');
+      if (phone.startsWith('0')) {
+        phone = '62' + phone.substring(1);
+      } else if (phone.startsWith('8')) {
+        phone = '62' + phone;
+      }
+      return phone;
+    };
+
+    const formatPrice = (p) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(p);
+
+    const showToast = (text, icon = '✓') => {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').textContent = text;
+      document.getElementById('toast-icon').textContent = icon;
+      toast.classList.remove('-translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('-translate-y-20', 'opacity-0');
+      }, 2400);
+    };
+
+    const init = async () => {
+      const path = window.location.pathname;
+      if (path === '/' || path === '/404' || slug === 'shop-app' || slug === 'index') return;
+
+      // 1. Fetch business by slug
+      let biz = null;
+      try {
+        const { data: directBiz } = await supabase
+          .from('businesses')
+          .select('*, outlets(*)')
+          .or(`slug.eq.${slug},slug.eq.${slugHyphen},slug.eq.${slugUnderscore},slug.ilike.${slug},slug.ilike.${slugHyphen}`)
+          .maybeSingle();
+
+        if (directBiz) {
+          biz = directBiz;
+        } else {
+          // Fallback via outlet query
+          const { data: outlet } = await supabase
+            .from('outlets')
+            .select('*, businesses(*)')
+            .or(`businesses.slug.eq.${slug},businesses.slug.eq.${slugHyphen},businesses.slug.eq.${slugUnderscore}`)
+            .limit(1)
+            .maybeSingle();
+          if (outlet && outlet.businesses) {
+            biz = outlet.businesses;
+          }
+        }
+      } catch (e) {
+        console.error('Fetch business error:', e);
+      }
+      
+      if (!biz) {
+        document.getElementById('shop-name').textContent = "Toko Tidak Ditemukan";
+        document.getElementById('menu-grid').innerHTML = `
+          <div class="col-span-2 py-24 text-center">
+            <div class="text-5xl mb-4">🏪</div>
+            <h3 class="text-base font-extrabold text-slate-800 mb-1">Toko Belum Ditemukan</h3>
+            <p class="text-xs text-slate-400 max-w-xs mx-auto">Pastikan link atau username slug toko sudah sesuai.</p>
+          </div>
+        `;
+        document.getElementById('main-content').classList.remove('opacity-0');
+        return;
+      }
+
+      // Ensure outlets are populated if join returned empty
+      if (biz && (!biz.outlets || biz.outlets.length === 0)) {
+        try {
+          const { data: outletRows } = await supabase
+            .from('outlets')
+            .select('*')
+            .eq('business_id', biz.id);
+          if (outletRows && outletRows.length > 0) {
+            biz.outlets = outletRows;
+          }
+        } catch (err) {
+          console.warn('Fallback outlets fetch error:', err);
+        }
+      }
+
+      bizData = biz;
+      const outlets = Array.isArray(bizData.outlets) ? bizData.outlets : [];
+      const primaryOutlet = outlets.find(o => o.code === 'main')
+        || outlets.find(o => o.is_active && (o.phone || o.address)) 
+        || outlets.find(o => o.phone || o.address) 
+        || outlets[0] 
+        || {};
+
+      // Populate header info
+      document.getElementById('shop-name').textContent = bizData.name;
+      document.title = `${bizData.name} | Menu Digital`;
+      if (bizData.description) {
+        document.getElementById('shop-desc').textContent = bizData.description;
+      }
+      
+      const storeAddr = bizData.address || primaryOutlet.address || 'Indonesia';
+      document.getElementById('shop-address').textContent = `📍 ${storeAddr}`;
+      document.getElementById('info-address').textContent = storeAddr;
+
+      const rawPhone = getStorePhone(bizData);
+      const cleanPhone = formatWhatsAppPhone(rawPhone);
+      const btnWaDirect = document.getElementById('btn-wa-direct');
+      if (rawPhone && cleanPhone) {
+        document.getElementById('info-phone').textContent = rawPhone;
+        btnWaDirect.setAttribute('href', `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Halo ${bizData.name}, saya melihat menu online Anda di Mangga POS.`)}`);
+        btnWaDirect.onclick = null;
+      } else {
+        document.getElementById('info-phone').textContent = 'Belum diatur';
+        btnWaDirect.setAttribute('href', '#');
+        btnWaDirect.onclick = (e) => {
+          e.preventDefault();
+          alert('Nomor WhatsApp toko belum diatur oleh pemilik toko.');
+        };
+      }
+
+      // Banner & Logo
+      if (bizData.image_url) {
+        document.getElementById('hero-bg').style.backgroundImage = `url(${bizData.image_url})`;
+        const img = document.getElementById('shop-logo-img') as HTMLImageElement;
+        img.src = bizData.image_url;
+        img.classList.remove('hidden');
+        document.getElementById('shop-logo-fallback').classList.add('hidden');
+      } else {
+        document.getElementById('shop-logo-fallback').textContent = bizData.name.charAt(0).toUpperCase();
+      }
+      
+      // 2. Fetch menu items
+      const { data: items } = await supabase
+        .from('menu_items')
+        .select('*, menu_categories(name), variants:menu_item_variants(*)')
+        .eq('business_id', bizData.id)
+        .eq('stock_available', true)
+        .order('name', { ascending: true });
+      
+      if (items) {
+        allItems = items.map(item => ({
+          ...item,
+          variants_data: (item.variants || []).filter(v => v.stock_available)
+        }));
+        renderCategories();
+        renderMenu();
+      }
+
+      document.getElementById('main-content').classList.remove('opacity-0');
+
+      // Setup Listeners
+      setupListeners();
+    };
+
+    const setupListeners = () => {
+      // Search Input
+      const searchInput = document.getElementById('search-input') as HTMLInputElement;
+      const clearBtn = document.getElementById('search-clear');
+      
+      searchInput.oninput = (e: any) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        if (searchQuery.length > 0) {
+          clearBtn.classList.remove('hidden');
+        } else {
+          clearBtn.classList.add('hidden');
+        }
+        renderMenu();
+      };
+
+      clearBtn.onclick = () => {
+        searchInput.value = '';
+        searchQuery = '';
+        clearBtn.classList.add('hidden');
+        renderMenu();
+        searchInput.focus();
+      };
+
+      // View Toggle (Grid / List)
+      const viewToggle = document.getElementById('view-toggle');
+      const iconGrid = document.getElementById('icon-grid');
+      const iconList = document.getElementById('icon-list');
+      
+      viewToggle.onclick = () => {
+        isGridView = !isGridView;
+        if (isGridView) {
+          iconList.classList.remove('hidden');
+          iconGrid.classList.add('hidden');
+        } else {
+          iconList.classList.add('hidden');
+          iconGrid.classList.remove('hidden');
+        }
+        renderMenu();
+      };
+
+      // Share Button
+      document.getElementById('btn-share').onclick = async () => {
+        const shareData = {
+          title: bizData ? `${bizData.name} - Menu Digital` : 'Menu Digital Toko',
+          text: `Cek menu dan pesan langsung dari ${bizData?.name || 'toko kami'}:`,
+          url: window.location.href,
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+          } catch (_) {}
+        } else {
+          navigator.clipboard.writeText(window.location.href);
+          showToast('Link toko disalin ke clipboard! 📋');
+        }
+      };
+
+      // Store Info Modal
+      document.getElementById('btn-info-sheet').onclick = () => {
+        const modal = document.getElementById('info-modal');
+        modal.classList.remove('pointer-events-none');
+        modal.classList.add('opacity-100');
+        modal.querySelector('div').classList.remove('translate-y-full');
+      };
+
+      (window as any).closeInfoModal = () => {
+        const modal = document.getElementById('info-modal');
+        modal.classList.add('pointer-events-none');
+        modal.classList.remove('opacity-100');
+        modal.querySelector('div').classList.add('translate-y-full');
+      };
+
+      // Tracking Header Button & Search Listeners
+      const btnTrackHeader = document.getElementById('btn-track-header');
+      if (btnTrackHeader) {
+        btnTrackHeader.onclick = () => {
+          openTrackingModal();
+        };
+      }
+
+      const doTrack = () => {
+        const input = document.getElementById('track-search-input') as HTMLInputElement;
+        if (input && input.value.trim()) {
+          performTrackOrder(input.value.trim());
+        }
+      };
+
+      const btnDoTrack = document.getElementById('btn-do-track');
+      if (btnDoTrack) btnDoTrack.onclick = doTrack;
+
+      const trackSearchInput = document.getElementById('track-search-input') as HTMLInputElement;
+      const trackClearBtn = document.getElementById('track-clear-btn');
+      if (trackSearchInput) {
+        trackSearchInput.onkeydown = (e: any) => {
+          if (e.key === 'Enter') doTrack();
+        };
+        trackSearchInput.oninput = (e: any) => {
+          if (trackClearBtn) {
+            if (e.target.value.trim()) {
+              trackClearBtn.classList.remove('hidden');
+            } else {
+              trackClearBtn.classList.add('hidden');
+            }
+          }
+        };
+      }
+      if (trackClearBtn && trackSearchInput) {
+        trackClearBtn.onclick = () => {
+          trackSearchInput.value = '';
+          trackClearBtn.classList.add('hidden');
+          const container = document.getElementById('track-result-container');
+          if (container) {
+            container.innerHTML = `
+              <div id="track-empty-state" class="py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <div class="text-3xl mb-2">🔍</div>
+                <p class="text-xs font-bold text-slate-700">Masukkan Nomor Pesanan atau No. HP</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Bisa dicek dari HP atau perangkat apa pun tanpa harus login.</p>
+              </div>
+            `;
+          }
+          trackSearchInput.focus();
+        };
+      }
+
+      // Order Type Buttons in Checkout
+      const typeBtns = document.querySelectorAll('.order-type-btn');
+      const fieldAddress = document.getElementById('field-address');
+      const fieldTable = document.getElementById('field-table');
+
+      typeBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          typeBtns.forEach(b => {
+            b.classList.remove('active', 'border-indigo-600', 'bg-indigo-50/60', 'text-indigo-700');
+            b.classList.add('border-slate-100', 'bg-slate-50', 'text-slate-600');
+          });
+
+          const target = (e.currentTarget as HTMLElement);
+          target.classList.add('active', 'border-indigo-600', 'bg-indigo-50/60', 'text-indigo-700');
+          target.classList.remove('border-slate-100', 'bg-slate-50', 'text-slate-600');
+          selectedOrderType = target.getAttribute('data-type') || 'Takeaway';
+
+          if (selectedOrderType === 'Delivery') {
+            fieldAddress.classList.remove('hidden');
+            fieldTable.classList.add('hidden');
+          } else if (selectedOrderType === 'Dine-in') {
+            fieldAddress.classList.add('hidden');
+            fieldTable.classList.remove('hidden');
+          } else {
+            fieldAddress.classList.add('hidden');
+            fieldTable.classList.add('hidden');
+          }
+        });
+      });
+
+      // Cart Floating Button Click
+      document.getElementById('cart-float').onclick = (window as any).openCheckout;
+
+      // Send to WhatsApp Checkout
+      document.getElementById('send-wa-final').onclick = handleSendWhatsAppOrder;
+    };
+
+    const renderCategories = () => {
+      const catCountMap = new Map();
+      catCountMap.set('Semua', allItems.length);
+
+      allItems.forEach(i => {
+        const name = i.menu_categories?.name || 'Lainnya';
+        catCountMap.set(name, (catCountMap.get(name) || 0) + 1);
+      });
+
+      const cats = Array.from(catCountMap.keys());
+      const container = document.getElementById('category-tabs');
+      container.innerHTML = '';
+
+      cats.forEach(cat => {
+        const count = catCountMap.get(cat);
+        const btn = document.createElement('button');
+        const isActive = cat === activeCategory;
+        
+        btn.className = `px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 ${
+          isActive 
+            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
+            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+        }`;
+        
+        btn.innerHTML = `
+          <span>${cat}</span>
+          <span class="text-[10px] font-extrabold px-1.5 py-0.2 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'}">${count}</span>
+        `;
+        
+        btn.onclick = () => {
+          activeCategory = cat;
+          renderCategories();
+          renderMenu();
+        };
+        container.appendChild(btn);
+      });
+    };
+
+    const renderMenu = () => {
+      const container = document.getElementById('menu-grid');
+      container.innerHTML = '';
+      
+      let filtered = activeCategory === 'Semua' 
+        ? allItems 
+        : allItems.filter(i => (i.menu_categories?.name || 'Lainnya') === activeCategory);
+      
+      if (searchQuery) {
+        filtered = filtered.filter(i => 
+          i.name.toLowerCase().includes(searchQuery) ||
+          (i.description && i.description.toLowerCase().includes(searchQuery))
+        );
+      }
+
+      // Update Section Header
+      document.getElementById('section-title').textContent = activeCategory;
+      document.getElementById('section-count').textContent = `${filtered.length} menu tersedia`;
+
+      if (filtered.length === 0) {
+        container.className = "py-16 text-center col-span-2";
+        container.innerHTML = `
+          <div class="text-4xl mb-3">🔍</div>
+          <h4 class="text-sm font-bold text-slate-800 mb-1">Menu Tidak Ditemukan</h4>
+          <p class="text-xs text-slate-400">Coba gunakan kata kunci pencarian yang lain.</p>
+        `;
+        return;
+      }
+      
+      // Update Container Layout Class
+      if (isGridView) {
+        container.className = "grid grid-cols-2 gap-3.5";
+      } else {
+        container.className = "flex flex-col gap-3";
+      }
+
+      filtered.forEach(item => {
+        const hasVariants = item.variants_data && item.variants_data.length > 0;
+        const cartItem = cart.find(c => c.id === item.id);
+        const inCartQty = cartItem ? cartItem.qty : 0;
+
+        const card = document.createElement('div');
+        
+        if (isGridView) {
+          // ── GRID CARD VIEW ───────────────────────────────────────
+          card.className = "product-card bg-white p-3 rounded-[26px] border border-slate-100 shadow-sm flex flex-col justify-between cursor-pointer select-none";
+          card.innerHTML = `
+            <div>
+              <!-- Product Image -->
+              <div class="relative w-full aspect-square rounded-[20px] bg-slate-100 overflow-hidden mb-2.5">
+                ${item.image_url 
+                  ? `<img src="${item.image_url}" loading="lazy" class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" alt="${item.name}"/>` 
+                  : `<div class="w-full h-full flex flex-col items-center justify-center text-slate-300 text-3xl">🍽️</div>`
+                }
+                ${hasVariants 
+                  ? `<span class="absolute top-2 left-2 px-2 py-0.5 rounded-lg bg-indigo-600/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-wider">Varian</span>` 
+                  : ''
+                }
+              </div>
+
+              <!-- Product Details -->
+              <div class="mb-2">
+                <h3 class="font-extrabold text-slate-900 text-xs leading-snug line-clamp-2 mb-1">${item.name}</h3>
+                ${item.description ? `<p class="text-[10px] text-slate-400 font-medium line-clamp-1 mb-1">${item.description}</p>` : ''}
+              </div>
+            </div>
+
+            <!-- Price & Action Stepper -->
+            <div class="pt-1 flex items-center justify-between border-t border-slate-50">
+              <span class="text-xs font-black text-indigo-600">${formatPrice(item.price)}</span>
+              
+              <div class="action-slot" data-id="${item.id}">
+                ${inCartQty > 0 && !hasVariants
+                  ? `<div class="flex items-center gap-1.5 bg-indigo-50 px-2 py-1 rounded-xl">
+                      <button class="btn-step-minus w-5 h-5 rounded-lg bg-white text-indigo-600 font-black text-xs flex items-center justify-center shadow-sm active:scale-90">-</button>
+                      <span class="text-xs font-extrabold text-indigo-700 min-w-[12px] text-center">${inCartQty}</span>
+                      <button class="btn-step-plus w-5 h-5 rounded-lg bg-indigo-600 text-white font-black text-xs flex items-center justify-center shadow-sm active:scale-90">+</button>
+                    </div>`
+                  : `<button class="btn-add-item p-2 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all active:scale-90" title="Tambah ke keranjang">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>`
+                }
+              </div>
+            </div>
+          `;
+        } else {
+          // ── LIST ROW VIEW ─────────────────────────────────────────
+          card.className = "product-card bg-white p-3.5 rounded-[24px] border border-slate-100 shadow-sm flex items-center gap-3.5 cursor-pointer select-none";
+          card.innerHTML = `
+            <div class="relative w-20 h-20 rounded-[18px] bg-slate-100 overflow-hidden flex-shrink-0">
+              ${item.image_url 
+                ? `<img src="${item.image_url}" loading="lazy" class="w-full h-full object-cover" alt="${item.name}"/>` 
+                : `<div class="w-full h-full flex items-center justify-center text-slate-300 text-2xl">🍽️</div>`
+              }
+              ${hasVariants ? `<span class="absolute top-1 left-1 px-1.5 py-0.2 rounded-md bg-indigo-600 text-white text-[8px] font-black uppercase">Varian</span>` : ''}
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <h3 class="font-extrabold text-slate-900 text-xs leading-snug line-clamp-1 mb-0.5">${item.name}</h3>
+              <p class="text-[10px] text-slate-400 font-medium line-clamp-1 mb-2">${item.description || 'Pilihan menu lezat'}</p>
+              <span class="text-xs font-black text-indigo-600">${formatPrice(item.price)}</span>
+            </div>
+
+            <div class="action-slot flex-shrink-0" data-id="${item.id}">
+              ${inCartQty > 0 && !hasVariants
+                ? `<div class="flex items-center gap-1.5 bg-indigo-50 px-2 py-1 rounded-xl">
+                    <button class="btn-step-minus w-5 h-5 rounded-lg bg-white text-indigo-600 font-black text-xs flex items-center justify-center shadow-sm active:scale-90">-</button>
+                    <span class="text-xs font-extrabold text-indigo-700 min-w-[12px] text-center">${inCartQty}</span>
+                    <button class="btn-step-plus w-5 h-5 rounded-lg bg-indigo-600 text-white font-black text-xs flex items-center justify-center shadow-sm active:scale-90">+</button>
+                  </div>`
+                : `<button class="btn-add-item px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white text-xs font-bold transition-all active:scale-90 flex items-center gap-1">
+                    <span>+ Tambah</span>
+                  </button>`
+              }
+            </div>
+          `;
+        }
+
+        // Attach Card Button Click Actions
+        const btnAdd = card.querySelector('.btn-add-item');
+        if (btnAdd) {
+          btnAdd.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (hasVariants) {
+              openVariantModal(item);
+            } else {
+              addToCart(item);
+            }
+          });
+        }
+
+        const btnMinus = card.querySelector('.btn-step-minus');
+        if (btnMinus) {
+          btnMinus.addEventListener('click', (e) => {
+            e.stopPropagation();
+            decrementCart(item.id);
+          });
+        }
+
+        const btnPlus = card.querySelector('.btn-step-plus');
+        if (btnPlus) {
+          btnPlus.addEventListener('click', (e) => {
+            e.stopPropagation();
+            addToCart(item);
+          });
+        }
+
+        // Click whole card to add to cart or open variants
+        card.addEventListener('click', () => {
+          if (hasVariants) {
+            openVariantModal(item);
+          } else {
+            addToCart(item);
+          }
+        });
+
+        container.appendChild(card);
+      });
+    };
+
+    // ── Variant Bottom Sheet ──────────────────────────────────────────
+
+    const openVariantModal = (item) => {
+      pendingVariantItem = item;
+      selectedVariant = item.variants_data[0] || null;
+      variantQuantity = 1;
+
+      const modal = document.getElementById('variant-modal');
+      const content = document.getElementById('variant-content');
+      
+      content.innerHTML = `
+        <div class="flex gap-4 mb-5 items-center">
+          <div class="w-16 h-16 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0">
+            ${item.image_url 
+              ? `<img src="${item.image_url}" class="w-full h-full object-cover" alt="${item.name}"/>` 
+              : `<div class="w-full h-full flex items-center justify-center text-2xl">🍴</div>`
+            }
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900 leading-tight">${item.name}</h3>
+            <p id="variant-display-price" class="text-sm text-indigo-600 font-black mt-1">${formatPrice(selectedVariant ? selectedVariant.price : item.price)}</p>
+          </div>
+        </div>
+
+        <div class="mb-5">
+          <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2.5">Pilih Varian</label>
+          <div class="grid grid-cols-2 gap-2" id="variant-options"></div>
+        </div>
+
+        <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100 mb-2">
+          <span class="text-xs font-bold text-slate-700">Jumlah Pesanan</span>
+          <div class="flex items-center gap-3">
+            <button id="modal-qty-minus" class="w-7 h-7 rounded-xl bg-white border border-slate-200 text-slate-700 font-extrabold flex items-center justify-center active:scale-90">-</button>
+            <span id="modal-qty-val" class="font-extrabold text-sm text-slate-900 min-w-[16px] text-center">1</span>
+            <button id="modal-qty-plus" class="w-7 h-7 rounded-xl bg-indigo-600 text-white font-extrabold flex items-center justify-center active:scale-90">+</button>
+          </div>
+        </div>
+      `;
+
+      const optionsContainer = content.querySelector('#variant-options');
+      item.variants_data.forEach(v => {
+        const btn = document.createElement('button');
+        const isSelected = selectedVariant && selectedVariant.id === v.id;
+        btn.className = `p-3 rounded-2xl border-2 text-left transition-all ${
+          isSelected 
+            ? 'border-indigo-600 bg-indigo-50/70 text-indigo-900' 
+            : 'border-slate-100 bg-slate-50 text-slate-700 hover:border-slate-200'
+        }`;
+        btn.innerHTML = `
+          <p class="font-extrabold text-xs mb-0.5">${v.name}</p>
+          <p class="text-indigo-600 font-black text-[11px]">${formatPrice(v.price)}</p>
+        `;
+        btn.onclick = () => {
+          selectedVariant = v;
+          optionsContainer.querySelectorAll('button').forEach(b => {
+            b.className = 'p-3 rounded-2xl border-2 border-slate-100 bg-slate-50 text-slate-700 hover:border-slate-200 text-left transition-all';
+          });
+          btn.className = 'p-3 rounded-2xl border-2 border-indigo-600 bg-indigo-50/70 text-indigo-900 text-left transition-all';
+          document.getElementById('variant-display-price').textContent = formatPrice(v.price);
+        };
+        optionsContainer.appendChild(btn);
+      });
+
+      // Quantity controls inside modal
+      const qtyVal = content.querySelector('#modal-qty-val');
+      content.querySelector('#modal-qty-minus').onclick = () => {
+        if (variantQuantity > 1) {
+          variantQuantity--;
+          qtyVal.textContent = String(variantQuantity);
+        }
+      };
+      content.querySelector('#modal-qty-plus').onclick = () => {
+        variantQuantity++;
+        qtyVal.textContent = String(variantQuantity);
+      };
+
+      modal.classList.remove('pointer-events-none');
+      modal.classList.add('opacity-100');
+      modal.querySelector('div').classList.remove('translate-y-full');
+    };
+
+    (window as any).closeVariantModal = () => {
+      const modal = document.getElementById('variant-modal');
+      modal.classList.add('pointer-events-none');
+      modal.classList.remove('opacity-100');
+      modal.querySelector('div').classList.add('translate-y-full');
+    };
+
+    document.getElementById('add-variant-to-cart').onclick = () => {
+      if (!selectedVariant) return alert("Pilih varian produk terlebih dahulu.");
+      addToCart(pendingVariantItem, selectedVariant, variantQuantity);
+      (window as any).closeVariantModal();
+    };
+
+    // ── Cart State Operations ────────────────────────────────────────
+
+    const addToCart = (item, variant = null, addQty = 1) => {
+      const cartId = variant ? `${item.id}-${variant.id}` : item.id;
+      const existing = cart.find(i => i.cartId === cartId);
+      
+      if (existing) {
+        existing.qty += addQty;
+      } else {
+        cart.push({
+          ...item,
+          cartId,
+          variantId: variant ? variant.id : null,
+          variantName: variant ? variant.name : null,
+          price: variant ? variant.price : item.price,
+          qty: addQty
+        });
+      }
+      
+      showToast(`${item.name} ditambahkan (${cart.find(i => i.cartId === cartId).qty}x) 🛒`);
+      updateCartUI();
+      renderMenu();
+    };
+
+    const decrementCart = (cartId) => {
+      const idx = cart.findIndex(i => i.cartId === cartId || i.id === cartId);
+      if (idx !== -1) {
+        if (cart[idx].qty > 1) {
+          cart[idx].qty--;
+        } else {
+          cart.splice(idx, 1);
+        }
+      }
+      updateCartUI();
+      renderMenu();
+    };
+
+    const updateCartUI = () => {
+      const totalCount = cart.reduce((acc, i) => acc + i.qty, 0);
+      const totalPrice = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      const float = document.getElementById('cart-float');
+      
+      if (totalCount > 0) {
+        float.classList.remove('translate-y-32', 'opacity-0', 'pointer-events-none');
+        document.getElementById('cart-badge').textContent = String(totalCount);
+        document.getElementById('cart-count-text').textContent = `${totalCount} Produk di Keranjang`;
+        document.getElementById('cart-total').textContent = formatPrice(totalPrice);
+      } else {
+        float.classList.add('translate-y-32', 'opacity-0', 'pointer-events-none');
+      }
+    };
+
+    // ── Checkout Modal & WhatsApp Payload ────────────────────────────
+
+    (window as any).openCheckout = () => {
+      const modal = document.getElementById('checkout-modal');
+      const list = document.getElementById('cart-items-list');
+      list.innerHTML = '';
+      
+      if (cart.length === 0) return;
+
+      // Auto-fill customer profile from localStorage (Guest Checkout memory)
+      try {
+        const savedProfile = localStorage.getItem('dpos_customer_profile');
+        if (savedProfile) {
+          const p = JSON.parse(savedProfile);
+          const nameInput = document.getElementById('cust-name') as HTMLInputElement;
+          const phoneInput = document.getElementById('cust-phone') as HTMLInputElement;
+          const addressInput = document.getElementById('cust-address') as HTMLTextAreaElement;
+          if (p.name && !nameInput.value) nameInput.value = p.name;
+          if (p.phone && !phoneInput.value) phoneInput.value = p.phone;
+          if (p.address && !addressInput.value) addressInput.value = p.address;
+        }
+      } catch (_) {}
+
+      cart.forEach(item => {
+        const div = document.createElement('div');
+        div.className = "bg-slate-50 p-3 rounded-2xl flex items-center gap-3 border border-slate-100";
+        div.innerHTML = `
+          ${item.image_url 
+            ? `<div class="w-12 h-12 rounded-xl bg-slate-200 overflow-hidden flex-shrink-0">
+                <img src="${item.image_url}" class="w-full h-full object-cover" alt="${item.name}"/>
+               </div>` 
+            : `<div class="w-12 h-12 rounded-xl bg-slate-200 flex items-center justify-center text-lg flex-shrink-0">🍽️</div>`
+          }
+          <div class="flex-1 min-w-0">
+            <h4 class="font-extrabold text-slate-900 text-xs leading-snug truncate">${item.name}</h4>
+            ${item.variantName ? `<span class="inline-block px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-700 text-[9px] font-black uppercase mt-0.5">${item.variantName}</span>` : ''}
+            <p class="text-[11px] font-black text-indigo-600 mt-0.5">${formatPrice(item.price * item.qty)}</p>
+          </div>
+
+          <div class="flex items-center gap-1.5 flex-shrink-0 bg-white p-1 rounded-xl border border-slate-200/80 shadow-sm">
+            <button class="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs flex items-center justify-center btn-modal-minus active:scale-90 transition-all">-</button>
+            <span class="text-xs font-black text-slate-900 w-5 text-center">${item.qty}</span>
+            <button class="w-6 h-6 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs flex items-center justify-center btn-modal-plus active:scale-90 transition-all">+</button>
+          </div>
+        `;
+
+        div.querySelector('.btn-modal-minus').onclick = () => {
+          decrementCart(item.cartId);
+          if (cart.length === 0) {
+            (window as any).closeCheckout();
+          } else {
+            (window as any).openCheckout();
+          }
+        };
+
+        div.querySelector('.btn-modal-plus').onclick = () => {
+          item.qty++;
+          updateCartUI();
+          (window as any).openCheckout();
+        };
+
+        list.appendChild(div);
+      });
+
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      document.getElementById('modal-total').textContent = formatPrice(total);
+      
+      modal.classList.remove('pointer-events-none');
+      modal.classList.add('opacity-100');
+      modal.querySelector('div').classList.remove('translate-y-full');
+    };
+
+    (window as any).closeCheckout = () => {
+      const modal = document.getElementById('checkout-modal');
+      modal.classList.add('pointer-events-none');
+      modal.classList.remove('opacity-100');
+      modal.querySelector('div').classList.add('translate-y-full');
+    };
+
+    // ── Order Tracking State & Functions ──────────────────────────────
+    let currentTrackingChannel: any = null;
+
+    const subscribeOrderRealtime = (orderId: string, invoiceNumber: string) => {
+      if (currentTrackingChannel) {
+        supabase.removeChannel(currentTrackingChannel);
+        currentTrackingChannel = null;
+      }
+
+      currentTrackingChannel = supabase
+        .channel(`order-track-${orderId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'orders',
+            filter: `id=eq.${orderId}`
+          },
+          (payload: any) => {
+            console.log('Realtime order update received:', payload);
+            showToast('Status pesanan diperbarui! 🔔');
+            performTrackOrder(invoiceNumber, false);
+            checkAndRenderActiveOrderBanner();
+          }
+        )
+        .subscribe();
+    };
+
+    const renderTrackingNotFound = (queryTerm: string) => {
+      const container = document.getElementById('track-result-container');
+      if (!container) return;
+      container.innerHTML = `
+        <div class="py-8 text-center bg-rose-50/60 rounded-2xl border border-rose-200/80 p-5">
+          <div class="text-3xl mb-2">🔎</div>
+          <p class="text-xs font-black text-rose-800">Pesanan "${queryTerm}" Tidak Ditemukan</p>
+          <p class="text-[11px] text-rose-600 mt-1 max-w-xs mx-auto">Pastikan nomor invoice atau nomor WhatsApp yang Anda masukkan sudah sesuai.</p>
+        </div>
+      `;
+    };
+
+    const renderTrackingResults = (orders: any[]) => {
+      const container = document.getElementById('track-result-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      orders.forEach((order) => {
+        const isPaid = order.status === 'paid';
+        const isVoid = order.status === 'void';
+
+        let step = 1;
+        let stepTitle = 'Pesanan Diterima';
+        let stepDesc = 'Pesanan telah masuk ke sistem toko dan menunggu antrean dapur/kasir.';
+
+        if (isVoid) {
+          step = -1;
+          stepTitle = 'Pesanan Dibatalkan';
+          stepDesc = order.void_reason ? `Alasan: ${order.void_reason}` : 'Pesanan telah dibatalkan oleh pihak toko.';
+        } else if (isPaid) {
+          step = 4;
+          stepTitle = 'Pesanan Selesai & Lunas';
+          stepDesc = 'Pesanan telah diselesaikan dan diterima. Terima kasih! 🙏✨';
+        } else {
+          step = 2;
+          stepTitle = 'Sedang Diproses';
+          stepDesc = 'Toko sedang menyiapkan pesanan Anda dengan cermat.';
+        }
+
+        const card = document.createElement('div');
+        card.className = 'bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-4 shadow-sm';
+
+        const storeWa = formatWhatsAppPhone(getStorePhone(bizData));
+
+        card.innerHTML = `
+          <!-- Header Info -->
+          <div class="flex items-start justify-between border-b border-slate-200/70 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-sm font-black text-indigo-700 tracking-wider">${order.invoice_number}</span>
+                <button class="btn-copy-inv text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg font-bold hover:bg-indigo-100 transition-all active:scale-90" data-inv="${order.invoice_number}">Salin</button>
+              </div>
+              <p class="text-[11px] text-slate-500 font-medium mt-0.5">${new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(order.created_at))}</p>
+            </div>
+            <div class="text-right">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                isVoid ? 'bg-rose-100 text-rose-700' : (isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700 animate-pulse')
+              }">
+                <span class="w-1.5 h-1.5 rounded-full ${isVoid ? 'bg-rose-500' : (isPaid ? 'bg-emerald-500' : 'bg-amber-500')}"></span>
+                ${isVoid ? 'Batal' : (isPaid ? 'Selesai' : 'Diproses')}
+              </span>
+              <p class="text-[10px] text-slate-400 font-bold mt-1">${(order.order_source || 'Online').toUpperCase()}</p>
+            </div>
+          </div>
+
+          <!-- WhatsApp Direct Action Prompt for Confirmed Orders -->
+          ${order.status === 'confirmed' ? `
+            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 text-center">
+              <div class="w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-1.5 text-sm shadow-sm">
+                ✓
+              </div>
+              <p class="text-xs font-black text-emerald-900">Pesanan Masuk ke Sistem Kasir Toko!</p>
+              <p class="text-[11px] text-emerald-700 mt-0.5 mb-2.5 leading-relaxed">Silakan kirim rincian pesanan ke WhatsApp penjual agar langsung disiapkan toko:</p>
+              <a href="${latestOrderWaUrl || (storeWa ? `https://api.whatsapp.com/send/?phone=${storeWa}&text=${encodeURIComponent(`Halo ${bizData.name}, saya ingin konfirmasi pesanan #${order.invoice_number} saya.`)}` : '#')}" class="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-xl font-bold text-xs shadow-md shadow-emerald-200 active:scale-95 transition-all">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.073.043.419-.101.825z"/></svg>
+                <span>Buka Chat WhatsApp Penjual ➔</span>
+              </a>
+            </div>
+          ` : ''}
+
+          <!-- Realtime 4-step Timeline -->
+          ${isVoid ? `
+            <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-rose-800 text-xs">
+              <div class="flex items-center gap-2 font-bold mb-1">
+                <span>❌</span>
+                <span>Pesanan Dibatalkan</span>
+              </div>
+              <p class="text-[11px] text-rose-600">${stepDesc}</p>
+            </div>
+          ` : `
+            <div class="py-2">
+              <div class="flex items-center justify-between mb-3 relative px-1">
+                <div class="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-1 bg-slate-200 z-0"></div>
+                <div class="absolute left-6 top-1/2 -translate-y-1/2 h-1 bg-indigo-600 z-0 transition-all duration-700" style="width: ${step === 4 ? 'calc(100% - 48px)' : (step === 3 ? '66%' : (step === 2 ? '33%' : '0%'))}"></div>
+                
+                <!-- Step 1 -->
+                <div class="relative z-10 flex flex-col items-center">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-200 text-slate-500'}">
+                    📝
+                  </div>
+                  <span class="text-[9px] font-bold text-slate-600 mt-1">Diterima</span>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="relative z-10 flex flex-col items-center">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? (step === 2 ? 'bg-amber-500 text-white ring-4 ring-amber-100 shadow-md animate-pulse' : 'bg-indigo-600 text-white shadow-md') : 'bg-slate-200 text-slate-500'}">
+                    👨‍🍳
+                  </div>
+                  <span class="text-[9px] font-bold text-slate-600 mt-1">Diproses</span>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative z-10 flex flex-col items-center">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${step >= 3 ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-200 text-slate-500'}">
+                    🛵
+                  </div>
+                  <span class="text-[9px] font-bold text-slate-600 mt-1">Siap/Antar</span>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="relative z-10 flex flex-col items-center">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${step >= 4 ? 'bg-emerald-600 text-white ring-4 ring-emerald-100 shadow-md' : 'bg-slate-200 text-slate-500'}">
+                    ✓
+                  </div>
+                  <span class="text-[9px] font-bold text-slate-600 mt-1">Selesai</span>
+                </div>
+              </div>
+
+              <div class="bg-indigo-50/70 border border-indigo-100/80 rounded-xl p-3 text-center">
+                <p class="text-xs font-extrabold text-indigo-900">${stepTitle}</p>
+                <p class="text-[11px] text-indigo-700/80 mt-0.5">${stepDesc}</p>
+              </div>
+            </div>
+          `}
+
+          <!-- Items Details -->
+          <div class="space-y-1.5 border-t border-slate-200/70 pt-3 text-xs">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Rincian Menu</p>
+            ${(order.order_items || []).map((item: any) => `
+              <div class="flex justify-between items-center text-slate-700">
+                <div class="min-w-0 pr-2">
+                  <span class="font-bold">${item.name}</span>
+                  ${item.variant_name ? `<span class="text-[10px] text-indigo-600 font-semibold ml-1">[${item.variant_name}]</span>` : ''}
+                  <span class="text-slate-400 text-[11px]"> x${item.quantity}</span>
+                </div>
+                <span class="font-extrabold flex-shrink-0">${formatPrice(item.subtotal || item.unit_price * item.quantity)}</span>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Customer & Delivery Info -->
+          <div class="bg-white p-3 rounded-xl border border-slate-200/80 text-[11px] space-y-1">
+            <div class="flex justify-between">
+              <span class="text-slate-400 font-medium">Pemesan:</span>
+              <span class="font-bold text-slate-800">${order.customer_name || '-'} ${order.customer_phone ? `(${order.customer_phone})` : ''}</span>
+            </div>
+            ${order.table_number ? `
+              <div class="flex justify-between">
+                <span class="text-slate-400 font-medium">Nomor Meja:</span>
+                <span class="font-bold text-slate-800">Meja ${order.table_number}</span>
+              </div>
+            ` : ''}
+            ${order.notes ? `
+              <div class="flex justify-between items-start pt-1 border-t border-slate-100">
+                <span class="text-slate-400 font-medium flex-shrink-0 mr-2">Catatan / Antar:</span>
+                <span class="font-semibold text-slate-700 text-right text-[10px]">${order.notes}</span>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Total & Action -->
+          <div class="flex items-center justify-between border-t border-slate-200/70 pt-3">
+            <div>
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Total Pesanan</span>
+              <p class="text-base font-black text-indigo-600">${formatPrice(order.grand_total || order.subtotal)}</p>
+            </div>
+            ${storeWa ? `
+              <a href="https://wa.me/${storeWa}?text=${encodeURIComponent(`Halo ${bizData.name}, saya ingin menanyakan status pesanan saya #${order.invoice_number}`)}" target="_blank" class="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
+                <span>💬 Chat Toko</span>
+              </a>
+            ` : ''}
+          </div>
+        `;
+
+        card.querySelector('.btn-copy-inv')?.addEventListener('click', (e) => {
+          const inv = (e.currentTarget as HTMLElement).getAttribute('data-inv');
+          if (inv) {
+            navigator.clipboard.writeText(inv);
+            showToast('Nomor invoice disalin! 📋');
+          }
+        });
+
+        container.appendChild(card);
+      });
+    };
+
+    const performTrackOrder = async (queryTerm: string, openIfFound = true) => {
+      if (!queryTerm) return;
+      const cleaned = queryTerm.trim();
+      const container = document.getElementById('track-result-container');
+      if (container) {
+        container.innerHTML = `
+          <div class="py-8 text-center text-slate-400">
+            <div class="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p class="text-xs font-bold">Mencari pesanan...</p>
+          </div>
+        `;
+      }
+
+      try {
+        let query = supabase
+          .from('orders')
+          .select('*, order_items(*)')
+          .order('created_at', { ascending: false });
+
+        if (cleaned.toUpperCase().startsWith('INV-')) {
+          query = query.eq('invoice_number', cleaned.toUpperCase());
+        } else {
+          let cleanDigits = cleaned.replace(/[^0-9]/g, '');
+          if (cleanDigits.length >= 7) {
+            query = query.or(`customer_phone.ilike.%${cleanDigits}%,invoice_number.ilike.%${cleaned}%`);
+          } else {
+            query = query.ilike('invoice_number', `%${cleaned}%`);
+          }
+        }
+
+        if (bizData?.id) {
+          query = query.eq('business_id', bizData.id);
+        }
+
+        const { data: orders, error } = await query.limit(5);
+
+        if (error || !orders || orders.length === 0) {
+          renderTrackingNotFound(cleaned);
+          return;
+        }
+
+        renderTrackingResults(orders);
+
+        if (orders[0]?.id) {
+          subscribeOrderRealtime(orders[0].id, orders[0].invoice_number);
+        }
+      } catch (err) {
+        console.error('Track order error:', err);
+        renderTrackingNotFound(cleaned);
+      }
+    };
+
+    const openTrackingModal = (searchQuery?: string) => {
+      const modal = document.getElementById('tracking-modal');
+      if (!modal) return;
+      modal.classList.remove('pointer-events-none');
+      modal.classList.add('opacity-100');
+      modal.querySelector('div')?.classList.remove('translate-y-full');
+
+      const searchInput = document.getElementById('track-search-input') as HTMLInputElement;
+      if (searchQuery) {
+        if (searchInput) searchInput.value = searchQuery;
+        performTrackOrder(searchQuery);
+      } else {
+        const activeOrderStr = localStorage.getItem('dpos_active_order');
+        if (activeOrderStr) {
+          try {
+            const activeOrder = JSON.parse(activeOrderStr);
+            if (activeOrder?.invoice_number) {
+              if (searchInput) searchInput.value = activeOrder.invoice_number;
+              performTrackOrder(activeOrder.invoice_number);
+              return;
+            }
+          } catch (_) {}
+        }
+        const profileStr = localStorage.getItem('dpos_customer_profile');
+        if (profileStr) {
+          try {
+            const prof = JSON.parse(profileStr);
+            if (prof?.phone) {
+              if (searchInput) searchInput.value = prof.phone;
+              performTrackOrder(prof.phone);
+              return;
+            }
+          } catch (_) {}
+        }
+      }
+    };
+
+    (window as any).openTrackingModal = openTrackingModal;
+
+    (window as any).closeTrackingModal = () => {
+      const modal = document.getElementById('tracking-modal');
+      if (!modal) return;
+      modal.classList.add('pointer-events-none');
+      modal.classList.remove('opacity-100');
+      modal.querySelector('div')?.classList.add('translate-y-full');
+      if (currentTrackingChannel) {
+        supabase.removeChannel(currentTrackingChannel);
+        currentTrackingChannel = null;
+      }
+    };
+
+    const checkAndRenderActiveOrderBanner = async () => {
+      const activeOrderStr = localStorage.getItem('dpos_active_order');
+      const banner = document.getElementById('active-order-banner');
+      if (!activeOrderStr || !banner) {
+        if (banner) banner.classList.add('hidden');
+        return;
+      }
+
+      try {
+        const activeOrder = JSON.parse(activeOrderStr);
+        if (!activeOrder?.invoice_number) {
+          banner.classList.add('hidden');
+          return;
+        }
+
+        const orderTime = new Date(activeOrder.created_at || Date.now()).getTime();
+        if (Date.now() - orderTime > 24 * 60 * 60 * 1000) {
+          banner.classList.add('hidden');
+          return;
+        }
+
+        banner.classList.remove('hidden');
+        const invElem = document.getElementById('banner-order-inv');
+        if (invElem) invElem.textContent = activeOrder.invoice_number;
+
+        const { data: order } = await supabase
+          .from('orders')
+          .select('status')
+          .eq('invoice_number', activeOrder.invoice_number)
+          .maybeSingle();
+
+        const statusElem = document.getElementById('banner-order-status');
+        if (statusElem) {
+          if (order) {
+            if (order.status === 'paid') {
+              statusElem.textContent = '✅ Selesai / Lunas';
+              statusElem.className = 'text-xs text-emerald-400 font-bold truncate';
+            } else if (order.status === 'void') {
+              statusElem.textContent = '❌ Dibatalkan';
+              statusElem.className = 'text-xs text-rose-400 font-bold truncate';
+            } else {
+              statusElem.textContent = '👨‍🍳 Sedang Diproses Toko...';
+              statusElem.className = 'text-xs text-amber-300 font-bold truncate';
+            }
+          } else {
+            statusElem.textContent = 'Menunggu Konfirmasi Toko...';
+          }
+        }
+
+        const btnBannerView = document.getElementById('btn-banner-view');
+        if (btnBannerView) {
+          btnBannerView.onclick = () => {
+            openTrackingModal(activeOrder.invoice_number);
+          };
+        }
+      } catch (_) {
+        banner.classList.add('hidden');
+      }
+    };
+
+    const handleSendWhatsAppOrder = async () => {
+      let storePhone = getStorePhone(bizData);
+
+      // If phone wasn't loaded in bizData, attempt fallback query to outlets table
+      if (!storePhone && bizData?.id) {
+        try {
+          const { data: outletRows } = await supabase
+            .from('outlets')
+            .select('*')
+            .eq('business_id', bizData.id);
+          if (outletRows && outletRows.length > 0) {
+            bizData.outlets = outletRows;
+            storePhone = getStorePhone(bizData);
+          }
+        } catch (e) {
+          console.warn('Fallback outlets fetch during checkout error:', e);
+        }
+      }
+
+      const cleanPhone = formatWhatsAppPhone(storePhone);
+      if (!cleanPhone || cleanPhone.length < 5) {
+        alert("Nomor WhatsApp toko belum dikonfigurasi oleh pemilik toko.\nSilakan pastikan nomor WhatsApp atau telepon sudah diisi pada profil bisnis atau outlet.");
+        return;
+      }
+
+      const custName = (document.getElementById('cust-name') as HTMLInputElement).value.trim();
+      const custPhone = (document.getElementById('cust-phone') as HTMLInputElement).value.trim();
+      const custAddress = (document.getElementById('cust-address') as HTMLTextAreaElement).value.trim();
+      const custTable = (document.getElementById('cust-table') as HTMLInputElement).value.trim();
+      const custNotes = (document.getElementById('cust-notes') as HTMLInputElement).value.trim();
+
+      if (!custName) {
+        alert("Silakan isi nama Anda terlebih dahulu.");
+        document.getElementById('cust-name').focus();
+        return;
+      }
+
+      if (selectedOrderType === 'Delivery' && !custAddress) {
+        alert("Silakan isi alamat pengiriman untuk pesanan antar.");
+        document.getElementById('cust-address').focus();
+        return;
+      }
+
+      // 1. Remember guest customer profile in localStorage for subsequent visits
+      try {
+        localStorage.setItem('dpos_customer_profile', JSON.stringify({
+          name: custName,
+          phone: custPhone,
+          address: custAddress
+        }));
+      } catch (_) {}
+
+      const phone = cleanPhone;
+
+      // 2. Generate Invoice Ref & Order ID
+      const orderRef = 'INV-' + Date.now().toString().slice(-6) + Math.floor(10 + Math.random() * 90);
+      const orderId = crypto.randomUUID();
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      
+      // Ensure outlets list is populated before picking outlet
+      if (!bizData.outlets || bizData.outlets.length === 0) {
+        try {
+          const { data: outletRows } = await supabase
+            .from('outlets')
+            .select('*')
+            .eq('business_id', bizData.id);
+          if (outletRows && outletRows.length > 0) {
+            bizData.outlets = outletRows;
+          }
+        } catch (_) {}
+      }
+
+      const outlets = Array.isArray(bizData.outlets) ? bizData.outlets : [];
+      const primaryOutlet = outlets.find(o => o.code === 'main')
+        || outlets.find(o => o.is_active && (o.phone || o.address))
+        || outlets.find(o => o.is_active)
+        || outlets.find(o => o.phone)
+        || outlets[0]
+        || {};
+      const targetOutletId = primaryOutlet.id || bizData.id;
+
+      // 3. Save Order directly to Supabase DB (Real-time sync to dpos Cashier POS)
+      const orderPayload = {
+        id: orderId,
+        outlet_id: targetOutletId,
+        business_id: bizData.id,
+        invoice_number: orderRef,
+        customer_name: custName,
+        customer_phone: custPhone || null,
+        customer_email: null,
+        table_number: selectedOrderType === 'Dine-in' ? (parseInt(custTable, 10) || null) : null,
+        dining_option: selectedOrderType === 'Dine-in' ? 'dine_in' : (selectedOrderType === 'Delivery' ? 'delivery' : 'take_away'),
+        status: 'confirmed',
+        order_source: 'online',
+        notes: [
+          selectedOrderType === 'Delivery' ? `[DELIVERY] Alamat: ${custAddress}` : (selectedOrderType === 'Dine-in' ? `[DINE-IN] Meja: ${custTable || '-'}` : `[TAKEAWAY]`),
+          custNotes ? `Catatan: ${custNotes}` : ''
+        ].filter(Boolean).join(' | '),
+        subtotal: total,
+        discount_total: 0,
+        tax_amount: 0,
+        grand_total: total,
+        paid_amount: 0,
+        change_amount: 0
+      };
+
+      const itemsPayload = cart.map(item => ({
+        id: crypto.randomUUID(),
+        order_id: orderId,
+        menu_item_id: item.id || null,
+        variant_id: item.variantId || null,
+        name: item.name,
+        variant_name: item.variantName || null,
+        quantity: item.qty,
+        unit_price: item.price,
+        subtotal: item.price * item.qty,
+        notes: null
+      }));
+
+      try {
+        const { error: orderErr } = await supabase.from('orders').insert(orderPayload);
+        if (orderErr) {
+          console.warn('Direct order insert warning:', orderErr.message);
+        } else {
+          const { error: itemsErr } = await supabase.from('order_items').insert(itemsPayload);
+          if (itemsErr) console.warn('Order items insert warning:', itemsErr.message);
+        }
+      } catch (err) {
+        console.warn('Supabase order insert caught error:', err);
+      }
+
+      // 4. Save active order to localStorage for status banner & tracking
+      try {
+        localStorage.setItem('dpos_active_order', JSON.stringify({
+          id: orderId,
+          invoice_number: orderRef,
+          outlet_id: targetOutletId,
+          business_id: bizData.id,
+          customer_name: custName,
+          customer_phone: custPhone,
+          created_at: new Date().toISOString()
+        }));
+      } catch (_) {}
+
+      // 5. Build live tracking URL
+      const trackingUrl = `${window.location.origin}${window.location.pathname}?order=${orderRef}`;
+
+      // 6. Build WhatsApp text payload
+      const dateStr = new Intl.DateTimeFormat('id-ID', { dateStyle: 'full', timeStyle: 'short' }).format(new Date());
+
+      let msg = `🛒 *PESANAN BARU VIA MENU ONLINE*\n`;
+      msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+      msg += `🔖 *No. Pesanan:* #${orderRef}\n`;
+      msg += `📅 *Waktu:* ${dateStr}\n`;
+      msg += `🏪 *Toko:* ${bizData.name.toUpperCase()}\n`;
+      msg += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+      msg += `👤 *DATA PEMESAN:*\n`;
+      msg += `• *Nama:* ${custName}\n`;
+      if (custPhone) {
+        msg += `• *No. WA:* ${custPhone}\n`;
+      }
+      msg += `• *Tipe:* ${selectedOrderType.toUpperCase()}\n`;
+      if (selectedOrderType === 'Delivery') {
+        msg += `• *Alamat Antar:* ${custAddress}\n`;
+      } else if (selectedOrderType === 'Dine-in') {
+        msg += `• *No. Meja:* ${custTable || '-'}\n`;
+      }
+      if (custNotes) {
+        msg += `• *Catatan Khusus:* ${custNotes}\n`;
+      }
+      msg += `\n📋 *RINCIAN MENU:*\n`;
+
+      cart.forEach((item, idx) => {
+        msg += `${idx + 1}. *${item.name}*`;
+        if (item.variantName) msg += ` [${item.variantName}]`;
+        msg += `\n   ↳ ${item.qty}x @ ${formatPrice(item.price)} = *${formatPrice(item.price * item.qty)}*\n`;
+      });
+
+      msg += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
+      msg += `💰 *TOTAL BAYAR: ${formatPrice(total)}*\n`;
+      msg += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      msg += `🔍 *Lacak Status Pesanan Live:*\n${trackingUrl}\n\n`;
+      msg += `Mohon konfirmasi ketersediaan & proses pesanan ini ya kak. Terima kasih! 🙏✨`;
+
+      // 7. Cleanup cart & display feedback
+      (window as any).closeCheckout();
+      cart = [];
+      updateCartUI();
+      checkAndRenderActiveOrderBanner();
+      openTrackingModal(orderRef);
+      showToast('Pesanan tersimpan & mengarahkan ke WhatsApp... 🚀');
+
+      // 8. Open WhatsApp reliably via direct navigation (universal intent link)
+      const waUrl = `https://api.whatsapp.com/send/?phone=${phone}&text=${encodeURIComponent(msg)}`;
+      latestOrderWaUrl = waUrl;
+      setTimeout(() => {
+        window.location.href = waUrl;
+      }, 300);
+    };
+
+    // Auto-check URL parameter for order tracking on load
+    const checkUrlForTracking = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const trackParam = urlParams.get('order') || urlParams.get('lacak');
+      if (trackParam) {
+        openTrackingModal(trackParam);
+      } else {
+        checkAndRenderActiveOrderBanner();
+      }
+    };
+
+    init().then(() => {
+      checkUrlForTracking();
+    });
+  </script>
+</Layout>

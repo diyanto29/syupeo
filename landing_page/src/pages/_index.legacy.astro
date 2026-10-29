@@ -1,0 +1,1191 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
+
+// Inisialisasi fallback default jika database offline saat build
+let freePlan = {
+	max_products: 50,
+	max_transactions_month: 500,
+	max_outlets: 1,
+};
+
+let proPlan = {
+	price_monthly: 35000,
+	tiers: [
+		{ code: '1_month', name: '1 Bulan (Bulanan Dasar)', price: 35000, subtitle: '/bln', is_active: true },
+		{ code: '6_months', name: '6 Bulan', price: 99000, badge: 'HEMAT 34%', subtitle: '/6 bln', is_active: true },
+		{ code: '12_months', name: '1 Tahun (12 Bulan)', price: 180000, badge: 'HEMAT 28%', subtitle: '/thn', is_active: true },
+	]
+};
+
+try {
+	const { data: plans, error } = await supabase.from('subscription_plans').select('*');
+	if (plans && !error) {
+		const free = plans.find((p: any) => p.code === 'free');
+		if (free) {
+			freePlan = {
+				max_products: free.max_products ?? 50,
+				max_transactions_month: free.max_transactions_month ?? 500,
+				max_outlets: free.max_outlets ?? 1,
+			};
+		}
+
+		const pro = plans.find((p: any) => p.code === 'pro');
+		if (pro) {
+			proPlan.price_monthly = pro.price_monthly ?? 35000;
+			if (pro.pricing_tiers && Array.isArray(pro.pricing_tiers.tiers)) {
+				proPlan.tiers = pro.pricing_tiers.tiers.filter((t: any) => t.is_active !== false);
+			}
+		}
+	}
+} catch (e) {
+	console.error('Error fetching subscription_plans from DB:', e);
+}
+
+const formatRupiah = (val: number) => {
+	return 'Rp ' + Number(val).toLocaleString('id-ID');
+};
+---
+
+<Layout 
+	title="Mangga POS - Aplikasi Kasir Online & Menu Digital UMKM | Mudahkan.online"
+	description="Kelola penjualan toko, scan 32.000+ Master Katalog ritel, cetak struk Bluetooth, menu digital QR, dan pantau omzet real-time dengan Mangga POS resmi di Google Play Store."
+>
+	<!-- Top Navigation Bar -->
+	<header class="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-200/70 transition-all">
+		<div class="container mx-auto px-6 h-20 flex items-center justify-between">
+			<a href="/" class="flex items-center gap-3.5 group">
+				<div class="relative">
+					<img 
+						src="/logo.png" 
+						alt="Mangga POS Logo" 
+						class="w-11 h-11 rounded-2xl shadow-sm object-cover border border-orange-200 group-hover:scale-105 group-hover:shadow-md transition-all duration-300" 
+					/>
+					<span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+				</div>
+				<div>
+					<div class="flex items-center gap-1.5">
+						<span class="font-black text-xl text-slate-900 tracking-tight">Mangga POS</span>
+						<span class="px-2 py-0.5 text-[10px] font-extrabold bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-full shadow-xs">
+							UMKM & RITEL
+						</span>
+					</div>
+					<p class="text-[11px] text-slate-400 font-semibold leading-none mt-0.5">by Mudahkan.online</p>
+				</div>
+			</a>
+
+			<nav class="hidden md:flex items-center gap-7 text-sm font-bold text-slate-600">
+				<a href="#features" class="hover:text-orange-600 transition-colors">Fitur Unggulan</a>
+				<a href="#hardware-packages" class="hover:text-orange-600 transition-colors flex items-center gap-1">
+					<span>Paket Mesin Kasir</span>
+					<span class="px-1.5 py-0.2 rounded-md bg-purple-100 text-purple-700 text-[10px] font-black">Hardware</span>
+				</a>
+				<a href="#pricing" class="hover:text-orange-600 transition-colors">Langganan App</a>
+				<a href="/panduan" class="hover:text-orange-600 transition-colors flex items-center gap-1.5">
+					<span>Buku Panduan</span>
+					<span class="px-1.5 py-0.5 text-[9px] font-bold bg-amber-100 text-amber-800 rounded-md">18 Bab</span>
+				</a>
+				<a href="#download" class="hover:text-orange-600 transition-colors">Unduh Aplikasi</a>
+			</nav>
+
+			<div class="flex items-center gap-3">
+				<a 
+					href="https://play.google.com/store/apps/details?id=online.mudahkan.manggapos" 
+					target="_blank"
+					class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold text-xs border border-orange-200 transition-all hover:scale-105"
+				>
+					<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.99 1.99 0 0 1-.61-.908V2.722c.162-.352.378-.667.609-.908zm11.306 11.31l2.122-2.124-11.45-6.611 9.328 8.735zm0 1.752l-9.328 8.735 11.45-6.611-2.122-2.124zm1.485-1.485l3.535 2.041c.883.51 1.435 1.455 1.435 2.478s-.552 1.968-1.435 2.478l-3.535 2.041-2.122-2.124 2.122-6.914z"/></svg>
+					<span>Play Store</span>
+				</a>
+				<a 
+					href="https://adminmanggapos.mudahkan.online" 
+					target="_blank" 
+					class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md shadow-slate-900/10 transition-all hover:-translate-y-0.5"
+				>
+					Web Admin Portal ↗
+				</a>
+			</div>
+		</div>
+	</header>
+
+	<!-- Hero Section -->
+	<div class="relative overflow-hidden bg-white">
+		<!-- Background Glow Accents -->
+		<div class="absolute -top-32 -left-32 w-96 h-96 bg-orange-400/15 rounded-full blur-3xl pointer-events-none"></div>
+		<div class="absolute top-1/4 -right-32 w-96 h-96 bg-amber-400/15 rounded-full blur-3xl pointer-events-none"></div>
+
+		<div class="relative pt-12 pb-20 lg:pt-20 lg:pb-32 container mx-auto px-6">
+			<div class="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+				
+				<!-- Left Text & CTA -->
+				<div class="lg:col-span-6 text-left">
+					<div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200/80 mb-6 shadow-xs">
+						<span class="relative flex h-2 w-2">
+							<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+							<span class="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+						</span>
+						<span class="text-[11px] font-extrabold text-orange-700 uppercase tracking-wider">Aplikasi Kasir Android & Tablet Terbaik</span>
+					</div>
+					
+					<h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.12] mb-6 tracking-tight">
+						Kelola Kasir & Toko <br/> 
+						<span class="bg-gradient-to-r from-orange-600 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+							Lebih Cepat & Praktis
+						</span>
+					</h1>
+					
+					<p class="text-base sm:text-lg text-slate-600 font-medium leading-relaxed mb-8 max-w-xl">
+						<strong>Mangga POS</strong> adalah aplikasi kasir pintar tangguh <strong>100% Offline-First</strong> untuk toko ritel, warung kelontong, kafe, dan resto. Dilengkapi <strong>Master Katalog 32.000+ barcode ritel</strong>, resep bahan baku otomatis, shift kasir anti-bocor, dan menu digital QR meja.
+					</p>
+
+					<!-- Buttons -->
+					<div class="flex flex-wrap items-center gap-4">
+						<a 
+							href="https://play.google.com/store/apps/details?id=online.mudahkan.manggapos" 
+							target="_blank" 
+							class="px-7 py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-sm shadow-xl shadow-slate-900/20 transition-all hover:scale-105 inline-flex items-center gap-3.5 group"
+						>
+							<svg class="w-7 h-7 fill-current text-white shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.99 1.99 0 0 1-.61-.908V2.722c.162-.352.378-.667.609-.908zm11.306 11.31l2.122-2.124-11.45-6.611 9.328 8.735zm0 1.752l-9.328 8.735 11.45-6.611-2.122-2.124zm1.485-1.485l3.535 2.041c.883.51 1.435 1.455 1.435 2.478s-.552 1.968-1.435 2.478l-3.535 2.041-2.122-2.124 2.122-6.914z"/></svg>
+							<div class="text-left">
+								<p class="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Temukan di</p>
+								<p class="text-base font-black leading-none">Google Play</p>
+							</div>
+						</a>
+
+						<a 
+							href="/panduan" 
+							class="px-6 py-4 bg-white text-slate-800 border-2 border-slate-200/90 hover:border-orange-300 hover:bg-orange-50/40 rounded-2xl font-black text-sm transition-all inline-flex items-center gap-2 shadow-xs"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+							<span>Buku Panduan (17 Bab)</span>
+						</a>
+					</div>
+
+					<!-- Trust Checklist -->
+					<div class="mt-8 pt-6 border-t border-slate-100 flex flex-wrap items-center gap-y-2.5 gap-x-3.5 text-xs font-bold text-slate-500">
+						<span class="flex items-center gap-1.5 text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/70">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+							100% Tangguh Offline (Anti-Macet)
+						</span>
+						<span class="flex items-center gap-1.5 text-orange-800 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200/70">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+							Master Katalog 32k+ Siap Scan
+						</span>
+						<span class="flex items-center gap-1.5 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/70">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+							Shift Kasir & Resep Bahan Baku
+						</span>
+						<span class="flex items-center gap-1.5 text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200/70">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+							Thermal Bluetooth & Struk WA
+						</span>
+					</div>
+				</div>
+
+				<!-- Right Tablet POS Showcase -->
+				<div class="lg:col-span-6 relative">
+					<!-- Ambient Glow -->
+					<div class="absolute -inset-4 bg-gradient-to-tr from-orange-500/20 via-amber-500/15 to-transparent rounded-[44px] blur-2xl"></div>
+
+					<!-- Main Tablet Container Mockup -->
+					<div class="relative bg-slate-900 rounded-[38px] p-3.5 sm:p-5 shadow-2xl border border-slate-800">
+						<!-- Camera hole -->
+						<div class="w-2.5 h-2.5 bg-slate-800 rounded-full mx-auto mb-3 border border-slate-700"></div>
+
+						<!-- Screen Inner -->
+						<div class="bg-slate-50 rounded-[28px] overflow-hidden border border-slate-200 text-left text-slate-900 shadow-inner">
+							
+							<!-- Top POS Header Bar -->
+							<div class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between">
+								<div class="flex items-center gap-2">
+									<img src="/logo.png" class="w-6 h-6 rounded-lg object-cover" alt="Mangga POS" />
+									<span class="font-extrabold text-xs text-slate-900">Mangga POS</span>
+									<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[9px] flex items-center gap-1">
+										<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online
+									</span>
+								</div>
+								<div class="text-[11px] font-bold text-slate-500">
+									Kasir: <span class="text-slate-800 font-extrabold">Budi</span> (Shift 1)
+								</div>
+							</div>
+
+							<!-- POS Screen Body: 2 Columns Layout -->
+							<div class="grid grid-cols-12 min-h-[300px] text-xs">
+								
+								<!-- Left Column: Search & Products Grid -->
+								<div class="col-span-7 p-3.5 border-r border-slate-200 bg-white flex flex-col justify-between">
+									<div>
+										<!-- Search & Scan Barcode Box -->
+										<div class="flex items-center gap-1.5 bg-slate-100 rounded-xl px-2.5 py-1.5 mb-2.5 border border-slate-200/80">
+											<svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+											<span class="text-[10px] text-slate-400 font-semibold truncate">Scan barcode atau cari nama produk...</span>
+										</div>
+
+										<!-- Category Pills -->
+										<div class="flex gap-1.5 mb-3 overflow-x-auto pb-1 text-[9px] font-bold">
+											<span class="px-2 py-0.5 rounded-lg bg-orange-600 text-white">Semua</span>
+											<span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600">Minuman</span>
+											<span class="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-800 border border-amber-200">Retail 32k ⚡</span>
+											<span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600">Snack</span>
+										</div>
+
+										<!-- Mini Product Cards Grid -->
+										<div class="grid grid-cols-2 gap-2">
+											<div class="p-2 rounded-xl border border-slate-100 bg-slate-50 hover:border-orange-300 transition-all">
+												<div class="flex items-center justify-between mb-1">
+													<span class="px-1 py-0.2 rounded text-[8px] font-black bg-amber-100 text-amber-800">32k Ritel</span>
+													<span class="text-[9px] text-emerald-600 font-bold">Stok: 48</span>
+												</div>
+												<p class="font-extrabold text-[11px] text-slate-800 leading-tight truncate">Teh Botol 450ml</p>
+												<p class="text-[10px] text-orange-600 font-black mt-1">Rp 4.000</p>
+											</div>
+
+											<div class="p-2 rounded-xl border border-slate-100 bg-slate-50 hover:border-orange-300 transition-all">
+												<div class="flex items-center justify-between mb-1">
+													<span class="px-1 py-0.2 rounded text-[8px] font-black bg-amber-100 text-amber-800">32k Ritel</span>
+													<span class="text-[9px] text-emerald-600 font-bold">Stok: 120</span>
+												</div>
+												<p class="font-extrabold text-[11px] text-slate-800 leading-tight truncate">Indomie Goreng</p>
+												<p class="text-[10px] text-orange-600 font-black mt-1">Rp 3.500</p>
+											</div>
+
+											<div class="p-2 rounded-xl border border-slate-100 bg-slate-50 hover:border-orange-300 transition-all">
+												<div class="flex items-center justify-between mb-1">
+													<span class="px-1 py-0.2 rounded text-[8px] font-black bg-rose-100 text-rose-800">Diskon 10%</span>
+													<span class="text-[9px] text-emerald-600 font-bold">Resep</span>
+												</div>
+												<p class="font-extrabold text-[11px] text-slate-800 leading-tight truncate">Kopi Susu Aren</p>
+												<p class="text-[10px] text-orange-600 font-black mt-1">Rp 18.000</p>
+											</div>
+
+											<div class="p-2 rounded-xl border border-slate-100 bg-slate-50 hover:border-orange-300 transition-all">
+												<div class="flex items-center justify-between mb-1">
+													<span class="px-1 py-0.2 rounded text-[8px] font-black bg-slate-200 text-slate-700">Dapur</span>
+													<span class="text-[9px] text-emerald-600 font-bold">Stok: 25</span>
+												</div>
+												<p class="font-extrabold text-[11px] text-slate-800 leading-tight truncate">Roti Bakar Keju</p>
+												<p class="text-[10px] text-orange-600 font-black mt-1">Rp 15.000</p>
+											</div>
+										</div>
+									</div>
+
+									<div class="mt-2 text-[9px] text-slate-400 font-medium text-center">
+										⚡ Scan barcode barcode fisik produk langsung terdeteksi
+									</div>
+								</div>
+
+								<!-- Right Column: Cart & Total Receipt -->
+								<div class="col-span-5 p-3.5 bg-slate-50/70 flex flex-col justify-between">
+									<div>
+										<div class="flex items-center justify-between pb-2 border-b border-slate-200 mb-2">
+											<span class="font-extrabold text-[11px] text-slate-800">Keranjang #084</span>
+											<span class="text-[9px] font-bold text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded">Meja 03</span>
+										</div>
+
+										<div class="space-y-1.5 text-[10px]">
+											<div class="flex justify-between items-center">
+												<span class="font-bold text-slate-700 truncate max-w-[90px]">Teh Botol 450ml (x2)</span>
+												<span class="font-black text-slate-900">8.000</span>
+											</div>
+											<div class="flex justify-between items-center">
+												<span class="font-bold text-slate-700 truncate max-w-[90px]">Kopi Susu Aren (x1)</span>
+												<span class="font-black text-slate-900">18.000</span>
+											</div>
+											<div class="flex justify-between items-center text-rose-600">
+												<span class="font-semibold">Promo Diskon</span>
+												<span class="font-black">-1.800</span>
+											</div>
+										</div>
+									</div>
+
+									<!-- Total & Quick Buttons -->
+									<div class="pt-2 border-t border-slate-200">
+										<div class="flex justify-between items-baseline mb-2">
+											<span class="text-[10px] font-bold text-slate-500">Total Tagihan:</span>
+											<span class="text-sm font-black text-slate-900">Rp 24.200</span>
+										</div>
+
+										<div class="grid grid-cols-2 gap-1.5">
+											<div class="bg-orange-600 text-white rounded-lg py-1.5 text-center font-bold text-[9px] shadow-xs">
+												📱 QRIS
+											</div>
+											<div class="bg-slate-900 text-white rounded-lg py-1.5 text-center font-bold text-[9px] shadow-xs">
+												💵 Tunai
+											</div>
+										</div>
+										<div class="mt-1 flex justify-between text-[8px] text-slate-400 font-semibold px-0.5">
+											<span>🖨️ Struk Thermal</span>
+											<span>💬 Kirim WA</span>
+										</div>
+									</div>
+								</div>
+
+							</div>
+						</div>
+					</div>
+
+					<!-- Floating Stat Chips -->
+					<div class="hidden sm:flex absolute -top-4 -right-4 bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-slate-200 shadow-xl items-center gap-3 animate-bounce [animation-duration:3s]">
+						<div class="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-black">
+							⚡
+						</div>
+						<div>
+							<p class="text-[11px] font-black text-slate-900 leading-tight">Master Catalog 32k+</p>
+							<p class="text-[9px] text-slate-400 font-semibold">Scan barcode retail instan</p>
+						</div>
+					</div>
+
+					<div class="hidden sm:flex absolute -bottom-5 -left-4 bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-slate-200 shadow-xl items-center gap-3">
+						<div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-black">
+							✓
+						</div>
+						<div>
+							<p class="text-[11px] font-black text-slate-900 leading-tight">Struk Bluetooth & WA</p>
+							<p class="text-[9px] text-slate-400 font-semibold">Cetak nota tanpa ribet</p>
+						</div>
+					</div>
+
+				</div>
+
+			</div>
+		</div>
+
+		<!-- Official Google Play Download Showcase Section -->
+		<div id="download" class="container mx-auto px-6 pb-20 text-center">
+			<div class="max-w-4xl mx-auto bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 rounded-[38px] p-8 lg:p-12 text-white shadow-2xl relative overflow-hidden border border-slate-800">
+				
+				<!-- Background ambient glow -->
+				<div class="absolute -top-24 -right-24 w-80 h-80 bg-orange-500/20 blur-[100px] rounded-full"></div>
+				<div class="absolute -bottom-24 -left-24 w-80 h-80 bg-amber-500/15 blur-[100px] rounded-full"></div>
+
+				<div class="relative z-10 grid md:grid-cols-12 gap-8 items-center text-left">
+					
+					<!-- Left Column Info -->
+					<div class="md:col-span-8">
+						<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-orange-500/20 text-orange-400 border border-orange-500/30 mb-4">
+							<span>⭐ TERSEDIA RESMI DI GOOGLE PLAY</span>
+						</div>
+						
+						<h2 class="text-3xl lg:text-4xl font-black text-white mb-3 tracking-tight">
+							Download Aplikasi <span class="text-orange-400">Mangga POS</span>
+						</h2>
+						
+						<p class="text-slate-300 font-medium text-sm leading-relaxed mb-6 max-w-lg">
+							Unduh aplikasi Mangga POS untuk smartphone/tablet Android kasir maupun PC & Laptop Windows kasir Anda. Aman, cepat, dan selalu terupdate.
+						</p>
+
+						<div class="flex flex-wrap items-center gap-3.5 mb-6">
+							<a 
+								href="https://play.google.com/store/apps/details?id=online.mudahkan.manggapos" 
+								target="_blank" 
+								class="flex items-center gap-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 px-5 py-3.5 rounded-2xl hover:scale-105 transition-all shadow-xl shadow-orange-500/30 font-black group"
+							>
+								<svg class="w-7 h-7 fill-current text-slate-950 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.99 1.99 0 0 1-.61-.908V2.722c.162-.352.378-.667.609-.908zm11.306 11.31l2.122-2.124-11.45-6.611 9.328 8.735zm0 1.752l-9.328 8.735 11.45-6.611-2.122-2.124zm1.485-1.485l3.535 2.041c.883.51 1.435 1.455 1.435 2.478s-.552 1.968-1.435 2.478l-3.535 2.041-2.122-2.124 2.122-6.914z"/></svg>
+								<div class="text-left">
+									<p class="text-[9px] font-bold uppercase opacity-80 leading-none mb-1">Android App</p>
+									<p class="text-base font-black leading-none">Google Play Store</p>
+								</div>
+							</a>
+
+							<a 
+								href="https://drive.usercontent.google.com/download?id=1ZaGgr5pysg3EenxixYSbhrr5U-Xlx2nc&export=download" 
+								class="flex items-center gap-3 bg-blue-600 hover:bg-blue-500 text-white px-5 py-3.5 rounded-2xl hover:scale-105 transition-all shadow-xl shadow-blue-500/25 font-black group"
+							>
+								<svg class="w-6 h-6 fill-current text-white shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.949-1.801"/></svg>
+								<div class="text-left">
+									<p class="text-[9px] font-bold uppercase opacity-80 leading-none mb-1">PC / Laptop</p>
+									<p class="text-base font-black leading-none">Windows (.exe)</p>
+								</div>
+							</a>
+
+							<a 
+								href="/panduan#bab-18" 
+								class="px-4 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-colors"
+							>
+								Panduan Install ↗
+							</a>
+						</div>
+
+						<!-- Platform Security Badges -->
+						<div class="grid grid-cols-2 gap-2 text-[11px] text-slate-300 font-semibold">
+							<div class="flex items-center gap-1.5">
+								<span class="text-emerald-400 font-black">✓</span> Verifikasi Google Play Protect
+							</div>
+							<div class="flex items-center gap-1.5">
+								<span class="text-emerald-400 font-black">✓</span> Windows 10 & 11 (64-bit) Siap Pakai
+							</div>
+							<div class="flex items-center gap-1.5">
+								<span class="text-emerald-400 font-black">✓</span> Mendukung Android 7.0 s/d 15+
+							</div>
+							<div class="flex items-center gap-1.5">
+								<span class="text-emerald-400 font-black">✓</span> Driver Printer Kasir (POS-58 & 80) Bundled
+							</div>
+						</div>
+					</div>
+
+					<!-- Right Column QR Code Scanner -->
+					<div class="md:col-span-4 flex flex-col items-center justify-center">
+						<div class="bg-white p-4 rounded-3xl shadow-2xl border-4 border-orange-500/20 text-center">
+							<img 
+								src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://play.google.com/store/apps/details?id=online.mudahkan.manggapos&margin=10" 
+								alt="QR Code Play Store Mangga POS"
+								class="w-36 h-36 mx-auto rounded-xl"
+							/>
+							<div class="mt-2.5">
+								<p class="text-[11px] font-black text-slate-900 leading-tight">Scan untuk Install</p>
+								<p class="text-[9px] text-slate-500 font-bold mt-0.5">Buka kamera HP Anda</p>
+							</div>
+						</div>
+						<span class="text-[10px] text-slate-400 font-bold mt-3">online.mudahkan.manggapos</span>
+					</div>
+
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<!-- Features Grid -->
+	<div id="features" class="py-24 bg-slate-50 border-t border-slate-200/70">
+		<div class="container mx-auto px-6 text-center mb-16">
+			<div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-black uppercase tracking-wider mb-3">
+				FITUR LENGKAP ALL-IN-ONE
+			</div>
+			<p class="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+				Solusi Modern untuk Kemajuan <br/> 
+				<span class="bg-gradient-to-r from-orange-600 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+					Usaha UMKM & Ritel Anda
+				</span>
+			</p>
+		</div>
+
+		<div class="container mx-auto px-6 grid md:grid-cols-2 lg:grid-cols-3 gap-7 text-left">
+			
+			<!-- 1. Offline-First Feature (Core Differentiator Highlighted) -->
+			<div class="bg-gradient-to-br from-white via-amber-50/40 to-orange-50/60 p-8 rounded-[36px] border-2 border-amber-400 shadow-xl shadow-amber-500/10 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+				<div class="absolute top-0 right-0 w-28 h-28 bg-amber-100/70 rounded-bl-[90px] -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+				<div class="w-14 h-14 bg-gradient-to-tr from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform relative z-10 shadow-md shadow-amber-500/20">
+					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+				</div>
+				<div class="inline-block px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-600 to-orange-600 text-white text-[10px] font-black uppercase tracking-wider mb-2">
+					TEKNOLOGI HYBRID OFFLINE-FIRST ⚡
+				</div>
+				<h3 class="text-2xl font-black text-slate-900 mb-3">100% Tangguh Offline</h3>
+				<p class="text-slate-600 font-medium text-sm leading-relaxed">
+					Toko tetap bisa jualan meski mati lampu, sinyal ngadat, atau kuota habis! Katalog dibuka instan <strong>0ms</strong> via SQLite lokal, struk langsung tercetak, dan transaksi otomatis tersinkronisasi ke cloud saat internet kembali.
+				</p>
+			</div>
+
+			<!-- 2. Master Catalog Feature (Retail Highlighted) -->
+			<div class="bg-gradient-to-br from-white to-orange-50/50 p-8 rounded-[36px] border-2 border-orange-300 shadow-lg shadow-orange-500/5 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+				<div class="absolute top-0 right-0 w-28 h-28 bg-orange-100 rounded-bl-[90px] -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+				<div class="w-14 h-14 bg-gradient-to-tr from-orange-600 to-amber-500 rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform relative z-10 shadow-md shadow-orange-500/20">
+					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+				</div>
+				<div class="inline-block px-2.5 py-0.5 rounded-full bg-orange-600 text-white text-[10px] font-black uppercase tracking-wider mb-2">
+					KHUSUS TOKO RITEL & WARUNG
+				</div>
+				<h3 class="text-2xl font-black text-slate-900 mb-3">Master Katalog 32k+ Produk</h3>
+				<p class="text-slate-600 font-medium text-sm leading-relaxed">
+					Database lebih dari 32.000 produk minimarket & kelontong Indonesia siap pakai. Cukup scan barcode kemasan barang, nama, kategori, dan estimasi harga otomatis terisi!
+				</p>
+			</div>
+
+			<!-- 3. Shift Kasir & Arus Kas (Petty Cash Control) -->
+			<div class="bg-white p-8 rounded-[36px] border border-slate-200/80 shadow-xs hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+				<div class="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-[80px] -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+				<div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors relative z-10">
+					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+				</div>
+				<div class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wider mb-2">
+					KONTROL ARUS KAS & SHIFT
+				</div>
+				<h3 class="text-2xl font-black text-slate-900 mb-3">Shift Kasir & Anti-Bocor</h3>
+				<p class="text-slate-500 font-medium text-sm leading-relaxed">
+					Buka kas awal shift, catat pengeluaran operasional (petty cash) wajib foto struk belanja, dan tutup shift dengan rekonsiliasi otomatis selisih kas fisik vs sistem.
+				</p>
+			</div>
+
+			<!-- 4. Resep Bahan Baku & Auto Potong Stok (BOM) -->
+			<div class="bg-white p-8 rounded-[36px] border border-slate-200/80 shadow-xs hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+				<div class="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-[80px] -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+				<div class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 mb-6 group-hover:bg-purple-600 group-hover:text-white transition-colors relative z-10">
+					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+				</div>
+				<div class="inline-block px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-extrabold uppercase tracking-wider mb-2">
+					KAFE, RESTO & KULINER
+				</div>
+				<h3 class="text-2xl font-black text-slate-900 mb-3">Resep & Potong Bahan Baku</h3>
+				<p class="text-slate-500 font-medium text-sm leading-relaxed">
+					Hubungkan menu minuman/makanan ke bahan baku mentah (kopi, susu, gula, cup). Stok bahan otomatis terpotong presisi tiap gelas terjual!
+				</p>
+			</div>
+
+			<!-- 5. Fast POS & Split Bill -->
+			<div class="bg-white p-8 rounded-[36px] border border-slate-200/80 shadow-xs hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+				<div class="absolute top-0 right-0 w-24 h-24 bg-orange-50 rounded-bl-[80px] -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+				<div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 mb-6 group-hover:bg-orange-600 group-hover:text-white transition-colors relative z-10">
+					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+				</div>
+				<div class="inline-block px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-extrabold uppercase tracking-wider mb-2">
+					OPERASIONAL KASIR
+				</div>
+				<h3 class="text-2xl font-black text-slate-900 mb-3">Kasir Digital Cepat & Split Bill</h3>
+				<p class="text-slate-500 font-medium text-sm leading-relaxed">
+					Checkout &lt; 10 detik. Dilengkapi tombol nominal uang cepat, kalkulator kembalian otomatis, simpan keranjang (draft), dan pisah bayar tagihan meja (split bill).
+				</p>
+			</div>
+
+			<!-- 6. QRIS & Tebus Murah / BOGO Promo Engine -->
+			<div class="bg-white p-8 rounded-[36px] border border-slate-200/80 shadow-xs hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+				<div class="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-[80px] -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+				<div class="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 mb-6 group-hover:bg-amber-600 group-hover:text-white transition-colors relative z-10">
+					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+				</div>
+				<div class="inline-block px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-extrabold uppercase tracking-wider mb-2">
+					PROMO & PEMBAYARAN
+				</div>
+				<h3 class="text-2xl font-black text-slate-900 mb-3">Tebus Murah, BOGO & QRIS</h3>
+				<p class="text-slate-500 font-medium text-sm leading-relaxed">
+					Terima QRIS semua bank/e-wallet. Buat promo menarik: Tebus Murah (Beli A tebus B Rp 2.000), Beli 1 Gratis 1 (BOGO), diskon kategori, dan harga grosir bertingkat.
+				</p>
+			</div>
+
+			<!-- 7. Digital Menu & Waiter Workspace -->
+			<div class="bg-white p-8 rounded-[36px] border border-slate-200/80 shadow-xs hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+				<div class="absolute top-0 right-0 w-24 h-24 bg-rose-50 rounded-bl-[80px] -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+				<div class="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 mb-6 group-hover:bg-rose-600 group-hover:text-white transition-colors relative z-10">
+					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/></svg>
+				</div>
+				<div class="inline-block px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-extrabold uppercase tracking-wider mb-2">
+					MANAJEMEN MEJA & WAITER
+				</div>
+				<h3 class="text-2xl font-black text-slate-900 mb-3">Menu QR Meja & Waiter Mode</h3>
+				<p class="text-slate-500 font-medium text-sm leading-relaxed">
+					Pelanggan cukup scan stiker QR di meja untuk pesan sendiri tanpa antre. Dilengkapi workspace khusus pelayan (waiter) untuk catat pesanan langsung dari meja tamu.
+				</p>
+			</div>
+
+			<!-- 8. AI Studio & Advisor -->
+			<div class="bg-white p-8 rounded-[36px] border border-slate-200/80 shadow-xs hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+				<div class="absolute top-0 right-0 w-24 h-24 bg-sky-50 rounded-bl-[80px] -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+				<div class="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center text-sky-600 mb-6 group-hover:bg-sky-600 group-hover:text-white transition-colors relative z-10">
+					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+				</div>
+				<div class="inline-block px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 text-[10px] font-extrabold uppercase tracking-wider mb-2">
+					KECERDASAN BUATAN (AI)
+				</div>
+				<h3 class="text-2xl font-black text-slate-900 mb-3">AI Photo Studio & Asisten</h3>
+				<p class="text-slate-500 font-medium text-sm leading-relaxed">
+					Sulap foto produk biasa di meja jadi foto katalog studio profesional dalam 1 klik dengan AI. Dapatkan juga analisis jam sibuk dan saran strategi bisnis dari AI Advisor.
+				</p>
+			</div>
+
+			<!-- 9. Printer Bluetooth & Laporan Excel/PDF -->
+			<div class="bg-white p-8 rounded-[36px] border border-slate-200/80 shadow-xs hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+				<div class="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-[80px] -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+				<div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors relative z-10">
+					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+				</div>
+				<div class="inline-block px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-extrabold uppercase tracking-wider mb-2">
+					HARDWARE & LAPORAN
+				</div>
+				<h3 class="text-2xl font-black text-slate-900 mb-3">Thermal Bluetooth & Excel</h3>
+				<p class="text-slate-500 font-medium text-sm leading-relaxed">
+					Cetak struk kasir 58mm/80mm Bluetooth & WiFi, kirim nota digital ke WhatsApp pelanggan tanpa kertas, dan unduh laporan omzet & laba rugi ke file Excel (.xlsx) / PDF.
+				</p>
+			</div>
+
+			<!-- 10. Buku Kasbon & Pembayaran Tempo (Piutang Pelanggan) -->
+			<div class="bg-gradient-to-br from-white to-amber-50/50 p-8 rounded-[36px] border border-amber-200/90 shadow-xs hover:shadow-xl transition-all duration-300 group relative overflow-hidden md:col-span-2 lg:col-span-3">
+				<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+					<div class="max-w-2xl">
+						<div class="inline-block px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-extrabold uppercase tracking-wider mb-2">
+							PIUTANG & KASBON DIGITAL 📖
+						</div>
+						<h3 class="text-2xl font-black text-slate-900 mb-2">Buku Kasbon & Bayar Tempo (Piutang Pelanggan)</h3>
+						<p class="text-slate-600 font-medium text-sm leading-relaxed">
+							Catat transaksi belanja hutang / tempo langsung dari layar kasir! Dilengkapi batas plafon kredit pelanggan, pilihan jatuh tempo, kirim rincian nota & reminder tagihan via WhatsApp, serta kelola riwayat cicilan pelunasan tanpa ribet buku kertas manual.
+						</p>
+					</div>
+					<div class="shrink-0 flex items-center gap-3">
+						<a 
+							href="/panduan#bab-13" 
+							class="px-5 py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-amber-600/20 transition-all"
+						>
+							Baca Panduan Kasbon ➔
+						</a>
+					</div>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- Quick Guide Callout Banner -->
+		<div class="container mx-auto px-6 mt-14 text-center">
+			<div class="max-w-4xl mx-auto bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 rounded-3xl p-8 lg:p-10 text-white shadow-xl shadow-orange-500/20 flex flex-col sm:flex-row items-center justify-between gap-6 text-left">
+				<div>
+					<span class="inline-block px-3 py-1 rounded-full text-xs font-black bg-white/20 text-white mb-2 border border-white/30">
+						📖 PANDUAN PENGGUNAAN LENGKAP
+					</span>
+					<h3 class="text-2xl sm:text-3xl font-black text-white">Butuh Bantuan Memulai?</h3>
+					<p class="text-white/95 text-sm mt-1 max-w-lg font-medium">
+						Pelajari tutorial lengkap 17 bab: dari mode offline, shift kasir, buku kasbon tempo, resep BOM, import 32.000 Master Katalog ritel, hingga printer Bluetooth.
+					</p>
+				</div>
+				<a 
+					href="/panduan" 
+					class="px-7 py-4 bg-white text-orange-700 hover:bg-orange-50 rounded-2xl font-black text-sm whitespace-nowrap shadow-lg transition-all hover:scale-105 shrink-0"
+				>
+					Buka Buku Panduan ➔
+				</a>
+			</div>
+		</div>
+	</div>
+
+	<!-- Pricing Section -->
+	<div id="pricing" class="py-24 bg-white border-t border-slate-200/70">
+		<div class="container mx-auto px-6 text-center mb-16">
+			<div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-black uppercase tracking-wider mb-3">
+				PILIHAN PAKET & LANGGANAN
+			</div>
+			<p class="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+				Mulai Gratis, Upgrade Kapan Saja
+			</p>
+			<p class="text-slate-500 mt-3 max-w-xl mx-auto text-sm sm:text-base font-medium">
+				Pilih paket yang paling pas untuk skala usaha Anda. Transparan tanpa biaya tersembunyi.
+			</p>
+		</div>
+
+		<div class="container mx-auto px-6 max-w-5xl grid md:grid-cols-2 gap-8 items-stretch">
+			
+			<!-- Free Plan Card -->
+			<div class="p-8 lg:p-10 rounded-[38px] bg-slate-50 border border-slate-200/90 flex flex-col justify-between hover:shadow-lg transition-all">
+				<div>
+					<div class="inline-block px-3 py-1 rounded-full text-xs font-black bg-slate-200 text-slate-700 mb-4">
+						STARTER
+					</div>
+					<h3 class="text-3xl font-black text-slate-900">Paket Free</h3>
+					<p class="text-slate-500 text-sm mt-2">Solusi kasir esensial untuk memulai usaha tanpa biaya langganan.</p>
+					
+					<div class="my-6">
+						<span class="text-4xl font-black text-slate-900">Rp 0</span>
+						<span class="text-slate-400 font-bold text-sm">/ selamanya</span>
+					</div>
+
+					<ul class="space-y-3 text-sm font-semibold text-slate-600">
+						<li class="flex items-center gap-2.5">
+							<span class="text-emerald-600 font-black">✓</span> {freePlan.max_outlets} Outlet & Kasir Utama
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-emerald-600 font-black">✓</span> Maksimal <span id="free-plan-products">{freePlan.max_products}</span> Produk Katalog
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-emerald-600 font-black">✓</span> <span id="free-plan-transactions">{freePlan.max_transactions_month}</span> Transaksi per Bulan
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-emerald-600 font-black">✓</span> Dashboard Penjualan Dasar
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-emerald-600 font-black">✓</span> Cetak Struk Bluetooth Thermal
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-emerald-600 font-black">✓</span> Manajemen Diskon & Promo
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-emerald-600 font-black">✓</span> Refund & Pembatalan Transaksi
+						</li>
+					</ul>
+				</div>
+
+				<div class="mt-8 pt-6 border-t border-slate-200">
+					<a 
+						href="https://play.google.com/store/apps/details?id=online.mudahkan.manggapos" 
+						target="_blank"
+						class="w-full py-4 rounded-xl bg-slate-900 text-white font-black text-sm text-center block hover:bg-slate-800 transition-colors shadow-xs"
+					>
+						Download & Pakai Gratis
+					</a>
+				</div>
+			</div>
+
+			<!-- Pro Plan Card (Highlighted) -->
+			<div class="p-8 lg:p-10 rounded-[38px] bg-gradient-to-b from-orange-50/90 via-amber-50/50 to-orange-50/90 border-2 border-orange-400 relative shadow-2xl shadow-orange-500/15 flex flex-col justify-between">
+				<div class="absolute -top-3.5 right-8 px-4 py-1.5 rounded-full bg-gradient-to-r from-orange-600 to-amber-500 text-white text-[11px] font-black uppercase tracking-wider shadow-md">
+					BEST SELLER 👑
+				</div>
+
+				<div>
+					<div class="inline-block px-3 py-1 rounded-full text-xs font-black bg-orange-200 text-orange-900 mb-4">
+						BISNIS PRO UNLIMITED
+					</div>
+					<h3 class="text-3xl font-black text-slate-900">Paket Pro</h3>
+					<p class="text-slate-600 text-sm mt-2">Akses fitur penuh tanpa batas untuk pertumbuhan bisnis maksimal.</p>
+					
+					<!-- Pricing Tiers Matrix (Live from Supabase DB) -->
+					<div id="pricing-tiers-container" class="my-5 bg-white/95 backdrop-blur-sm rounded-2xl p-4 border border-orange-200 shadow-xs space-y-2.5">
+						{proPlan.tiers.map((tier: any) => {
+							if (tier.is_lifetime) {
+								return (
+									<div class="flex justify-between items-center text-xs font-black text-orange-900 bg-orange-100/80 p-2.5 rounded-xl border border-orange-200/80">
+										<span class="flex items-center gap-1">👑 {tier.name}</span>
+										<span>{formatRupiah(tier.price)} <span class="text-[10px] text-orange-800 font-bold block sm:inline">({tier.subtitle || 'Sekali Bayar Selamanya'})</span></span>
+									</div>
+								);
+							}
+							if (tier.code === '1_month' || tier.months === 1) {
+								return (
+									<div class="flex justify-between items-center text-sm font-black text-slate-900 border-b border-slate-100 pb-2">
+										<span>{tier.name}</span>
+										<span class="text-orange-600">{formatRupiah(tier.price)} <span class="text-[11px] text-slate-400 font-medium">{tier.subtitle ? `/${tier.subtitle.replace(/^\//, '')}` : '/bln'}</span></span>
+									</div>
+								);
+							}
+							return (
+								<div class="flex justify-between items-center text-xs font-bold text-slate-700">
+									<span class="flex items-center gap-1.5">
+										{tier.name}
+										{tier.badge && (
+											<span class="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black">{tier.badge}</span>
+										)}
+									</span>
+									<span class="font-extrabold text-slate-900">{formatRupiah(tier.price)}</span>
+								</div>
+							);
+						})}
+					</div>
+
+					<!-- Feature Highlights -->
+					<ul class="space-y-2.5 text-sm font-semibold text-slate-700">
+						<li class="flex items-center gap-2.5">
+							<span class="text-orange-600 font-black">✓</span> <strong>Tanpa Batas Produk & Transaksi (Unlimited)</strong>
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-orange-600 font-black">✓</span> <strong>100% Tangguh Offline-First & Auto Sync Cloud</strong>
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-orange-600 font-black">✓</span> <strong>100% Bebas Iklan Selamanya</strong>
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-orange-600 font-black">✓</span> <strong>Akses Master Catalog (32k+ Produk Ritel)</strong>
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-orange-600 font-black">✓</span> <strong>Shift Kasir & Audit Arus Kas Berfoto Struk</strong>
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-orange-600 font-black">✓</span> Manajemen Resep (BOM) & Potong Stok Otomatis
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-orange-600 font-black">✓</span> Promo Tebus Murah, BOGO & Harga Grosir
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-orange-600 font-black">✓</span> Menu Digital QR Self-Order & Waiter Workspace
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-orange-600 font-black">✓</span> Studio Foto Produk AI & Ekspor Excel / PDF
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-orange-600 font-black">✓</span> <strong>Buku Kasbon, Plafon Kredit & Tempo Pelanggan</strong>
+						</li>
+						<li class="flex items-center gap-2.5">
+							<span class="text-orange-600 font-black">✓</span> Multi-Outlet Cabang Bisnis (Hingga 5 Outlet)
+						</li>
+					</ul>
+				</div>
+
+				<div class="mt-8 pt-6 border-t border-orange-200">
+					<a 
+						href="https://wa.me/6285624277920?text=Halo%20Admin%20Mangga%20POS,%20saya%20ingin%20upgrade%20ke%20Paket%20Pro" 
+						target="_blank" 
+						class="w-full py-4 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-black text-sm text-center block shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5"
+					>
+						Hubungi Admin untuk Upgrade Pro ➔
+					</a>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+	<!-- Hardware Bundles Section (Mesin Kasir Siap Pakai) -->
+	<div id="hardware-packages" class="py-24 bg-slate-900 border-t border-slate-800 text-white relative overflow-hidden">
+		<div class="absolute top-0 right-1/4 w-96 h-96 bg-purple-600/10 blur-[140px] rounded-full pointer-events-none"></div>
+		<div class="absolute bottom-0 left-1/4 w-96 h-96 bg-orange-600/10 blur-[140px] rounded-full pointer-events-none"></div>
+
+		<div class="container mx-auto px-6 text-center mb-16 relative z-10">
+			<div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-black uppercase tracking-wider mb-4">
+				<span>⚡ MESIN KASIR PLUG & PLAY</span>
+			</div>
+			<h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
+				Paket Bundling Mesin Kasir Lengkap
+			</h2>
+			<p class="text-slate-400 mt-3 max-w-2xl mx-auto text-sm sm:text-base font-medium">
+				Tinggal colok listrik, langsung jualan! Semua alat <strong>100% jadi Hak Milik Anda</strong> (bukan sistem sewa). Sudah disetting, dites cetak, dan dibantu input menu awal.
+			</p>
+		</div>
+
+		<div id="hardware-packages-grid" class="container mx-auto px-6 max-w-6xl grid md:grid-cols-3 gap-8 items-stretch relative z-10">
+			
+			<!-- Paket 1: Starter Mobile -->
+			<div class="p-8 rounded-[36px] bg-slate-800/60 border border-slate-700/80 flex flex-col justify-between hover:border-slate-600 transition-all">
+				<div>
+					<div class="inline-block px-3 py-1 rounded-full text-xs font-black bg-slate-700 text-slate-300 mb-4">
+						HEMAT & PRAKTIS
+					</div>
+					<h3 class="text-2xl font-black text-white">Paket Starter Mobile</h3>
+					<p class="text-slate-400 text-xs mt-1.5 leading-relaxed">
+						Solusi kasir praktis dan fleksibel untuk usaha bergerak atau ruang terbatas.
+					</p>
+					
+					<div class="my-6 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
+						<div class="text-3xl font-black text-white">Rp 499.000</div>
+						<div class="text-xs text-slate-500 line-through mt-0.5">Rp 650.000</div>
+					</div>
+
+					<p class="text-xs font-bold text-slate-300 mb-2">🎯 Cocok: Warung, Booth, Kedai Kaki Lima, Food Truck, Pedagang Keliling</p>
+
+					<ul class="space-y-2.5 text-xs font-medium text-slate-300 mt-4">
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Printer Thermal Bluetooth 58mm Portable (Rechargeable)
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Gratis 5 Roll Kertas Struk Thermal
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Aplikasi Mangga POS PRO Lisensi 6 Bulan Penuh
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Toko Online & Menu Digital Otomatis (pos.mudahkan.online)
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Dukungan Cetak Struk & Pembayaran QRIS Dinamis
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Garansi Hardware Tukar Baru 1 Bulan & Pendampingan WA
+						</li>
+					</ul>
+				</div>
+
+				<div class="mt-8 pt-6 border-t border-slate-700/60">
+					<a 
+						href="https://wa.me/6285624277920?text=Halo%20Admin%20Mangga%20POS,%20saya%20tertarik%20pesan%20Paket%20Starter%20Mobile%20(Rp%20499.000).%20Mohon%20info%20pemesanan."
+						target="_blank"
+						class="w-full py-3.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-black text-xs text-center block transition-all"
+					>
+						Pesan Paket Starter ➔
+					</a>
+				</div>
+			</div>
+
+			<!-- Paket 2: Meja Kafe & Resto (Best Seller) -->
+			<div class="p-8 rounded-[36px] bg-gradient-to-b from-purple-950/40 via-slate-800 to-slate-800 border-2 border-purple-500 shadow-2xl shadow-purple-500/20 relative flex flex-col justify-between">
+				<div class="absolute -top-3.5 right-8 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-500 text-white text-[11px] font-black uppercase tracking-wider shadow-md">
+					BEST SELLER 👑
+				</div>
+
+				<div>
+					<div class="inline-block px-3 py-1 rounded-full text-xs font-black bg-purple-500/20 text-purple-300 border border-purple-500/30 mb-4">
+						MEJA KASIR LENGKAP
+					</div>
+					<h3 class="text-2xl font-black text-white">Paket Meja Kafe & Resto</h3>
+					<p class="text-slate-300 text-xs mt-1.5 leading-relaxed">
+						Set lengkap meja kasir modern siap pakai untuk F&B dan jasa profesional.
+					</p>
+					
+					<div class="my-6 p-4 rounded-2xl bg-slate-900 border border-purple-500/40">
+						<div class="text-3xl font-black text-purple-400">Rp 2.499.000</div>
+						<div class="text-xs text-slate-500 line-through mt-0.5">Rp 3.200.000</div>
+					</div>
+
+					<p class="text-xs font-bold text-purple-200 mb-2">🎯 Cocok: Coffee Shop, Restoran, Kedai Kopi, Barbershop, Salon, Laundry</p>
+
+					<ul class="space-y-2.5 text-xs font-medium text-slate-200 mt-4">
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Tablet Layar Jernih Android + Stand Holder Meja Kokoh
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Printer Kasir Thermal 58mm Auto Bluetooth & USB
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Laci Uang Kasir Logam Otomatis (Cash Drawer RJ11)
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Gratis 10 Roll Kertas Struk Kasir Berkualitas
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Lisensi Mangga POS PRO 1 Tahun Penuh (Tanpa Batas)
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> <strong>Gratis Bantuan Input 30 Menu Awal & Logo Toko (Terima Beres)</strong>
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Fitur Manajemen Meja, Kitchen Display (KDS) & Split Bill
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Garansi Hardware 1 Tahun Resmi & Layanan Support Prioritas
+						</li>
+					</ul>
+				</div>
+
+				<div class="mt-8 pt-6 border-t border-purple-500/30">
+					<a 
+						href="https://wa.me/6285624277920?text=Halo%20Admin%20Mangga%20POS,%20saya%20tertarik%20pesan%20Paket%20Meja%20Kafe%20%26%20Resto%20(Rp%202.499.000).%20Mohon%20info%20pemesanan."
+						target="_blank"
+						class="w-full py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-sm text-center block shadow-lg shadow-purple-600/30 transition-all hover:scale-105"
+					>
+						Pesan Paket Meja Kafe ➔
+					</a>
+				</div>
+			</div>
+
+			<!-- Paket 3: Super Ritel & Minimarket -->
+			<div class="p-8 rounded-[36px] bg-slate-800/60 border border-slate-700/80 flex flex-col justify-between hover:border-slate-600 transition-all">
+				<div>
+					<div class="inline-block px-3 py-1 rounded-full text-xs font-black bg-slate-700 text-slate-300 mb-4">
+						SUPER LENGKAP
+					</div>
+					<h3 class="text-2xl font-black text-white">Paket Super Ritel & Minimarket</h3>
+					<p class="text-slate-400 text-xs mt-1.5 leading-relaxed">
+						Perangkat kasir performa tinggi dengan barcode scanner cepat untuk toko kelontong dan ritel.
+					</p>
+					
+					<div class="my-6 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
+						<div class="text-3xl font-black text-white">Rp 3.499.000</div>
+						<div class="text-xs text-slate-500 line-through mt-0.5">Rp 4.500.000</div>
+					</div>
+
+					<p class="text-xs font-bold text-slate-300 mb-2">🎯 Cocok: Minimarket, Toko Sembako, Apotek, Toko Sparepart, Toko Bangunan</p>
+
+					<ul class="space-y-2.5 text-xs font-medium text-slate-300 mt-4">
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Tablet Kasir Android 10 Inch / Layar Lebar Definisi Tinggi
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Barcode Scanner Laser Wireless 1D & 2D (Bisa Scan Layar HP & Dus Produk)
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Printer Thermal Struk Kasir Kecepatan Tinggi
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Laci Uang Kasir Logam Heavy-Duty (Cash Drawer RJ11)
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> <strong>Master Katalog 10.000+ Barcode Produk Siap Pakai Langsung</strong>
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Lisensi Mangga POS PRO 1 Tahun Penuh (Tanpa Batas Transaksi)
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Fitur Buku Kasbon Piutang, Stok Multi-Satuan (Pcs/Dus) & Arus Kas Shift
+						</li>
+						<li class="flex items-start gap-2">
+							<span class="text-emerald-400 font-bold">✓</span> Garansi Hardware 1 Tahun & Training Penggunaan Lengkap
+						</li>
+					</ul>
+				</div>
+
+				<div class="mt-8 pt-6 border-t border-slate-700/60">
+					<a 
+						href="https://wa.me/6285624277920?text=Halo%20Admin%20Mangga%20POS,%20saya%20tertarik%20pesan%20Paket%20Super%20Ritel%20%26%20Minimarket%20(Rp%203.499.000).%20Mohon%20info%20pemesanan."
+						target="_blank"
+						class="w-full py-3.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-black text-xs text-center block transition-all"
+					>
+						Pesan Paket Super Ritel ➔
+					</a>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+	<!-- Real-time Supabase Synchronizer for Hardware Packages -->
+	<script>
+		import { createClient } from '@supabase/supabase-js';
+
+		const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || 'https://kjekiseloobdxomicolo.supabase.co';
+		const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZWtpc2Vsb29iZHhvbWljb2xvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1OTM3OTMsImV4cCI6MjEwNjE2OTc5M30.csMbrT-zokTlb1SBplh_xRr9_Cpksk46OSJ0BQZTQB0';
+		const supabase = createClient(supabaseUrl, supabaseKey);
+
+		async function syncHardwarePackagesFromCloud() {
+			try {
+				const { data, error } = await supabase
+					.from('hardware_packages')
+					.select('*')
+					.eq('is_active', true)
+					.order('sort_order', { ascending: true });
+
+				if (error || !data || data.length === 0) return;
+
+				const grid = document.getElementById('hardware-packages-grid');
+				if (!grid) return;
+
+				grid.innerHTML = data.map((pkg) => {
+					const isBestSeller = pkg.is_popular || (pkg.badge && pkg.badge.includes('BEST'));
+					const priceFormatted = 'Rp ' + Number(pkg.price).toLocaleString('id-ID');
+					const origPriceFormatted = pkg.original_price && pkg.original_price > pkg.price
+						? 'Rp ' + Number(pkg.original_price).toLocaleString('id-ID')
+						: null;
+					const waText = encodeURIComponent(`Halo Admin Mangga POS, saya tertarik pesan ${pkg.name} (${priceFormatted}). Mohon info pemesanan.`);
+					const itemsList = Array.isArray(pkg.items_included) ? pkg.items_included : [];
+
+					return `
+						<div class="p-8 rounded-[36px] flex flex-col justify-between transition-all relative ${
+							isBestSeller
+								? 'bg-gradient-to-b from-purple-950/40 via-slate-800 to-slate-800 border-2 border-purple-500 shadow-2xl shadow-purple-500/20'
+								: 'bg-slate-800/60 border border-slate-700/80 hover:border-slate-600'
+						}">
+							${isBestSeller ? `
+								<div class="absolute -top-3.5 right-8 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-500 text-white text-[11px] font-black uppercase tracking-wider shadow-md">
+									${pkg.badge || 'BEST SELLER 👑'}
+								</div>
+							` : ''}
+
+							<div>
+								<div class="inline-block px-3 py-1 rounded-full text-xs font-black ${
+									isBestSeller ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-700 text-slate-300'
+								} mb-4">
+									${pkg.badge || 'PROMO'}
+								</div>
+								<h3 class="text-2xl font-black text-white">${pkg.name}</h3>
+								<p class="${isBestSeller ? 'text-slate-300' : 'text-slate-400'} text-xs mt-1.5 leading-relaxed">
+									${pkg.description || 'Solusi kasir lengkap siap pakai untuk bisnis Anda.'}
+								</p>
+								
+								<div class="my-6 p-4 rounded-2xl ${
+									isBestSeller ? 'bg-slate-900 border border-purple-500/40' : 'bg-slate-900/80 border border-slate-800'
+								}">
+									<div class="text-3xl font-black ${isBestSeller ? 'text-purple-400' : 'text-white'}">${priceFormatted}</div>
+									${origPriceFormatted ? `<div class="text-xs text-slate-500 line-through mt-0.5">${origPriceFormatted}</div>` : ''}
+								</div>
+
+								${pkg.suitable_for ? `
+									<p class="text-xs font-bold ${isBestSeller ? 'text-purple-200' : 'text-slate-300'} mb-2">🎯 Cocok: ${pkg.suitable_for}</p>
+								` : ''}
+
+								<ul class="space-y-2.5 text-xs font-medium ${isBestSeller ? 'text-slate-200' : 'text-slate-300'} mt-4">
+									${itemsList.map((item) => `
+										<li class="flex items-start gap-2">
+											<span class="text-emerald-400 font-bold">✓</span> ${item}
+										</li>
+									`).join('')}
+								</ul>
+							</div>
+
+							<div class="mt-8 pt-6 border-t ${isBestSeller ? 'border-purple-500/30' : 'border-slate-700/60'}">
+								<a 
+									href="https://wa.me/6285624277920?text=${waText}"
+									target="_blank"
+									class="w-full ${
+										isBestSeller
+											? 'py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-sm text-center block shadow-lg shadow-purple-600/30 transition-all hover:scale-105'
+											: 'py-3.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-black text-xs text-center block transition-all'
+									}"
+								>
+									Pesan ${pkg.name} ➔
+								</a>
+							</div>
+						</div>
+					`;
+				}).join('');
+			} catch (e) {
+				console.warn('Realtime hardware sync error:', e);
+			}
+		}
+
+		syncHardwarePackagesFromCloud();
+	</script>
+
+	<!-- CTA Banner Section -->
+	<div class="py-20 bg-white border-t border-slate-200/70">
+		<div class="container mx-auto px-6">
+			<div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 rounded-[44px] p-10 lg:p-20 text-center relative overflow-hidden shadow-2xl border border-slate-800">
+				<div class="absolute top-0 right-0 w-80 h-80 bg-orange-500/20 blur-[120px] rounded-full"></div>
+				<div class="absolute bottom-0 left-0 w-80 h-80 bg-amber-500/20 blur-[120px] rounded-full"></div>
+				
+				<div class="relative z-10">
+					<img src="/logo.png" alt="Mangga POS" class="w-16 h-16 rounded-2xl mx-auto mb-6 shadow-md border border-slate-700 object-cover" />
+					<h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-5 leading-tight tracking-tight">
+						Siap Memajukan Operasional Toko Anda?
+					</h2>
+					<p class="text-slate-400 text-base lg:text-lg font-medium mb-10 max-w-2xl mx-auto">
+						Bergabunglah bersama puluhan pemilik usaha kafe, warung, dan toko ritel yang telah merasakan kemudahan bertransaksi bersama <strong>Mangga POS</strong>.
+					</p>
+					
+					<div class="flex flex-wrap gap-4 justify-center">
+						<a 
+							href="https://play.google.com/store/apps/details?id=online.mudahkan.manggapos" 
+							target="_blank" 
+							class="px-8 py-4 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl font-black text-base hover:scale-105 transition-transform inline-flex items-center gap-3 shadow-xl shadow-orange-600/30"
+						>
+							<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.99 1.99 0 0 1-.61-.908V2.722c.162-.352.378-.667.609-.908zm11.306 11.31l2.122-2.124-11.45-6.611 9.328 8.735zm0 1.752l-9.328 8.735 11.45-6.611-2.122-2.124zm1.485-1.485l3.535 2.041c.883.51 1.435 1.455 1.435 2.478s-.552 1.968-1.435 2.478l-3.535 2.041-2.122-2.124 2.122-6.914z"/></svg>
+							<span>Install di Google Play</span>
+						</a>
+						<a 
+							href="https://wa.me/6285624277920?text=Halo%20Admin%20Mangga%20POS,%20saya%20ingin%20tanya%20seputar%20aplikasi" 
+							target="_blank" 
+							class="px-8 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl font-black text-base hover:scale-105 transition-all inline-block"
+						>
+							Konsultasi via WhatsApp 💬
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Footer -->
+	<footer class="bg-white border-t border-slate-200/80 py-12">
+		<div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+			<div class="flex items-center gap-3.5">
+				<img src="/logo.png" alt="Mangga POS Logo" class="w-10 h-10 rounded-xl shadow-xs border border-slate-200 object-cover" />
+				<div>
+					<p class="font-black text-slate-900 text-base leading-none">Mangga POS</p>
+					<p class="text-xs text-slate-400 mt-1">Platform Kasir & Menu Digital oleh <strong>Mudahkan.online</strong></p>
+				</div>
+			</div>
+			
+			<p class="text-slate-400 font-bold text-xs">© 2026 Mudahkan.online. Seluruh hak cipta dilindungi.</p>
+			
+			<div class="flex flex-wrap items-center justify-center gap-6">
+				<a href="/panduan" class="text-slate-500 hover:text-orange-600 font-bold text-xs">Buku Panduan</a>
+				<a href="/privacy" class="text-slate-500 hover:text-orange-600 font-bold text-xs">Kebijakan Privasi</a>
+				<a href="/delete-account" class="text-slate-500 hover:text-orange-600 font-bold text-xs">Hapus Akun</a>
+				<a href="https://adminmanggapos.mudahkan.online" target="_blank" class="text-slate-500 hover:text-orange-600 font-bold text-xs">Portal Admin</a>
+				<a href="https://wa.me/6285624277920" target="_blank" class="text-slate-500 hover:text-orange-600 font-bold text-xs">Hubungi Kami</a>
+			</div>
+		</div>
+	</footer>
+
+	<!-- Client-side Sync to guarantee real-time updates from Supabase -->
+	<script>
+		const supabaseUrl = "https://cqlhndfndomhyopcxxvi.supabase.co";
+		const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxbGhuZGZuZG9taHlvcGN4eHZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyMjc5NDIsImV4cCI6MjA3NDgwMzk0Mn0.Uf04jXNn4u0_0Dk3t25qKx8gT1Nrnw2fW3oO1Nq97h8";
+
+		async function refreshPricingFromDB() {
+			try {
+				const res = await fetch(`${supabaseUrl}/rest/v1/subscription_plans?select=*`, {
+					headers: {
+						apikey: supabaseAnonKey,
+						Authorization: `Bearer ${supabaseAnonKey}`
+					}
+				});
+				if (!res.ok) return;
+				const plans = await res.json();
+				const free = plans.find((p) => p.code === 'free');
+				if (free) {
+					const prodEl = document.getElementById('free-plan-products');
+					if (prodEl && free.max_products) prodEl.textContent = free.max_products;
+					const txEl = document.getElementById('free-plan-transactions');
+					if (txEl && free.max_transactions_month) txEl.textContent = free.max_transactions_month;
+				}
+			} catch (e) {
+				// Silent fallback
+			}
+		}
+
+		if (typeof window !== 'undefined') {
+			window.addEventListener('DOMContentLoaded', refreshPricingFromDB);
+		}
+	</script>
+</Layout>
+

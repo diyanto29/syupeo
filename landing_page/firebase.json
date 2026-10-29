@@ -1,0 +1,21 @@
+{
+  "hosting": {
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/order/**",
+        "destination": "/order-app/index.html"
+      },
+      {
+        "source": "/s/**",
+        "destination": "/shop-app/index.html"
+      }
+    ],
+    "cleanUrls": true
+  }
+}

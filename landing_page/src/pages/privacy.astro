@@ -1,0 +1,114 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout 
+	title="Kebijakan Privasi - Mangga POS | Mudahkan.online"
+	description="Kebijakan privasi resmi aplikasi Mangga POS oleh Mudahkan.online. Informasi tentang bagaimana kami mengumpulkan, menggunakan, dan melindungi data Anda."
+>
+	<header class="bg-white border-b border-slate-100 sticky top-0 z-50">
+		<div class="container mx-auto px-6 h-20 flex items-center justify-between">
+			<a href="/" class="flex items-center gap-3">
+				<img src="/logo.png" alt="Mangga POS Logo" class="w-10 h-10 rounded-xl shadow-xs border border-slate-200" />
+				<div>
+					<span class="font-black text-xl text-slate-900">Mangga POS</span>
+					<p class="text-[11px] text-slate-400 font-semibold leading-none">by Mudahkan.online</p>
+				</div>
+			</a>
+			<a href="/" class="text-sm font-bold text-orange-600 hover:text-orange-500">
+				← Kembali ke Beranda
+			</a>
+		</div>
+	</header>
+
+	<main class="py-16 lg:py-24 bg-slate-50">
+		<div class="container mx-auto px-6 max-w-4xl">
+			<div class="bg-white rounded-[32px] p-8 lg:p-14 border border-slate-200 shadow-sm space-y-8 text-slate-700 leading-relaxed">
+				<div class="border-b border-slate-100 pb-6">
+					<span class="px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200">
+						Dokumen Resmi
+					</span>
+					<h1 class="text-3xl lg:text-4xl font-black text-slate-900 mt-3">Kebijakan Privasi (Privacy Policy)</h1>
+					<p class="text-xs text-slate-400 mt-2 font-medium">Terakhir diperbarui: 1 Oktober 2026</p>
+				</div>
+
+				<section class="space-y-3">
+					<h2 class="text-xl font-black text-slate-900">1. Pendahuluan</h2>
+					<p>
+						Selamat datang di <strong>Mangga POS</strong>, layanan aplikasi Point of Sale (Kasir) dan Menu Digital yang dikembangkan oleh <strong>Mudahkan.online</strong> ("kami"). Kami sangat menghargai privasi Anda dan berkomitmen untuk melindungi informasi pribadi serta data usaha yang Anda percayakan kepada kami.
+					</p>
+					<p>
+						Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, menyimpan, dan menjaga informasi Anda saat menggunakan aplikasi mobile Android <strong>Mangga POS</strong> dan situs web terkait.
+					</p>
+				</section>
+
+				<section class="space-y-3">
+					<h2 class="text-xl font-black text-slate-900">2. Data yang Kami Kumpulkan</h2>
+					<p>Kami hanya mengumpulkan data yang diperlukan untuk mendukung fungsi operasional kasir dan manajemen bisnis Anda:</p>
+					<ul class="list-disc pl-6 space-y-2 text-sm">
+						<li><strong>Informasi Akun:</strong> Alamat email Google dan nama pengguna saat Anda masuk (*Login Google*).</li>
+						<li><strong>Informasi Profil Usaha:</strong> Nama bisnis, jenis usaha, alamat outlet, dan nomor kontak WhatsApp untuk cetak struk atau nota.</li>
+						<li><strong>Data Operasional POS:</strong> Daftar produk katalog, harga, stok bahan baku, kategori, serta riwayat transaksi penjualan yang Anda inputkan.</li>
+						<li><strong>Data Teknis Perangkat:</strong> Model perangkat, versi sistem operasi Android, serta log error untuk pemeliharaan sistem.</li>
+					</ul>
+				</section>
+
+				<section class="space-y-3">
+					<h2 class="text-xl font-black text-slate-900">3. Izin Perangkat (Device Permissions)</h2>
+					<p>Aplikasi Mangga POS membutuhkan izin perangkat berikut demi kelancaran fitur:</p>
+					<ul class="list-disc pl-6 space-y-2 text-sm">
+						<li><strong>Koneksi Internet (INTERNET):</strong> Untuk sinkronisasi data katalog produk, pesanan, dan laporan ke Cloud Database secara real-time.</li>
+						<li><strong>Bluetooth (BLUETOOTH & BLUETOOTH_CONNECT):</strong> Diperlukan khusus untuk menghubungkan dan mencetak struk belanja ke printer thermal Bluetooth.</li>
+						<li><strong>Kamera (CAMERA):</strong> Digunakan untuk memindai barcode produk pada saat transaksi atau input stok barang.</li>
+						<li><strong>Mikrofon (RECORD_AUDIO):</strong> Opsional, digunakan jika Anda mengaktifkan fitur pencarian produk berbasis suara (Voice Search).</li>
+					</ul>
+					<p class="text-xs text-slate-500 italic">Kami tidak menggunakan izin di atas untuk merekam aktivitas pribadi di luar fungsi fitur kasir yang sedang Anda gunakan.</p>
+				</section>
+
+				<section class="space-y-3">
+					<h2 class="text-xl font-black text-slate-900">4. Penggunaan Informasi</h2>
+					<p>Informasi yang terkumpul digunakan semata-mata untuk:</p>
+					<ul class="list-disc pl-6 space-y-2 text-sm">
+						<li>Menyediakan layanan kasir online, sinkronisasi multi-outlet, dan laporan penjualan.</li>
+						<li>Mencetak struk belanja dan mengirimkan nota pesanan digital via WhatsApp ke pelanggan Anda.</li>
+						<li>Mengirimkan notifikasi pembaruan aplikasi dan laporan transaksi harian.</li>
+						<li>Meningkatkan stabilitas performa aplikasi dan mencegah penyalahgunaan sistem.</li>
+					</ul>
+				</section>
+
+				<section class="space-y-3">
+					<h2 class="text-xl font-black text-slate-900">5. Keamanan & Kerahasiaan Data</h2>
+					<p>
+						Data Anda disimpan di infrastruktur Cloud Database berskala global (Supabase) dengan protokol enkripsi modern (SSL/TLS HTTPS). Kami <strong>tidak pernah menjual, menyewakan, atau membagikan data pribadi maupun data transaksi bisnis Anda kepada pihak ketiga manapun</strong> untuk keperluan komersial atau periklanan.
+					</p>
+				</section>
+
+				<section class="space-y-3">
+					<h2 class="text-xl font-black text-slate-900">6. Hak Pengguna & Penghapusan Akun</h2>
+					<p>
+						Anda memiliki kendali penuh atas data Anda. Anda berhak untuk melihat, memperbarui, mengekspor, atau menghapus akun dan seluruh data usaha Anda secara permanen kapan saja.
+					</p>
+					<p>
+						Instruksi lengkap mengenai penghapusan akun dapat Anda akses melalui halaman resmi: <br/>
+						👉 <a href="/delete-account" class="text-orange-600 font-bold hover:underline">Halaman Permintaan Penghapusan Akun (Account Deletion)</a>.
+					</p>
+				</section>
+
+				<section class="space-y-3">
+					<h2 class="text-xl font-black text-slate-900">7. Hubungi Kami</h2>
+					<p>Jika Anda memiliki pertanyaan mengenai kebijakan privasi ini atau pengelolaan data Anda, silakan hubungi kami:</p>
+					<div class="p-4 rounded-2xl bg-orange-50/60 border border-orange-200 text-sm space-y-1 text-slate-800">
+						<p><strong>Pengembang:</strong> Mangga POS (Mudahkan.online)</p>
+						<p><strong>Email Dukungan:</strong> diyanto2911@gmail.com</p>
+						<p><strong>WhatsApp Support:</strong> +62 856-2427-7920</p>
+						<p><strong>Website:</strong> https://mudahkan.online</p>
+					</div>
+				</section>
+			</div>
+		</div>
+	</main>
+
+	<footer class="bg-white border-t border-slate-100 py-8 text-center text-xs text-slate-400">
+		<p>© 2026 Mudahkan.online • Mangga POS. Seluruh hak cipta dilindungi.</p>
+	</footer>
+</Layout>

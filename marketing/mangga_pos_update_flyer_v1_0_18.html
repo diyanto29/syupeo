@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mangga POS v1.0.18 - KDS & F&B Operations Update Release Flyer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    body {
+      background: #0b1120;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .poster-container {
+      width: 100%;
+      max-width: 880px;
+      aspect-ratio: 3 / 4;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 60%, #f1f5f9 100%);
+      border-radius: 32px;
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Top Platform Pills */
+    .platform-top-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 24px 6px;
+    }
+    .platform-pill {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #334155;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .platform-pill.highlight {
+      background: #ecfdf5;
+      border-color: #6ee7b7;
+      color: #065f46;
+    }
+
+    /* Header */
+    .poster-header {
+      padding: 10px 40px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand-logo {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      box-shadow: 0 10px 20px -5px rgba(245, 124, 0, 0.4);
+    }
+    .brand-text h1 {
+      font-size: 36px;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+    .brand-text p {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* Main Grid */
+    .poster-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      padding: 8px 40px 18px;
+      gap: 26px;
+      align-items: center;
+    }
+
+    /* Mockups Stack */
+    .mockup-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* KDS Tablet Mockup */
+    .kds-mockup {
+      width: 100%;
+      max-width: 330px;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 10px;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.22);
+      border: 3px solid #334155;
+    }
+    .kds-screen {
+      background: #0f172a;
+      border-radius: 10px;
+      padding: 10px;
+      color: white;
+    }
+    .kds-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #334155;
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .kds-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .kds-card {
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 7px;
+      border-top: 3px solid #10b981;
+      font-size: 9px;
+    }
+    .kds-card.urgent {
+      border-top-color: #ef4444;
+    }
+    .kds-card-title {
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      color: #f8fafc;
+    }
+    .sla-timer {
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2px 4px;
+      border-radius: 4px;
+      background: #064e3b;
+      color: #34d399;
+    }
+    .sla-timer.red {
+      background: #7f1d1d;
+      color: #fca5a5;
+    }
+
+    /* POS & BOM Phone Mockup */
+    .phone-mockup {
+      width: 100%;
+      max-width: 270px;
+      background: #0f172a;
+      border: 6px solid #1e293b;
+      border-radius: 30px;
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
+      overflow: hidden;
+      margin-top: -24px;
+      margin-left: 45px;
+      z-index: 2;
+    }
+    .phone-screen {
+      background: #f8fafc;
+      padding: 12px 10px;
+    }
+    .mini-banner {
+      background: linear-gradient(135deg, #059669, #047857);
+      color: white;
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 10.5px;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 7px;
+    }
+    .mini-card {
+      background: white;
+      border-radius: 8px;
+      padding: 7px 9px;
+      margin-bottom: 6px;
+      border-left: 3px solid #059669;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      font-size: 9.5px;
+    }
+    .mini-card-head {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 800;
+      color: #1e293b;
+    }
+    .mini-badge {
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .mini-badge.amber {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    /* Updates Column */
+    .updates-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .release-tag {
+      align-self: flex-start;
+      background: #064e3b;
+      color: #34d399;
+      padding: 6px 16px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(52, 211, 153, 0.4);
+    }
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.35;
+    }
+    .feature-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: #ecfdf5;
+      color: #059669;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .highlight-banner {
+      background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+      color: #fef08a;
+      padding: 9px 14px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 12.5px;
+      text-align: center;
+      box-shadow: 0 6px 14px -3px rgba(4, 120, 87, 0.3);
+    }
+
+    .play-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: white;
+      padding: 8px 14px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    }
+    .play-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #0f172a;
+      color: white;
+      padding: 7px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+    .play-badge span {
+      display: block;
+      font-size: 7.5px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    .qr-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .qr-img {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      padding: 2px;
+    }
+    .qr-text {
+      font-size: 8.5px;
+      font-weight: 700;
+      color: #475569;
+      line-height: 1.25;
+    }
+
+    /* Footer */
+    .poster-footer {
+      background: #064e3b;
+      color: white;
+      padding: 12px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
+    }
+    .footer-left strong {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #34d399;
+    }
+    .footer-left span {
+      font-size: 10.5px;
+      color: #cbd5e1;
+    }
+    .footer-url {
+      font-weight: 800;
+      color: #fef08a;
+      font-size: 12.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="poster-container">
+    <!-- Top Platforms Bar -->
+    <div class="platform-top-bar">
+      <div class="platform-pill highlight">📱 Android (HP & Tablet)</div>
+      <div class="platform-pill">💻 Windows (PC & Laptop)</div>
+      <div class="platform-pill">🌐 Web Portal Browser</div>
+    </div>
+
+    <!-- Header -->
+    <header class="poster-header">
+      <div class="brand-group">
+        <div class="brand-logo">🥭</div>
+        <div class="brand-text">
+          <h1>Mangga POS</h1>
+          <p>Aplikasi Kasir Pintar & Operasional Resto/UMKM Indonesia</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Body -->
+    <main class="poster-body">
+      <!-- Mockup Multi-Device -->
+      <div class="mockup-col">
+        <!-- Tablet KDS Screen -->
+        <div class="kds-mockup">
+          <div class="kds-screen">
+            <div class="kds-header">
+              <span>🍳 Antrian Dapur (KDS)</span>
+              <span style="color:#34d399;">LIVE REAL-TIME</span>
+            </div>
+            <div class="kds-grid">
+              <div class="kds-card">
+                <div class="kds-card-title">
+                  <span>Meja 04</span>
+                  <span class="sla-timer">03:45</span>
+                </div>
+                <div style="color:#94a3b8; font-size:8px; margin-top:3px;">2x Nasi Goreng Spesial<br>1x Es Teh Manis</div>
+              </div>
+              <div class="kds-card urgent">
+                <div class="kds-card-title">
+                  <span>Meja 12</span>
+                  <span class="sla-timer red">14:20</span>
+                </div>
+                <div style="color:#94a3b8; font-size:8px; margin-top:3px;">1x Ayam Bakar Madu<br>1x Jus Alpukat</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phone Mobile POS & BOM -->
+        <div class="phone-mockup">
+          <div class="phone-screen">
+            <div class="mini-banner">
+              <span>🥭 Kasir POS</span>
+              <span>v1.0.18</span>
+            </div>
+            
+            <div class="mini-card">
+              <div class="mini-card-head">
+                <span>🚀 Kirim ke Dapur</span>
+                <span class="mini-badge">KOT TIKET</span>
+              </div>
+              <div style="color:#64748b; font-size:8.5px; margin-top:2px;">Kirim pesanan dine-in & cetak tiket dapur otomatis</div>
+            </div>
+
+            <div class="mini-card">
+              <div class="mini-card-head">
+                <span>📦 Resep BOM & HPP</span>
+                <span class="mini-badge amber">AUTO POTONG</span>
+              </div>
+              <div style="color:#64748b; font-size:8.5px; margin-top:2px;">Stok bahan baku terpotong per varian menu terjual</div>
+            </div>
+
+            <div class="mini-card">
+              <div class="mini-card-head">
+                <span>📊 Audit Stock Opname</span>
+                <span class="mini-badge">MASS SHEET</span>
+              </div>
+              <div style="color:#64748b; font-size:8.5px; margin-top:2px;">Input fisik serentak + Analisis Food Loss selisih</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Updates Highlights (v1.0.18) -->
+      <div class="updates-col">
+        <div class="release-tag">UPDATE RELEASE v1.0.18</div>
+
+        <ul class="feature-list">
+          <li class="feature-item">
+            <span class="feature-icon">🍳</span>
+            <span>Kitchen Display System (KDS): Antrian dapur interaktif dengan timer SLA warna & alur status masak.</span>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon">🧾</span>
+            <span>Integrasi Kasir-Dapur: Tombol "Kirim ke Dapur", cetak KOT, & kasir langsung bayar pesanan served.</span>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon">📦</span>
+            <span>Resep BOM & HPP Otomatis: Porsi bahan baku per varian & pemotongan stok fisik otomatis.</span>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon">📋</span>
+            <span>Stock Opname Massal & Food Loss: Lembar audit serentak & analisis varian kerugian bahan baku.</span>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon">📱</span>
+            <span>UI Responsif HP & Tablet: 0 pixel overflow, layout 1-kolom lega di HP, dan grid seimbang di tablet.</span>
+          </li>
+        </ul>
+
+        <div class="highlight-banner">
+          ✨ Cocok untuk Cafe, Restoran, Retail, Kuliner & Toko UMKM
+        </div>
+
+        <!-- Play Store & QR -->
+        <div class="play-row">
+          <a href="https://play.google.com/store/apps/details?id=online.mudahkan.manggapos" class="play-badge" target="_blank">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3.609 1.814L13.792 12 3.61 22.186c-.33-.2-.53-.55-.53-.96V2.774c0-.41.2-.76.53-.96zM15.207 13.414l2.42 2.42-12.7 7.33 10.28-9.75zM17.627 8.166l-2.42 2.42L4.927.836l12.7 7.33zM18.89 9.43l3.22 1.86c.92.53.92 1.4 0 1.93l-3.22 1.86-2.13-2.13 2.13-2.52z"/>
+            </svg>
+            <div>
+              <span>TERSEDIA DI</span>
+              Google Play
+            </div>
+          </a>
+
+          <div class="qr-box">
+            <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://play.google.com/store/apps/details?id=online.mudahkan.manggapos" alt="QR Play Store">
+            <div class="qr-text">
+              Scan untuk<br><strong>Update / Install</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="poster-footer">
+      <div class="footer-left">
+        <strong>PT Mudahkan Digital Nusantara</strong>
+        <span>Solusi POS Kasir Terintegrasi Android, Windows & Web</span>
+      </div>
+      <div class="footer-url">
+        pos.mudahkan.online
+      </div>
+    </footer>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "692859079311",
+    "project_id": "mangga-pos",
+    "storage_bucket": "mangga-pos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:692859079311:android:70742d4c71fc79b1a33efa",
+        "android_client_info": {
+          "package_name": "online.mudahkan.manggapos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrBdhQFm1YK56i9igfRn5WfwOKsWMC6Bg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

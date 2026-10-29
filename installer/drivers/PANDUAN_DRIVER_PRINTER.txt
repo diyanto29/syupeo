@@ -1,0 +1,27 @@
+===============================================================
+PANDUAN INSTALASI DRIVER PRINTER THERMAL KASIR (POS-58 / POS-80)
+MANGGA POS (DPOS) - WINDOWS EDITION
+===============================================================
+
+Driver ini mendukung hampir seluruh printer kasir thermal USB & LAN:
+- Ukuran 58mm (POS-58, ZJ-58, Xprinter XP-58, Panda, Iware, Kassen, EPPOS, dll.)
+- Ukuran 80mm (POS-80, ZJ-80, Xprinter XP-80, Epson TM compatible, dll.)
+
+LANGKAH INSTALASI:
+1. Hubungkan printer kasir ke stopkontak dan colokkan kabel USB printer ke PC/Laptop kasir.
+2. Nyalakan printer thermal kasir (tombol Power ON).
+3. Jalankan file: "POSPrinterDriverSetup.exe".
+4. Pilih Sistem Operasi: Windows 10 / Windows 11 (atau sesuai versi Windows Anda).
+5. Pilih Model Printer:
+   - Pilih "POS-58" jika Anda menggunakan kertas struk kecil (58mm).
+   - Pilih "POS-80" jika Anda menggunakan kertas struk standar/besar (80mm).
+6. Tentukan Port:
+   - Pilih port "USB001" (atau USB002 jika ada beberapa port USB).
+7. Klik "Install Now".
+8. Buka aplikasi Mangga POS -> Buka menu "Pengaturan" -> "Pengaturan Printer".
+9. Printer "POS-58" atau "POS-80" akan otomatis terdeteksi di Mangga POS dan siap digunakan untuk cetak struk dan tiket dapur!
+
+===============================================================
+Layanan Bantuan & Dukungan Teknis Mangga POS:
+Hubungi Customer Support Mangga POS jika memerlukan panduan konfigurasi.
+===============================================================
