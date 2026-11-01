@@ -4,266 +4,318 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   const AppTheme._();
 
-  static const Color _surface = Color(0xFFFBFBFB);
-  static const Color _surfaceLow = Color(0xFFF4F4F5);
-  static const Color _surfaceHighest = Color(0xFFE4E4E7);
-  static const Color _surfaceLowest = Color(0xFFFFFFFF);
-  static const Color _leafGreen = Color(0xFF15803D); // Daun Mangga Segar Indramayu
-  static const Color _deepInk = Color(0xFF18181B); // Crisp Modern Charcoal
-  static const Color _warmDepth = Color(0xFF431407); // Rich Mango Bark
-  static const Color _orange = Color(0xFFFF7A00); // Mangga Gedong Gincu Vibrant Orange
-  static const Color _orangeDark = Color(0xFFC2410C); // Deep Mango Sunset
-  static const Color _activeTable = Color(0xFFFEF3C7); // Mango Nectar Soft Cream
-  static const Color _validationTable = Color(0xFFFFEDD5); // Soft Apricot
-  static const Color _availableTable = Color(0xFFDCFCE7); // Fresh Mint Green
-  static const Color _outlineSoft = Color(0xFFA1A1AA);
-  static const Color _shadowNavy = Color(0x1418181B);
+  // ==========================================
+  // Syupeo Design System Tokens — v2
+  // Image ref: Syupeo POS Dashboard style guide
+  // ==========================================
+  static const Color primary = Color(0xFF0070FC); // Syupeo Blue
+  static const Color primaryHover = Color(0xFF005ECC); // Syupeo Blue hover
+  static const Color secondary = Color(0xFFBA8C02); // Amber / warning accent
+  static const Color accent = Color(0xFF3B82F6); // Blue-500 highlight
+  static const Color surface = Color(0xFFFFFFFF); // Pure White (card bg)
+  static const Color surfaceSubtle = Color(0xFFF1F5F9); // Canvas bg (#f1f5f9)
+  static const Color surfaceLow = Color(0xFFF8FAFC); // Slight tint
+  static const Color surfaceHighest = Color(0xFFE2E8F0); // Dividers / subtle
+  static const Color surfaceLowest = Color(0xFFFFFFFF);
+  static const Color text = Color(0xFF0F172A); // Near-black heading (#0f172a)
+  static const Color textBody = Color(0xFF334155); // Body text (#334155)
+  static const Color textMuted = Color(0xFF64748B); // Muted / subtitle
+  static const Color border = Color(0x14000000); // rgba(0,0,0,0.08) no-color border
+  static const Color success = Color(0xFF10B981); // Emerald-500 — status Ready
+  static const Color successBg = Color(0xFFD1FAE5); // Emerald-100 badge bg
+  static const Color warning = Color(0xFFF59E0B); // Amber-500 — status Waiting
+  static const Color warningBg = Color(0xFFFEF3C7); // Amber-100 badge bg
+  static const Color danger = Color(0xFFEF4444); // Red-500 — destructive / error
+  static const Color dangerBg = Color(0xFFFEE2E2); // Red-100 badge bg
+  static const Color info = Color(0xFF3B82F6); // Blue-500 — info banner
+  static const Color shadowDiffused = Color(0x14000000); // rgba(0,0,0,0.08)
+
+  // Layout Radii — matches image: cards 16px, buttons pill-style
+  static const double radiusSm = 6.0;   // Small chips / badges
+  static const double radiusMd = 12.0;  // Default: inputs, modals, small cards
+  static const double radiusLg = 16.0;  // Cards, panels
+  static const double radiusXl = 24.0;  // Drawer / bottom sheet
+  static const double radiusFull = 9999.0; // Pill buttons, avatar, segmented tabs
+
+  // Backward compatibility alias references for ConciergeThemeTokens
+  static const Color _activeTable = warningBg;
+  static const Color _validationTable = Color(0xFFFEF3C7);
+  static const Color _availableTable = successBg;
 
   static ThemeData get light {
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: const ColorScheme.light(
-        primary: _orange,
+        primary: primary,
         onPrimary: Colors.white,
-        primaryContainer: _warmDepth,
-        onPrimaryContainer: _orangeDark,
-        secondary: _leafGreen,
+        primaryContainer: Color(0xFFEFF6FF),
+        onPrimaryContainer: primaryHover,
+        secondary: secondary,
         onSecondary: Colors.white,
-        secondaryContainer: _activeTable,
-        onSecondaryContainer: _deepInk,
-        tertiary: _availableTable,
-        onTertiary: _deepInk,
-        surface: _surface,
-        onSurface: _deepInk,
-        surfaceContainerLowest: _surfaceLowest,
-        surfaceContainerLow: _surfaceLow,
-        surfaceContainerHighest: _surfaceHighest,
-        outline: _outlineSoft,
-        outlineVariant: _outlineSoft,
+        secondaryContainer: Color(0xFFFEF3C7),
+        onSecondaryContainer: text,
+        tertiary: accent,
+        onTertiary: Colors.white,
+        error: danger,
+        onError: Colors.white,
+        surface: surface,
+        onSurface: text,
+        surfaceContainerLowest: surfaceLowest,
+        surfaceContainerLow: surfaceLow,
+        surfaceContainerHighest: surfaceHighest,
+        outline: textMuted,
+        outlineVariant: surfaceHighest,
       ),
-      scaffoldBackgroundColor: _surface,
+      scaffoldBackgroundColor: surfaceSubtle, // #f1f5f9 canvas bg
     );
 
-    final manrope = GoogleFonts.manropeTextTheme(base.textTheme).copyWith(
-      displayLarge: GoogleFonts.manrope(
-        fontSize: 56,
-        fontWeight: FontWeight.w800,
-        letterSpacing: -1.12,
-        height: 1.0,
-        color: _deepInk,
-      ),
-      displayMedium: GoogleFonts.manrope(
-        fontSize: 44,
-        fontWeight: FontWeight.w800,
-        letterSpacing: -0.88,
-        height: 1.05,
-        color: _deepInk,
-      ),
-      headlineSmall: GoogleFonts.manrope(
-        fontSize: 24,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.48,
-        height: 1.15,
-        color: _deepInk,
-      ),
-      titleLarge: GoogleFonts.manrope(
-        fontSize: 22,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.44,
-        color: _deepInk,
-      ),
-      titleMedium: GoogleFonts.manrope(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.36,
-        color: _deepInk,
-      ),
-      titleSmall: GoogleFonts.manrope(
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.28,
-        color: _deepInk,
-      ),
-    );
-
-    final textTheme = GoogleFonts.interTextTheme(manrope).apply(
-      bodyColor: _deepInk,
-      displayColor: _deepInk,
+    // Typography scale strictly following Design System rules (All Inter)
+    final interBase = GoogleFonts.interTextTheme(base.textTheme).apply(
+      bodyColor: text,
+      displayColor: text,
       decoration: TextDecoration.none,
     );
 
-    return base.copyWith(
-      textTheme: textTheme.copyWith(
-        bodyLarge: GoogleFonts.inter(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          height: 1.45,
-          color: _deepInk,
-        ),
-        bodyMedium: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          height: 1.45,
-          color: _deepInk,
-        ),
-        bodySmall: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          height: 1.4,
-          color: _deepInk.withValues(alpha: 0.70),
-        ),
-        labelMedium: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.1,
-          color: _deepInk,
-        ),
-        labelSmall: GoogleFonts.inter(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.1,
-          color: _deepInk.withValues(alpha: 0.72),
-        ),
+    final textTheme = interBase.copyWith(
+      displayLarge: GoogleFonts.inter(
+        fontSize: 36,
+        fontWeight: FontWeight.w800,
+        height: 1.15,
+        letterSpacing: -0.72,
+        color: text,
       ),
+      displayMedium: GoogleFonts.inter(
+        fontSize: 32,
+        fontWeight: FontWeight.w800,
+        height: 1.15,
+        letterSpacing: -0.64,
+        color: text,
+      ),
+      headlineMedium: GoogleFonts.inter(
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        height: 1.25,
+        letterSpacing: -0.56,
+        color: text,
+      ),
+      headlineSmall: GoogleFonts.inter(
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+        height: 1.35,
+        letterSpacing: -0.44,
+        color: text,
+      ),
+      titleLarge: GoogleFonts.inter(
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+        height: 1.35,
+        letterSpacing: -0.44,
+        color: text,
+      ),
+      titleMedium: GoogleFonts.inter(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.32,
+        color: text,
+      ),
+      titleSmall: GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.28,
+        color: text,
+      ),
+      bodyLarge: GoogleFonts.inter(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 1.65,
+        color: textBody, // #334155
+      ),
+      bodyMedium: GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        height: 1.55,
+        color: textBody, // #334155
+      ),
+      bodySmall: GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        height: 1.40,
+        color: textMuted,
+      ),
+      labelMedium: GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
+        color: text,
+      ),
+      labelSmall: GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
+        color: textMuted,
+      ),
+    );
+
+    return base.copyWith(
+      textTheme: textTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
-        foregroundColor: _deepInk,
+        foregroundColor: text,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: GoogleFonts.manrope(
-          fontSize: 22,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.44,
-          color: _deepInk,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.4,
+          color: text,
         ),
       ),
       cardTheme: CardThemeData(
-        color: _surfaceLowest,
+        color: surface,
         elevation: 0,
-        shadowColor: _shadowNavy,
+        shadowColor: shadowDiffused,
         surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusLg), // 16px — matches image
+          side: BorderSide.none, // no border, shadow-only cards
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: _surfaceLowest,
+        backgroundColor: surface,
         elevation: 0,
-        indicatorColor: _activeTable,
+        indicatorColor: const Color(0xFFEFF6FF),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => GoogleFonts.inter(
             fontSize: 12,
             fontWeight: states.contains(WidgetState.selected)
                 ? FontWeight.w700
                 : FontWeight.w600,
-            color: _deepInk,
+            color: states.contains(WidgetState.selected) ? primary : textMuted,
           ),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: _orange,
+          backgroundColor: primary,
           foregroundColor: Colors.white,
           elevation: 0,
-          minimumSize: const Size(0, 52),
+          minimumSize: const Size(0, 52), // 52px height — matches image CTA
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(radiusFull), // pill button
           ),
           textStyle: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
           ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: _leafGreen,
-          minimumSize: const Size(0, 52),
-          side: BorderSide(color: _outlineSoft.withValues(alpha: 0.20)),
+          foregroundColor: primary,
+          minimumSize: const Size(0, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          side: const BorderSide(color: border, width: 1.0),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(radiusFull), // pill
           ),
           textStyle: GoogleFonts.inter(
             fontSize: 14,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: surface,
         hintStyle: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: const Color(0xFF94A3B8),
+          color: textMuted,
         ),
         labelStyle: GoogleFonts.inter(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF1E293B),
+          color: text,
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 13,
+          horizontal: 16,
+          vertical: 14,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(radiusMd), // 12px
           borderSide: const BorderSide(
-            color: Color(0xFFE2E8F0),
+            color: border,
             width: 1.0,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(
-            color: Color(0xFFE2E8F0),
+            color: border,
             width: 1.0,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(
-            color: Color(0xFF0F172A),
+            color: primary,
             width: 1.5,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
+            color: danger,
             width: 1.0,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
+            color: danger,
             width: 1.5,
           ),
         ),
       ),
       chipTheme: base.chipTheme.copyWith(
-        backgroundColor: _surfaceLow,
-        selectedColor: _activeTable,
-        side: BorderSide.none,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: surfaceLow,
+        selectedColor: const Color(0xFFEFF6FF),
+        side: const BorderSide(color: border, width: 1.0),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusFull)), // pill chips
         labelStyle: GoogleFonts.inter(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: _deepInk,
+          color: text,
         ),
       ),
-      dividerColor: Colors.transparent,
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          return Colors.white;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return primary;
+          }
+          return const Color(0xFFCBD5E1);
+        }),
+        trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      dividerColor: border,
       extensions: const [
         ConciergeThemeTokens(
-          baseSurface: _surface,
-          sectionSurface: _surfaceLow,
-          raisedSurface: _surfaceLowest,
+          baseSurface: surface,
+          sectionSurface: surfaceLow,
+          raisedSurface: surfaceLowest,
           activeTableSurface: _activeTable,
           validationSurface: _validationTable,
           availableAccent: _availableTable,
-          tintedShadow: _shadowNavy,
+          tintedShadow: shadowDiffused,
           ctaGradient: LinearGradient(
-            colors: [_deepInk, _warmDepth],
+            colors: [primary, primaryHover],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),

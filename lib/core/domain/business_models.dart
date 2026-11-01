@@ -27,6 +27,7 @@ class Business {
     this.enabledFeatures = const [],
     this.featuresConfig = const {},
     this.limitsConfig = const {'free': {}, 'pro': {}},
+    this.status = 'active',
     this.roleLabels = const {},
     this.isFeatureGateEnabled = true,
     this.maxTransactions,
@@ -55,6 +56,7 @@ class Business {
   final DateTime? subscriptionEndAt;
   final SubscriptionPlan? plan; // Data hasil join
   final String? businessType;
+  final String status;
   final List<String> enabledFeatures;
   final Map<String, String> featuresConfig; // { 'feat': 'off' | 'free' | 'pro' }
   final Map<String, dynamic> limitsConfig; // { 'free': { 'max_tx': 100 }, 'pro': { 'max_tx': 1000 } }
@@ -150,6 +152,7 @@ class Business {
           : DateTime.tryParse(json['subscription_end_at'] as String),
       plan: _parsePlan(json['subscription_plans']),
       businessType: json['business_type'] as String?,
+      status: (json['status'] as String?) ?? 'active',
       enabledFeatures: (json['enabled_features'] as List?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -199,6 +202,7 @@ class Business {
       'subscription_status': subscriptionStatus,
       'subscription_end_at': subscriptionEndAt?.toIso8601String(),
       'business_type': businessType,
+      'status': status,
       'enabled_features': enabledFeatures,
       'features_config': featuresConfig,
       'limits_config': limitsConfig,
@@ -294,6 +298,8 @@ class Business {
   }
 
   bool get isFnb => businessType == 'fnb' || businessType == 'general';
+  bool get isPendingActivation => status == 'pending';
+  bool get isActive => status == 'active';
 }
 
 class BusinessMember {

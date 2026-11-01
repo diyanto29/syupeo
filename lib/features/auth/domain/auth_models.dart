@@ -41,7 +41,9 @@ class AppProfile {
       staffCode: json['staff_code'] as String?,
       fullName: json['full_name'] as String?,
       avatarUrl: json['avatar_url'] as String?,
-      defaultRole: AppRole.fromValue(json['default_role'] as String?),
+      defaultRole: AppRole.fromValue(
+        (json['default_role'] as String?) ?? (json['role'] as String?),
+      ),
       isActive: (json['is_active'] as bool?) ?? true,
       onboardingCompleted: (json['onboarding_completed'] as bool?) ?? false,
     );

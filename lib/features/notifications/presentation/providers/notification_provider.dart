@@ -4,6 +4,7 @@ import 'package:dpos/core/services/notification_service.dart';
 import 'package:dpos/features/table_session/presentation/table_session_screen.dart';
 import 'package:dpos/features/transaction/data/transaction_repository.dart';
 import 'package:dpos/features/menu_management/data/menu_repository.dart';
+import 'package:dpos/features/subscription/presentation/providers/fulfillment_orders_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:dpos/core/providers/feature_gate_provider.dart';
 
@@ -27,6 +28,10 @@ final notificationManagerProvider = Provider.autoDispose<void>((ref) {
       } else if (event.type == NotificationEventType.lowStock) {
         debugPrint('🔄 Refreshing menu due to low stock event');
         ref.invalidate(menuItemsProvider);
+      } else if (event.type == NotificationEventType.statusUpdate) {
+        debugPrint('🔄 Refreshing fulfillment orders due to status update event');
+        ref.invalidate(fulfillmentOrdersProvider);
+        ref.invalidate(menuItemsProvider);
       }
     }
   });
@@ -48,7 +53,18 @@ final notificationManagerProvider = Provider.autoDispose<void>((ref) {
     
     if (businessId != null) {
       debugPrint('🔔 Subscribing to notifications for business: $businessId');
-      NotificationService.instance.subscribeToBusiness(businessId);
+      final targetPhones = [
+        if (bootstrap.business?.phone != null &&
+            bootstrap.business!.phone!.trim().isNotEmpty)
+          bootstrap.business!.phone!.trim(),
+        if (bootstrap.profile?.phone != null &&
+            bootstrap.profile!.phone!.trim().isNotEmpty)
+          bootstrap.profile!.phone!.trim(),
+      ];
+      NotificationService.instance.subscribeToBusiness(
+        businessId,
+        phones: targetPhones,
+      );
     }
   });
 

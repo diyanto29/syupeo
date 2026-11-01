@@ -27,7 +27,7 @@ class _TableQrGeneratorScreenState
     extends ConsumerState<TableQrGeneratorScreen> {
   final _tableController = TextEditingController();
   String _generatedUrl = '';
-  final String _baseUrl = 'https://pos.mudahkan.online';
+  final String _baseUrl = 'https://syupeo-admin.mudahkan.online';
 
   void _generate() {
     final table = _tableController.text.trim();

@@ -122,7 +122,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
               }
             },
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFF7A00),
+              backgroundColor: const Color(0xFF0070FC),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text('Simpan'),
@@ -159,7 +159,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
           'Tambah Bahan',
           style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: const Color(0xFFFF7A00),
+        backgroundColor: const Color(0xFF0070FC),
       ),
       body: ingredientsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -240,9 +240,9 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
                             child: ChoiceChip(
                               label: Text(cat),
                               selected: isSelected,
-                              selectedColor: const Color(0xFFFF7A00).withValues(alpha: 0.15),
+                              selectedColor: const Color(0xFF0070FC).withValues(alpha: 0.15),
                               labelStyle: GoogleFonts.plusJakartaSans(
-                                color: isSelected ? const Color(0xFFFF7A00) : const Color(0xFF64748B),
+                                color: isSelected ? const Color(0xFF0070FC) : const Color(0xFF64748B),
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                                 fontSize: 12,
                               ),

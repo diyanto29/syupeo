@@ -242,7 +242,7 @@ export default function MerchantDiscountsPage() {
             Manajemen Diskon & Promo
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Buat voucher diskon rupiah atau persentase yang tersinkronisasi otomatis dengan kasir DPOS
+            Buat voucher diskon rupiah atau persentase yang tersinkronisasi otomatis dengan aplikasi kasir Syupeo
           </p>
         </div>
 

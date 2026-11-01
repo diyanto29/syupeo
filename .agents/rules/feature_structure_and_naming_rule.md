@@ -1,6 +1,6 @@
-# Aturan Struktur Folder Fitur, Konvensi Penamaan & Standar Data DPOS
+# Aturan Struktur Folder Fitur, Konvensi Penamaan & Standar Data Syupeo
 
-Dokumen aturan ini menetapkan standarisasi resmi struktur folder, konvensi penamaan simbol/berkas, dan penanganan tipe data di seluruh modul Flutter aplikasi **DPOS (Mangga POS)**.
+Dokumen aturan ini menetapkan standarisasi resmi struktur folder, konvensi penamaan simbol/berkas, dan penanganan tipe data di seluruh modul Flutter aplikasi **Syupeo**.
 
 ---
 
@@ -42,7 +42,7 @@ lib/features/<nama_fitur>/
 ## 3. Standar Penanganan Mata Uang (Rupiah)
 
 1. **WAJIB Bertipe `int` (Bilangan Bulat):**
-   - Seluruh nominal uang di DPOS (`price`, `subtotal`, `tax_amount`, `discount_amount`, `total_amount`, `cash_received`, `change`) **HARUS bertipe `int`**.
+   - Seluruh nominal uang di Syupeo (`price`, `subtotal`, `tax_amount`, `discount_amount`, `total_amount`, `cash_received`, `change`) **HARUS bertipe `int`**.
    - Dilarang menggunakan `double` untuk nominal Rupiah guna mencegah kesalahan pembulatan desimal (*floating-point rounding errors*) pada transaksi kasir.
 2. **Format Tampilan Rupiah:**
    - Gunakan format mata uang baku Indonesia: `NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)` atau helper `RupiahInputHelper`.

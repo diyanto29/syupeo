@@ -3,57 +3,59 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { createClient } from '@/lib/supabase/client';
-import { Business, BusinessTypeTemplate, SubscriptionPlan } from '@/types/database';
+import { Business, BusinessTypeTemplate, RetailStarterKit, Warehouse } from '@/types/database';
+import WilayahSelector, { WilayahSelection } from '@/components/WilayahSelector';
+import GooglePlacesAutocomplete, { PlaceResult } from '@/components/GooglePlacesAutocomplete';
 import Link from 'next/link';
 import {
-  Building2,
   Search,
-  Filter,
   CheckCircle,
   X,
   AlertCircle,
-  Sliders,
   Sparkles,
   Store,
-  Layers,
-  Crown,
-  Calendar,
-  Zap,
-  Clock,
-  ShieldCheck,
   Check,
   Eye,
-  BarChart3,
   Trash2,
+  PlusCircle,
+  Package,
+  MapPin,
+  Truck,
+  CheckCircle2,
+  Navigation,
+  Phone,
+  UserCheck,
+  Loader2,
+  Clock,
 } from 'lucide-react';
 
 export default function BusinessesPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [templates, setTemplates] = useState<BusinessTypeTemplate[]>([]);
-  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [starterKits, setStarterKits] = useState<RetailStarterKit[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState('ALL');
-  const [selectedPlanFilter, setSelectedPlanFilter] = useState('ALL'); // 'ALL' | 'pro' | 'free'
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
-  // Change Template Modal state
-  const [templateModalBusiness, setTemplateModalBusiness] = useState<Business | null>(null);
-  const [selectedTemplateCode, setSelectedTemplateCode] = useState<string>('');
-
-  // Subscription Plan (Free/Pro) Modal state
-  const [planModalBusiness, setPlanModalBusiness] = useState<Business | null>(null);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('active');
-  const [durationMonths, setDurationMonths] = useState<number>(1);
-  const [isLifetime, setIsLifetime] = useState<boolean>(false);
-
-  // Custom Limits Modal state
-  const [limitsModalBusiness, setLimitsModalBusiness] = useState<Business | null>(null);
-  const [customLimitsData, setCustomLimitsData] = useState({
-    max_outlets: 1,
-    max_products: 50,
-    max_transactions: 100,
-  });
+  // --- Modal Onboarding Toko Baru & Starter Kit ---
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [formStoreName, setFormStoreName] = useState('');
+  const [formOwnerName, setFormOwnerName] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formTemplateCode, setFormTemplateCode] = useState('retail');
+  const [formProvince, setFormProvince] = useState('');
+  const [formCity, setFormCity] = useState('');
+  const [formDistrict, setFormDistrict] = useState('');
+  const [formVillage, setFormVillage] = useState('');
+  const [formAddress, setFormAddress] = useState('');
+  const [formLat, setFormLat] = useState<number | null>(null);
+  const [formLng, setFormLng] = useState<number | null>(null);
+  const [formStarterKitId, setFormStarterKitId] = useState('');
+  const [formPaymentStatus, setFormPaymentStatus] = useState<'paid_cash' | 'paid_transfer' | 'pending'>('paid_cash');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -63,252 +65,231 @@ export default function BusinessesPage() {
 
   const loadData = async () => {
     setLoading(true);
-    const [bizRes, tplRes, planRes] = await Promise.all([
-      supabase
-        .from('businesses')
-        .select('*, profiles(id, full_name, email, phone), subscription_plans(*), partners(*)')
-        .order('created_at', { ascending: false }),
-      supabase.from('business_type_templates').select('*').order('name'),
-      supabase.from('subscription_plans').select('*').order('price_monthly', { ascending: true }),
-    ]);
+    try {
+      const [bizRes, tplRes, kitRes, whRes] = await Promise.all([
+        supabase
+          .from('businesses')
+          .select('*, retail_starter_kits(*)')
+          .order('created_at', { ascending: false }),
+        supabase.from('business_type_templates').select('*').order('name'),
+        supabase.from('retail_starter_kits').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
+        supabase.from('warehouses').select('*').eq('is_active', true),
+      ]);
 
-    if (!bizRes.error && bizRes.data) {
-      setBusinesses(bizRes.data as Business[]);
+      if (!bizRes.error && bizRes.data) {
+        setBusinesses(bizRes.data as Business[]);
+      } else if (bizRes.error) {
+        console.warn('bizRes error, fallback to simple select:', bizRes.error);
+        const fallbackBiz = await supabase.from('businesses').select('*').order('created_at', { ascending: false });
+        if (fallbackBiz.data) setBusinesses(fallbackBiz.data as Business[]);
+      }
+
+      if (!tplRes.error && tplRes.data) {
+        setTemplates(tplRes.data as BusinessTypeTemplate[]);
+      }
+      if (!kitRes.error && kitRes.data) {
+        setStarterKits(kitRes.data as RetailStarterKit[]);
+        if (kitRes.data.length > 0 && !formStarterKitId) {
+          setFormStarterKitId(kitRes.data[0].id);
+        }
+      }
+      if (!whRes.error && whRes.data) {
+        setWarehouses(whRes.data as Warehouse[]);
+      }
+    } catch (err) {
+      console.error('Error loading data:', err);
+    } finally {
+      setLoading(false);
     }
-    if (!tplRes.error && tplRes.data) {
-      setTemplates(tplRes.data as BusinessTypeTemplate[]);
-    }
-    if (!planRes.error && planRes.data) {
-      setPlans(planRes.data as SubscriptionPlan[]);
-    }
-    setLoading(false);
   };
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // --- Handlers for Subscription Plan (Free vs Pro) ---
-  const openPlanModal = (biz: Business) => {
-    setPlanModalBusiness(biz);
-    // Cari plan id saat ini atau default
-    const currentPlanId = biz.plan_id || plans.find((p) => p.code === 'free')?.id || '';
-    setSelectedPlanId(currentPlanId);
-    setSelectedStatus(biz.subscription_status || 'active');
-    setDurationMonths(1);
-    setIsLifetime(!biz.subscription_end_at && biz.subscription_status === 'active' && biz.subscription_plans?.code === 'pro');
+  const resetRegisterForm = () => {
+    setFormStoreName('');
+    setFormOwnerName('');
+    setFormPhone('');
+    setFormEmail('');
+    setFormTemplateCode('retail');
+    setFormProvince('');
+    setFormCity('');
+    setFormDistrict('');
+    setFormVillage('');
+    setFormAddress('');
+    setFormLat(null);
+    setFormLng(null);
+    setFormStarterKitId(starterKits[0]?.id || '');
+    setFormPaymentStatus('paid_cash');
     setErrorMsg(null);
   };
 
-  const handleSavePlan = async () => {
-    if (!planModalBusiness || !selectedPlanId) return;
-    setIsUpdating(true);
+  // Handle Daftarkan Toko & Kirim Starter Kit
+  const handleRegisterStore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
     setErrorMsg(null);
 
     try {
-      const chosenPlan = plans.find((p) => p.id === selectedPlanId);
-      const isProChosen = chosenPlan?.code === 'pro';
+      if (!formStoreName.trim()) throw new Error('Nama toko wajib diisi.');
+      if (!formOwnerName.trim()) throw new Error('Nama pemilik toko wajib diisi.');
+      if (!formPhone.trim()) throw new Error('Nomor WhatsApp wajib diisi.');
+      if (!formCity.trim() || !formAddress.trim()) throw new Error('Alamat dan Kota toko wajib diisi.');
 
-      let endAt: string | null = null;
-      if (isProChosen) {
-        if (isLifetime) {
-          endAt = null; // null end_at = lifetime active
-        } else {
-          const date = new Date();
-          date.setMonth(date.getMonth() + durationMonths);
-          endAt = date.toISOString();
+      const cleanSlug = `${formStoreName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString().slice(-4)}`;
+      const fallbackEmail = formEmail.trim() || `toko_${Date.now().toString().slice(-6)}@syupeo.com`;
+
+      const chosenTpl = templates.find((t) => t.code === formTemplateCode) || templates[0];
+
+      // 1. Simpan ke tabel businesses
+      const bizPayload: any = {
+        name: formStoreName.trim(),
+        owner_name: formOwnerName.trim() || null,
+        slug: cleanSlug,
+        business_type: chosenTpl?.code || 'retail',
+        phone: formPhone.trim(),
+        email: fallbackEmail,
+        address: formAddress.trim(),
+        city: formCity.trim(),
+        province: formProvince.trim() || null,
+        district: formDistrict.trim() || null,
+        village: formVillage.trim() || null,
+        latitude: formLat,
+        longitude: formLng,
+        status: 'active',
+        subscription_status: 'active',
+        enabled_features: chosenTpl?.default_enabled_features || ['pos', 'inventory', 'cash_flow'],
+        max_transactions: chosenTpl?.max_transactions ?? 1000,
+        max_products: chosenTpl?.max_products ?? 100,
+        max_outlets: chosenTpl?.max_outlets ?? 1,
+        starter_kit_id: formStarterKitId || null,
+      };
+
+      const { data: newBiz, error: newBizErr } = await supabase
+        .from('businesses')
+        .insert(bizPayload)
+        .select()
+        .single();
+
+      if (newBizErr) throw newBizErr;
+
+      // 2. Buat default Outlet
+      await supabase.from('outlets').insert({
+        business_id: newBiz.id,
+        name: 'Toko Utama',
+        address: formAddress.trim(),
+        phone: formPhone.trim(),
+        latitude: formLat,
+        longitude: formLng,
+        is_active: true,
+      });
+
+      // 3. Jika memilih starter kit, jalankan auto-seed produk & buat dispatch order
+      if (formStarterKitId) {
+        const selectedKit = starterKits.find((k) => k.id === formStarterKitId);
+
+        // a. Panggil stored procedure auto-seed produk
+        try {
+          await supabase.rpc('apply_starter_kit_to_business', {
+            p_business_id: newBiz.id,
+            p_starter_kit_id: formStarterKitId,
+          });
+        } catch (rpcErr) {
+          console.warn('RPC apply_starter_kit_to_business warning:', rpcErr);
+        }
+
+        // b. Cari gudang terdekat dari kota/wilayah
+        const matchedWarehouse = warehouses.find(
+          (w) => w.city?.toLowerCase().includes(formCity.toLowerCase()) || formCity.toLowerCase().includes(w.city?.toLowerCase() || '')
+        ) || warehouses[0];
+
+        // c. Buat Order Fulfillment Dispatch
+        const orderCode = `ORD-${Date.now().toString().slice(-6)}`;
+        await supabase.from('package_fulfillment_orders').insert({
+          order_code: orderCode,
+          starter_kit_id: formStarterKitId,
+          kit_name: selectedKit?.name || 'Paket Usaha Retail',
+          recipient_name: `${formOwnerName.trim()} (${formStoreName.trim()})`,
+          recipient_phone: formPhone.trim(),
+          shipping_address: formAddress.trim(),
+          shipping_city: formCity.trim(),
+          shipping_province: formProvince.trim() || null,
+          shipping_district: formDistrict.trim() || null,
+          shipping_village: formVillage.trim() || null,
+          recipient_lat: formLat,
+          recipient_lng: formLng,
+          status: formPaymentStatus === 'pending' ? 'pending_dispatch' : 'packing',
+          fulfillment_mode: 'agent_direct',
+          assigned_warehouse_id: matchedWarehouse?.id || null,
+          sender_alias: 'Syupeo Official',
+          notes: `Pendaftaran via Admin/Sales. Status bayar: ${formPaymentStatus === 'paid_cash' ? 'LUNAS (TUNAI)' : formPaymentStatus === 'paid_transfer' ? 'LUNAS (TRANSFER)' : 'PENDING'}.`,
+        });
+      }
+
+      setSuccessMsg(
+        `Toko "${formStoreName}" berhasil didaftarkan! Produk starter kit otomatis disalin ke stok toko & tiket pengiriman gudang telah diterbitkan.`
+      );
+      setIsRegisterModalOpen(false);
+      resetRegisterForm();
+      await loadData();
+    } catch (err: any) {
+      setErrorMsg(`Gagal mendaftarkan toko: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // --- Handler Aktivasi Akun Toko oleh Admin ---
+  const handleActivateBusiness = async (biz: Business) => {
+    if (
+      !confirm(
+        `Aktivasi akun toko "${biz.name}"?\nStatus toko akan aktif dan pesanan paket usaha akan diteruskan ke tim gudang untuk packing.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setIsUpdating(true);
+      setErrorMsg(null);
+
+      // 1. Coba aktivasi melalui fungsi RPC activate_business
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('activate_business', {
+        p_business_id: biz.id,
+      });
+
+      if (rpcErr) {
+        console.warn('RPC activate_business warning, mencoba direct update:', rpcErr);
+
+        // 2. Fallback: Direct update via Supabase client
+        const { error: bizErr, data: updatedData } = await supabase
+          .from('businesses')
+          .update({
+            status: 'active',
+            subscription_status: 'active',
+          })
+          .eq('id', biz.id)
+          .select();
+
+        if (bizErr) throw bizErr;
+
+        if (biz.phone) {
+          await supabase
+            .from('package_fulfillment_orders')
+            .update({ status: 'packing' })
+            .eq('recipient_phone', biz.phone)
+            .eq('status', 'pending_dispatch');
         }
       }
 
-      // Update business subscription & sync limits if upgrading/downgrading
-      const updatePayload: any = {
-        plan_id: selectedPlanId,
-        subscription_status: selectedStatus,
-        subscription_end_at: endAt,
-        updated_at: new Date().toISOString(),
-      };
-
-      // Jika diubah ke PRO, berikan limit PRO (misal 5 outlet, unlimited transaksi)
-      if (isProChosen && chosenPlan) {
-        updatePayload.max_transactions = chosenPlan.max_transactions_month;
-        updatePayload.max_products = chosenPlan.max_products;
-        updatePayload.max_outlets = chosenPlan.max_outlets;
-      } else if (chosenPlan && chosenPlan.code === 'free') {
-        // Jika ke Free
-        updatePayload.max_transactions = chosenPlan.max_transactions_month || 150;
-        updatePayload.max_products = chosenPlan.max_products || 50;
-        updatePayload.max_outlets = chosenPlan.max_outlets || 1;
-      }
-
-      const { error } = await supabase
-        .from('businesses')
-        .update(updatePayload)
-        .eq('id', planModalBusiness.id);
-
-      if (error) throw error;
-
-      setSuccessMsg(
-        `Status langganan "${planModalBusiness.name}" berhasil diubah menjadi ${chosenPlan?.name || 'Paket Baru'}.`
-      );
-      setPlanModalBusiness(null);
+      setSuccessMsg(`Toko "${biz.name}" berhasil diaktivasi! Pengguna kasir sekarang memiliki akses penuh.`);
       await loadData();
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Gagal mengubah status langganan.');
+      setErrorMsg(`Gagal aktivasi toko: ${err?.message || err}`);
     } finally {
       setIsUpdating(false);
     }
   };
-
-  // Quick toggle Free <-> Pro in 1-click
-  const handleQuickTogglePro = async (biz: Business) => {
-    const isCurrentlyPro = biz.subscription_plans?.code === 'pro';
-    const targetPlanCode = isCurrentlyPro ? 'free' : 'pro';
-    const targetPlan = plans.find((p) => p.code === targetPlanCode);
-
-    if (!targetPlan) {
-      alert(`Paket ${targetPlanCode} tidak ditemukan di database.`);
-      return;
-    }
-
-    const confirmText = isCurrentlyPro
-      ? `Turunkan status bisnis "${biz.name}" ke FREE Plan?`
-      : `Upgrade status bisnis "${biz.name}" ke PRO Plan (Aktif Lifetime / 1 Tahun)?`;
-
-    if (!confirm(confirmText)) return;
-
-    try {
-      let endAt: string | null = null;
-      if (!isCurrentlyPro) {
-        // Beri 1 tahun aktif untuk PRO
-        const date = new Date();
-        date.setFullYear(date.getFullYear() + 1);
-        endAt = date.toISOString();
-      }
-
-      const { error } = await supabase
-        .from('businesses')
-        .update({
-          plan_id: targetPlan.id,
-          subscription_status: 'active',
-          subscription_end_at: endAt,
-          max_transactions: targetPlan.max_transactions_month,
-          max_products: targetPlan.max_products,
-          max_outlets: targetPlan.max_outlets,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', biz.id);
-
-      if (error) throw error;
-
-      setSuccessMsg(
-        `Berhasil mengubah status "${biz.name}" menjadi ${isCurrentlyPro ? 'FREE' : 'PRO'}.`
-      );
-      await loadData();
-    } catch (err: any) {
-      alert(`Gagal toggle plan: ${err.message}`);
-    }
-  };
-
-  // --- Handlers for Business Template ---
-  const openTemplateModal = (biz: Business) => {
-    setTemplateModalBusiness(biz);
-    setSelectedTemplateCode(biz.business_type || (templates[0]?.code ?? 'general'));
-    setErrorMsg(null);
-  };
-
-  const handleApplyTemplate = async () => {
-    if (!templateModalBusiness || !selectedTemplateCode) return;
-    setIsUpdating(true);
-    setErrorMsg(null);
-
-    try {
-      const targetTpl = templates.find((t) => t.code === selectedTemplateCode);
-      if (!targetTpl) throw new Error('Template tidak ditemukan.');
-
-      const { error } = await supabase
-        .from('businesses')
-        .update({
-          business_type: targetTpl.code,
-          enabled_features: targetTpl.default_enabled_features,
-          max_transactions: targetTpl.max_transactions ?? 100,
-          max_products: targetTpl.max_products ?? 50,
-          max_outlets: targetTpl.max_outlets ?? 1,
-          features_config: targetTpl.features_config || {},
-          limits_config: targetTpl.limits_config || {},
-          role_labels: targetTpl.role_labels || {},
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', templateModalBusiness.id);
-
-      if (error) throw error;
-
-      setSuccessMsg(
-        `Tipe template "${templateModalBusiness.name}" berhasil diubah menjadi "${targetTpl.name}".`
-      );
-      setTemplateModalBusiness(null);
-      await loadData();
-    } catch (err: any) {
-      setErrorMsg(err?.message || 'Gagal mengubah tipe template bisnis.');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  // --- Handlers for Custom Limits ---
-  const openLimitsModal = (biz: Business) => {
-    setLimitsModalBusiness(biz);
-    setCustomLimitsData({
-      max_outlets: biz.max_outlets ?? 1,
-      max_products: biz.max_products ?? 50,
-      max_transactions: biz.max_transactions ?? 100,
-    });
-  };
-
-  const handleSaveCustomLimits = async () => {
-    if (!limitsModalBusiness) return;
-    setIsUpdating(true);
-    try {
-      const { error } = await supabase
-        .from('businesses')
-        .update({
-          max_outlets: Number(customLimitsData.max_outlets),
-          max_products: Number(customLimitsData.max_products),
-          max_transactions: Number(customLimitsData.max_transactions),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', limitsModalBusiness.id);
-
-      if (error) throw error;
-      setSuccessMsg(`Limit kustom untuk "${limitsModalBusiness.name}" berhasil disimpan.`);
-      setLimitsModalBusiness(null);
-      await loadData();
-    } catch (err: any) {
-      alert(`Gagal menyimpan limit: ${err?.message}`);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  // Filtered List
-  const filteredBusinesses = businesses.filter((b) => {
-    const isPro = b.subscription_plans?.code === 'pro';
-
-    const matchesSearch =
-      b.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesType =
-      selectedTypeFilter === 'ALL' || b.business_type === selectedTypeFilter;
-
-    const matchesPlan =
-      selectedPlanFilter === 'ALL' ||
-      (selectedPlanFilter === 'pro' && isPro) ||
-      (selectedPlanFilter === 'free' && !isPro);
-
-    return matchesSearch && matchesType && matchesPlan;
-  });
 
   // --- Handler for Delete Business ---
   const handleDeleteBusiness = async (biz: Business) => {
@@ -316,13 +297,11 @@ export default function BusinessesPage() {
       return;
     }
     try {
-      // 1. Coba panggil RPC aman jika sudah dibuat di Supabase
       const { error: rpcErr } = await supabase.rpc('delete_business_by_admin', {
         p_business_id: biz.id,
       });
 
       if (rpcErr) {
-        // Fallback jika RPC belum dieksekusi di console: hapus outlets lalu hapus business
         const { data: outlets } = await supabase.from('outlets').select('id').eq('business_id', biz.id);
         if (outlets && outlets.length > 0) {
           const outletIds = outlets.map((o) => o.id);
@@ -341,91 +320,96 @@ export default function BusinessesPage() {
     }
   };
 
+  // Filter Search & Template (Bebas dari Plan Filter)
+  const filteredBusinesses = businesses.filter((b) => {
+    const matchesSearch =
+      b.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.owner_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.email?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesType =
+      selectedTypeFilter === 'ALL' || b.business_type === selectedTypeFilter;
+
+    const matchesStatus =
+      statusFilter === 'ALL' || b.status === statusFilter;
+
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
   return (
     <div>
       <Navbar
-        title="Manajemen Akun Bisnis"
-        description="Kelola status langganan PRO / FREE, template jenis usaha, dan batasan kuota seluruh mitra DPOS"
+        title="Mitra Toko Retail Syupeo"
+        description="Kelola aktivasi Toko Retail, paket usaha perdana, inventori produk, dan titik lokasi seluruh mitra toko"
       />
 
       <div className="space-y-6 mt-6">
         {/* Toast Alert */}
         {successMsg && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 flex items-center justify-between text-sm">
+          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-emerald-400" />
+              <CheckCircle className="w-5 h-5 text-emerald-600" />
               <span>{successMsg}</span>
             </div>
             <button onClick={() => setSuccessMsg(null)}>
-              <X className="w-4 h-4 text-emerald-400 hover:text-white" />
+              <X className="w-4 h-4 text-emerald-600 hover:text-slate-900" />
             </button>
           </div>
         )}
 
-        {/* Filter & Search Bar */}
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+        {/* Filter & Action Bar (Clean tanpa Plan) */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari nama bisnis, owner, atau email..."
+              placeholder="Cari nama toko, pemilik, kota, atau nomor WhatsApp..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-orange-500 shadow-xs"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#0070fc] shadow-xs"
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Filter Plan (Free / Pro) */}
-            <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
-              <button
-                onClick={() => setSelectedPlanFilter('ALL')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-                  selectedPlanFilter === 'ALL'
-                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Semua Plan
-              </button>
-              <button
-                onClick={() => setSelectedPlanFilter('pro')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
-                  selectedPlanFilter === 'pro'
-                    ? 'bg-amber-500 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-amber-700'
-                }`}
-              >
-                <Crown className="w-3.5 h-3.5" />
-                Hanya PRO
-              </button>
-              <button
-                onClick={() => setSelectedPlanFilter('free')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-                  selectedPlanFilter === 'free'
-                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Hanya FREE
-              </button>
-            </div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Filter Template Tipe Usaha */}
+            <select
+              value={selectedTypeFilter}
+              onChange={(e) => setSelectedTypeFilter(e.target.value)}
+              className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0070fc] shadow-xs"
+            >
+              <option value="ALL">Semua Tipe Usaha</option>
+              {templates.map((t) => (
+                <option key={t.code} value={t.code}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
 
-            {/* Filter Template */}
-            <div className="flex items-center gap-2">
-              <select
-                value={selectedTypeFilter}
-                onChange={(e) => setSelectedTypeFilter(e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:border-orange-500 shadow-xs"
-              >
-                <option value="ALL">Semua Tipe Template</option>
-                {templates.map((t) => (
-                  <option key={t.code} value={t.code}>
-                    {t.name} ({t.code})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Filter Status Aktivasi */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0070fc] shadow-xs"
+            >
+              <option value="ALL">Semua Status</option>
+              <option value="pending">Menunggu Aktivasi</option>
+              <option value="active">Aktif</option>
+            </select>
+
+            {/* Tombol Daftarkan Toko Baru & Kirim Starter Kit */}
+            <button
+              type="button"
+              onClick={() => {
+                resetRegisterForm();
+                setIsRegisterModalOpen(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0070fc] hover:bg-[#005ecc] text-white text-xs font-bold transition-all shadow-sm"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Daftarkan Toko Baru</span>
+            </button>
           </div>
         </div>
 
@@ -433,172 +417,162 @@ export default function BusinessesPage() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           {loading ? (
             <div className="text-center py-20">
-              <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-sm text-slate-500">Memuat data akun bisnis...</p>
+              <div className="w-8 h-8 border-2 border-[#0070fc] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-xs text-slate-500 font-medium">Memuat data toko retail...</p>
             </div>
           ) : filteredBusinesses.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 text-sm">
-              Tidak ada akun bisnis yang cocok dengan kriteria pencarian.
+            <div className="p-16 text-center text-slate-500 space-y-3">
+              <Store className="w-10 h-10 text-slate-300 mx-auto" />
+              <p className="text-sm font-semibold text-slate-700">Belum ada data toko retail terdaftar</p>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                Daftarkan toko retail perdana dengan paket usaha @ Rp 200.000 untuk memulai jaringan supply chain Anda.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  resetRegisterForm();
+                  setIsRegisterModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0070fc] text-white rounded-xl text-xs font-bold hover:bg-blue-600 transition-all shadow-xs"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>+ Daftarkan Toko Baru Sekarang</span>
+              </button>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider font-bold">
-                    <th className="py-3.5 px-6">Nama Bisnis & Owner</th>
-                    <th className="py-3.5 px-6">Status Paket</th>
-                    <th className="py-3.5 px-6">Tipe Bisnis</th>
-                    <th className="py-3.5 px-6">Limit Kuota</th>
-                    <th className="py-3.5 px-6 text-right">Kelola Status / Plan</th>
+                  <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                    <th className="py-3.5 px-5">Nama Toko & Pemilik</th>
+                    <th className="py-3.5 px-5">Paket Usaha (Starter Kit)</th>
+                    <th className="py-3.5 px-5">Wilayah & Titik GPS</th>
+                    <th className="py-3.5 px-5">Tipe Usaha</th>
+                    <th className="py-3.5 px-5">Status</th>
+                    <th className="py-3.5 px-5 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredBusinesses.map((b) => {
-                    const isPro = b.subscription_plans?.code === 'pro';
-                    const hasEndAt = !!b.subscription_end_at;
-                    const endAtFormatted = hasEndAt
-                      ? new Date(b.subscription_end_at!).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })
-                      : 'Lifetime';
-
+                    const linkedKit = b.retail_starter_kits;
                     return (
-                      <tr key={b.id} className="hover:bg-slate-50 transition-colors">
-                        {/* Bisnis & Owner */}
-                        <td className="py-4 px-6">
+                      <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
+                        {/* Nama Toko & Pemilik */}
+                        <td className="py-3.5 px-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                              {b.name?.charAt(0)?.toUpperCase() || 'B'}
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0070fc] border border-blue-200 flex items-center justify-center font-bold text-sm shrink-0">
+                              {b.name?.charAt(0)?.toUpperCase() || 'T'}
                             </div>
                             <div className="min-w-0">
                               <Link
                                 href={`/dashboard/businesses/${b.id}`}
-                                className="font-bold text-slate-900 hover:text-orange-600 transition-colors flex items-center gap-2 text-left group"
-                                title="Buka Halaman Profil Bisnis & Analitik Penjualan Lengkap"
+                                className="font-bold text-slate-900 hover:text-[#0070fc] transition-colors truncate block group"
                               >
-                                <span className="truncate group-hover:underline">{b.name}</span>
-                                {isPro && (
-                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
-                                    <Crown className="w-3 h-3 text-amber-600" /> PRO
-                                  </span>
-                                )}
+                                <span className="group-hover:underline">{b.name}</span>
                               </Link>
-                              <div className="text-xs text-slate-500 truncate">
-                                {b.profiles?.full_name || 'Owner'} •{' '}
-                                <span className="text-slate-400">{b.profiles?.email || '-'}</span>
+                              <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                                <span>{b.owner_name || 'Pemilik'}</span>
+                                {b.phone && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="font-mono text-slate-600">{b.phone}</span>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </div>
                         </td>
 
-                        {/* Status Paket (Free / Pro) */}
-                        <td className="py-4 px-6">
-                          <div className="space-y-1">
-                            {isPro ? (
-                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                <Crown className="w-3.5 h-3.5 text-amber-600" />
-                                <span>PRO PLAN</span>
+                        {/* Paket Usaha (Starter Kit) */}
+                        <td className="py-3.5 px-5">
+                          {linkedKit ? (
+                            <div className="space-y-1">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                <Package className="w-3 h-3 text-amber-600" />
+                                <span>{linkedKit.name}</span>
+                              </span>
+                              <div className="text-[10px] text-emerald-600 font-bold">
+                                Rp {Number(linkedKit.price).toLocaleString('id-ID')}
                               </div>
-                            ) : (
-                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                                <Store className="w-3.5 h-3.5 text-slate-500" />
-                                <span>FREE PLAN</span>
-                              </div>
-                            )}
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                              Toko Mandiri
+                            </span>
+                          )}
+                        </td>
 
-                            <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-slate-400" />
-                              <span>
-                                {isPro
-                                  ? hasEndAt
-                                    ? `Hingga ${endAtFormatted}`
-                                    : 'Akses Permanen (Lifetime)'
-                                  : 'Gratis Selamanya'}
+                        {/* Wilayah & Titik GPS */}
+                        <td className="py-3.5 px-5">
+                          <div className="space-y-0.5">
+                            <div className="font-medium text-slate-800 flex items-center gap-1">
+                              <MapPin className="w-3 h-3 text-[#0070fc] shrink-0" />
+                              <span className="truncate max-w-[180px]">
+                                {b.city || 'Indonesia'}{b.district ? `, ${b.district}` : ''}
                               </span>
                             </div>
-
-                            {b.partners && (
-                              <div className="pt-0.5">
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
-                                  Mitra: {b.partners.name} ({b.partners.commission_rate}%)
-                                </span>
-                              </div>
+                            {b.latitude && b.longitude ? (
+                              <a
+                                href={`https://www.google.com/maps/search/?api=1&query=${b.latitude},${b.longitude}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-[10px] font-mono text-blue-600 hover:underline"
+                              >
+                                <Navigation className="w-2.5 h-2.5" />
+                                <span>{b.latitude.toFixed(4)}, {b.longitude.toFixed(4)}</span>
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-slate-400 italic">GPS belum diset</span>
                             )}
                           </div>
                         </td>
 
-                        {/* Tipe Template */}
-                        <td className="py-4 px-6">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                            <Layers className="w-3.5 h-3.5 text-slate-500" />
-                            {b.business_type || 'default'}
+                        {/* Tipe Usaha */}
+                        <td className="py-3.5 px-5">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 capitalize">
+                            {b.business_type || 'Retail'}
                           </span>
                         </td>
 
-                        {/* Limit Kuota */}
-                        <td className="py-4 px-6 text-xs text-slate-600">
-                          <div>
-                            <span className="font-bold text-slate-900">{b.max_outlets ?? 1}</span>{' '}
-                            Outlet
-                          </div>
-                          <div className="text-slate-400">
-                            {b.max_products && b.max_products > 10000 ? 'Unlimited' : b.max_products ?? 50}{' '}
-                            Produk •{' '}
-                            {b.max_transactions && b.max_transactions > 10000
-                              ? 'Unlimited'
-                              : b.max_transactions ?? 100}{' '}
-                            Tx
-                          </div>
+                        {/* Status Toko */}
+                        <td className="py-3.5 px-5">
+                          {b.status === 'pending' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                              <Clock className="w-3 h-3 text-amber-600" />
+                              <span>Menunggu Aktivasi</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              <span>Aktif</span>
+                            </span>
+                          )}
                         </td>
 
                         {/* Aksi */}
-                        <td className="py-4 px-6 text-right">
+                        <td className="py-3.5 px-5 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {/* Tombol Utama: Buka Halaman Profil & Penjualan (Full Page) */}
+                            {b.status === 'pending' && (
+                              <button
+                                onClick={() => handleActivateBusiness(b)}
+                                disabled={isUpdating}
+                                className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center gap-1.5 shadow-2xs"
+                                title="Aktivasi Akun Toko Sekarang"
+                              >
+                                <UserCheck className="w-3.5 h-3.5" />
+                                <span>Aktivasi</span>
+                              </button>
+                            )}
+
                             <Link
                               href={`/dashboard/businesses/${b.id}`}
                               className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all flex items-center gap-1.5 shadow-2xs"
-                              title="Buka Halaman Profil Bisnis, Produk Terlaris & Katalog Lengkap"
+                              title="Buka Detail Toko"
                             >
                               <Eye className="w-3.5 h-3.5 text-slate-600" />
-                              <span>Detail & Penjualan</span>
+                              <span>Detail</span>
                             </Link>
 
-                            {/* Tombol Status Langganan Free/Pro */}
-                            <button
-                              onClick={() => openPlanModal(b)}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs ${
-                                isPro
-                                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-200'
-                                  : 'bg-orange-600 hover:bg-orange-500 text-white'
-                              }`}
-                              title="Ubah paket Free / Pro & masa aktif"
-                            >
-                              <Crown className="w-3.5 h-3.5" />
-                              {isPro ? 'Atur PRO' : 'Upgrade ke PRO'}
-                            </button>
-
-                            {/* Tombol Ganti Template */}
-                            <button
-                              onClick={() => openTemplateModal(b)}
-                              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-                              title="Ganti Template Bisnis"
-                            >
-                              <Layers className="w-4 h-4" />
-                            </button>
-
-                            {/* Tombol Override Limit */}
-                            <button
-                              onClick={() => openLimitsModal(b)}
-                              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-                              title="Override Limit Kuota"
-                            >
-                              <Sliders className="w-4 h-4" />
-                            </button>
-
-                            {/* Tombol Hapus Bisnis */}
                             <button
                               onClick={() => handleDeleteBusiness(b)}
                               className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors"
@@ -618,95 +592,137 @@ export default function BusinessesPage() {
         </div>
 
         {/* ======================================================== */}
-        {/* MODAL 1: UBAH STATUS LANGGANAN (FREE vs PRO)            */}
+        {/* MODAL: DAFTARKAN TOKO RETAIL BARU & STARTER KIT         */}
         {/* ======================================================== */}
-        {planModalBusiness && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <div className="bg-white w-full max-w-lg rounded-2xl p-6 border border-slate-200 shadow-2xl relative">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        {isRegisterModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+            <div className="bg-white w-full max-w-2xl rounded-2xl p-6 border border-slate-200 shadow-2xl relative max-h-[90vh] overflow-y-auto space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
-                    <Crown className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0070fc] flex items-center justify-center font-bold">
+                    <Store className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 text-base">Ubah Status Langganan</h3>
-                    <p className="text-xs text-slate-500">{planModalBusiness.name}</p>
+                    <h3 className="font-bold text-slate-900 text-base">Daftarkan Toko Retail & Starter Kit</h3>
+                    <p className="text-xs text-slate-500">Auto-seed katalog stok perdana & terbitkan pengiriman dari gudang terdekat</p>
                   </div>
                 </div>
                 <button
-                  onClick={() => setPlanModalBusiness(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  type="button"
+                  onClick={() => setIsRegisterModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {errorMsg && (
-                <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
-              <div className="mt-5 space-y-4">
-                {/* Pilihan Paket: FREE vs PRO */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-2">
-                    Pilih Paket Langganan:
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {plans.map((p) => {
-                      const isPro = p.code === 'pro';
-                      const isSelected = selectedPlanId === p.id;
+              <form onSubmit={handleRegisterStore} className="space-y-4 text-xs">
+                {/* 1. Informasi Toko & Pemilik */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3">
+                  <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <UserCheck className="w-4 h-4 text-[#0070fc]" />
+                    <span>Informasi Toko & Pemilik</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Nama Toko Retail</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Contoh: Toko Berkah Mandiri"
+                        value={formStoreName}
+                        onChange={(e) => setFormStoreName(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0070fc]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Nama Pemilik / PIC</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Contoh: Ibu Hj. Siti Aminah"
+                        value={formOwnerName}
+                        onChange={(e) => setFormOwnerName(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0070fc]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">No. WhatsApp Pemilik</label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="Contoh: 0812-3456-7890"
+                        value={formPhone}
+                        onChange={(e) => setFormPhone(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0070fc]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Email Pemilik (Opsional)</label>
+                      <input
+                        type="email"
+                        placeholder="Otomatis dibuat jika kosong"
+                        value={formEmail}
+                        onChange={(e) => setFormEmail(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0070fc]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Pilihan Starter Kit Perdana (@ Rp 200.000) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block font-bold text-slate-800 flex items-center gap-1.5">
+                      <Package className="w-4 h-4 text-[#ba8c02]" />
+                      <span>Pilih Paket Usaha (Starter Kit) Perdana</span>
+                    </label>
+                    <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                      Modal Rp 200.000
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {starterKits.map((kit) => {
+                      const isSelected = formStarterKitId === kit.id;
+                      const itemCount = Array.isArray(kit.items_included) ? kit.items_included.length : 0;
                       return (
                         <div
-                          key={p.id}
-                          onClick={() => setSelectedPlanId(p.id)}
-                          className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                          key={kit.id}
+                          onClick={() => setFormStarterKitId(kit.id)}
+                          className={`p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                             isSelected
-                              ? isPro
-                                ? 'bg-amber-50 border-amber-400 shadow-xs'
-                                : 'bg-slate-50 border-slate-400'
+                              ? 'bg-blue-50/70 border-[#0070fc] ring-2 ring-blue-100 shadow-xs'
                               : 'bg-white border-slate-200 hover:border-slate-300'
                           }`}
                         >
                           <div>
-                            <div className="flex items-center justify-between">
-                              <span
-                                className={`text-xs font-bold uppercase tracking-wider ${
-                                  isPro ? 'text-amber-800' : 'text-slate-700'
-                                }`}
-                              >
-                                {p.name}
+                            <div className="flex items-center justify-between gap-1 mb-1">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                                {kit.badge || 'Starter Kit'}
                               </span>
-                              {isSelected && (
-                                <span
-                                  className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] text-white ${
-                                    isPro ? 'bg-amber-600' : 'bg-slate-800'
-                                  }`}
-                                >
-                                  ✓
-                                </span>
-                              )}
+                              {isSelected && <Check className="w-3.5 h-3.5 text-[#0070fc]" />}
                             </div>
-                            <div className="text-lg font-black text-slate-900 mt-1">
-                              {p.price_monthly > 0
-                                ? `Rp ${Math.round(Number(p.price_monthly) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
-                                : 'Gratis'}
-                            </div>
-                            <div className="text-[11px] text-slate-500 mt-2 space-y-1">
-                              <div>• {p.max_outlets} Maks Outlet</div>
-                              <div>
-                                • {p.max_products > 10000 ? 'Unlimited' : p.max_products} Produk
-                              </div>
-                              <div>
-                                •{' '}
-                                {p.max_transactions_month > 10000
-                                  ? 'Unlimited'
-                                  : p.max_transactions_month}{' '}
-                                Transaksi
-                              </div>
-                            </div>
+                            <h5 className="font-bold text-slate-900 leading-snug">{kit.name}</h5>
+                            <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">{kit.description}</p>
+                          </div>
+
+                          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                            <span className="font-bold text-emerald-600">
+                              Rp {Number(kit.price).toLocaleString('id-ID')}
+                            </span>
+                            <span className="text-slate-500 font-mono">
+                              {itemCount > 0 ? `${itemCount} Produk` : 'Siap Jual'}
+                            </span>
                           </div>
                         </div>
                       );
@@ -714,266 +730,94 @@ export default function BusinessesPage() {
                   </div>
                 </div>
 
-                {/* Status Aktif */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Status Akun:
-                  </label>
-                  <select
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 text-xs font-semibold focus:outline-none focus:border-orange-500 shadow-xs"
-                  >
-                    <option value="active">Active (Aktif Normal)</option>
-                    <option value="trial">Trial (Masa Uji Coba)</option>
-                    <option value="expired">Expired (Berakhir / Ditangguhkan)</option>
-                  </select>
-                </div>
+                {/* 3. Lokasi Toko: Wilayah Administratif & GPS */}
+                <div className="space-y-3">
+                  <WilayahSelector
+                    initialProvince={formProvince}
+                    initialCity={formCity}
+                    initialDistrict={formDistrict}
+                    initialVillage={formVillage}
+                    onChange={(sel: WilayahSelection) => {
+                      setFormProvince(sel.provinceName);
+                      setFormCity(sel.regencyName);
+                      setFormDistrict(sel.districtName);
+                      setFormVillage(sel.villageName);
+                      if (!formAddress && sel.formattedText) {
+                        setFormAddress(sel.formattedText);
+                      }
+                    }}
+                  />
 
-                {/* Pengaturan Durasi PRO (hanya jika memilih PRO) */}
-                {plans.find((p) => p.id === selectedPlanId)?.code === 'pro' && (
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-700">
-                        Masa Aktif Paket PRO:
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-800">
-                        <input
-                          type="checkbox"
-                          checked={isLifetime}
-                          onChange={(e) => setIsLifetime(e.target.checked)}
-                          className="rounded border-slate-300 text-amber-600 focus:ring-0"
-                        />
-                        <span>Aktif Permanen (Lifetime)</span>
-                      </label>
-                    </div>
+                  <GooglePlacesAutocomplete
+                    initialAddress={formAddress}
+                    initialLat={formLat}
+                    initialLng={formLng}
+                    placeholder="Cari patokan toko / jalan via Google Places..."
+                    onSelectPlace={(place: PlaceResult) => {
+                      setFormAddress(place.formattedAddress);
+                      setFormLat(place.latitude);
+                      setFormLng(place.longitude);
+                    }}
+                  />
 
-                    {!isLifetime && (
-                      <div className="grid grid-cols-4 gap-2 pt-1">
-                        {[
-                          { label: '1 Bulan', months: 1 },
-                          { label: '3 Bulan', months: 3 },
-                          { label: '6 Bulan', months: 6 },
-                          { label: '1 Tahun', months: 12 },
-                        ].map((dur) => (
-                          <button
-                            key={dur.months}
-                            type="button"
-                            onClick={() => setDurationMonths(dur.months)}
-                            className={`py-2 rounded-lg text-xs font-bold border transition-all ${
-                              durationMonths === dur.months
-                                ? 'bg-orange-500 border-orange-500 text-white shadow-xs'
-                                : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
-                            }`}
-                          >
-                            {dur.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                  <button
-                    onClick={() => setPlanModalBusiness(null)}
-                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    onClick={handleSavePlan}
-                    disabled={isUpdating}
-                    className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-md shadow-orange-500/20 disabled:opacity-50 flex items-center gap-1.5"
-                  >
-                    <Crown className="w-3.5 h-3.5" />
-                    {isUpdating ? 'Menyimpan...' : 'Simpan Status Langganan'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ======================================================== */}
-        {/* MODAL 2: GANTI TEMPLATE BISNIS                          */}
-        {/* ======================================================== */}
-        {templateModalBusiness && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <div className="bg-white w-full max-w-lg rounded-2xl p-6 border border-slate-200 shadow-2xl relative">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center font-bold">
-                    <Layers className="w-4 h-4" />
-                  </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 text-base">Ganti Template Bisnis</h3>
-                    <p className="text-xs text-slate-500">{templateModalBusiness.name}</p>
+                    <label className="block font-semibold text-slate-700 mb-1">Alamat Fisik Lengkap Toko</label>
+                    <textarea
+                      required
+                      rows={2}
+                      placeholder="Jalan, nomor rumah, RT/RW, patokan depan toko untuk supir pengiriman..."
+                      value={formAddress}
+                      onChange={(e) => setFormAddress(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0070fc]"
+                    />
                   </div>
                 </div>
-                <button
-                  onClick={() => setTemplateModalBusiness(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
 
-              <div className="mt-5 space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-2">
-                    Pilih Template Baru:
-                  </label>
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                    {templates.map((tpl) => (
-                      <label
-                        key={tpl.code}
-                        className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                          selectedTemplateCode === tpl.code
-                            ? 'bg-orange-50 border-orange-400 text-slate-900'
-                            : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                {/* 4. Status Pembayaran */}
+                <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-2">
+                  <label className="block font-bold text-amber-900">Status Pembayaran Starter Kit (Rp 200.000)</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'paid_cash', label: 'Lunas (Tunai ke Sales)' },
+                      { id: 'paid_transfer', label: 'Lunas (Transfer Rekening)' },
+                      { id: 'pending', label: 'Pending (Menunggu Bayar)' },
+                    ].map((st) => (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => setFormPaymentStatus(st.id as any)}
+                        className={`py-2 px-2.5 rounded-lg text-[11px] font-bold border transition-all text-center ${
+                          formPaymentStatus === st.id
+                            ? 'bg-amber-600 border-amber-600 text-white shadow-xs'
+                            : 'bg-white border-amber-200 text-amber-900 hover:bg-amber-100/60'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="template_code"
-                            value={tpl.code}
-                            checked={selectedTemplateCode === tpl.code}
-                            onChange={(e) => setSelectedTemplateCode(e.target.value)}
-                            className="text-orange-600 focus:ring-orange-500"
-                          />
-                          <div>
-                            <div className="text-sm font-bold">{tpl.name}</div>
-                            <div className="text-xs text-slate-500">
-                              {tpl.max_outlets} Outlet • {tpl.max_products} Produk •{' '}
-                              {tpl.default_enabled_features?.length || 0} Modul
-                            </div>
-                          </div>
-                        </div>
-                        <span className="font-mono text-xs text-orange-700 bg-orange-100 px-2 py-0.5 rounded border border-orange-200 font-semibold">
-                          {tpl.code}
-                        </span>
-                      </label>
+                        {st.label}
+                      </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                {/* Tombol Aksi */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
                   <button
-                    onClick={() => setTemplateModalBusiness(null)}
-                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                    type="button"
+                    onClick={() => setIsRegisterModalOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors"
                   >
                     Batal
                   </button>
                   <button
-                    onClick={handleApplyTemplate}
-                    disabled={isUpdating}
-                    className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-md shadow-orange-500/20 disabled:opacity-50"
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2 rounded-xl bg-[#0070fc] hover:bg-[#005ecc] text-white font-bold transition-all shadow-md shadow-blue-500/20 flex items-center gap-2 disabled:opacity-60"
                   >
-                    {isUpdating ? 'Menerapkan...' : 'Terapkan Template'}
+                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    <Truck className="w-4 h-4" />
+                    <span>Daftarkan & Terbitkan Pengiriman</span>
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ======================================================== */}
-        {/* MODAL 3: OVERRIDE CUSTOM LIMITS                         */}
-        {/* ======================================================== */}
-        {limitsModalBusiness && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <div className="bg-white w-full max-w-md rounded-2xl p-6 border border-slate-200 shadow-2xl relative">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center font-bold">
-                    <Sliders className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-base">Override Limit Kuota</h3>
-                    <p className="text-xs text-slate-500">{limitsModalBusiness.name}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setLimitsModalBusiness(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="mt-5 space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Maksimum Outlet
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={customLimitsData.max_outlets}
-                    onChange={(e) =>
-                      setCustomLimitsData({
-                        ...customLimitsData,
-                        max_outlets: parseInt(e.target.value) || 1,
-                      })
-                    }
-                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm font-semibold focus:outline-none focus:border-orange-500 shadow-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Maksimum Produk / Menu
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={customLimitsData.max_products}
-                    onChange={(e) =>
-                      setCustomLimitsData({
-                        ...customLimitsData,
-                        max_products: parseInt(e.target.value) || 50,
-                      })
-                    }
-                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm font-semibold focus:outline-none focus:border-orange-500 shadow-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Maksimum Transaksi / Bulan
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={customLimitsData.max_transactions}
-                    onChange={(e) =>
-                      setCustomLimitsData({
-                        ...customLimitsData,
-                        max_transactions: parseInt(e.target.value) || 100,
-                      })
-                    }
-                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm font-semibold focus:outline-none focus:border-orange-500 shadow-xs"
-                  />
-                </div>
-
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                  <button
-                    onClick={() => setLimitsModalBusiness(null)}
-                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    onClick={handleSaveCustomLimits}
-                    disabled={isUpdating}
-                    className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-md shadow-orange-500/20 disabled:opacity-50"
-                  >
-                    {isUpdating ? 'Menyimpan...' : 'Simpan Batasan'}
-                  </button>
-                </div>
-              </div>
+              </form>
             </div>
           </div>
         )}

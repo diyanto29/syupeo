@@ -1,6 +1,6 @@
 ===============================================================
 PANDUAN INSTALASI DRIVER PRINTER THERMAL KASIR (POS-58 / POS-80)
-MANGGA POS (DPOS) - WINDOWS EDITION
+SYUPEO - WINDOWS EDITION
 ===============================================================
 
 Driver ini mendukung hampir seluruh printer kasir thermal USB & LAN:
@@ -18,10 +18,10 @@ LANGKAH INSTALASI:
 6. Tentukan Port:
    - Pilih port "USB001" (atau USB002 jika ada beberapa port USB).
 7. Klik "Install Now".
-8. Buka aplikasi Mangga POS -> Buka menu "Pengaturan" -> "Pengaturan Printer".
-9. Printer "POS-58" atau "POS-80" akan otomatis terdeteksi di Mangga POS dan siap digunakan untuk cetak struk dan tiket dapur!
+8. Buka aplikasi Syupeo -> Buka menu "Pengaturan" -> "Pengaturan Printer".
+9. Printer "POS-58" atau "POS-80" akan otomatis terdeteksi di Syupeo dan siap digunakan untuk cetak struk dan tiket dapur!
 
 ===============================================================
-Layanan Bantuan & Dukungan Teknis Mangga POS:
-Hubungi Customer Support Mangga POS jika memerlukan panduan konfigurasi.
+Layanan Bantuan & Dukungan Teknis Syupeo:
+Hubungi Customer Support Syupeo jika memerlukan panduan konfigurasi.
 ===============================================================

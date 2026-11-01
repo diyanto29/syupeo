@@ -355,8 +355,8 @@ class _MenuCategoryManagementScreenState
                               extraCount:
                                   ' ($specificOutletsCovered/$totalOutlets)',
                               subtext: 'Outlet Khusus',
-                              labelColor: const Color(0xFFEA580C),
-                              countColor: const Color(0xFFEA580C),
+                              labelColor: const Color(0xFF005ECC),
+                              countColor: const Color(0xFF005ECC),
                               icon: Icons.location_on_outlined,
                               iconBgColor: const Color(0xFFFEF3C7),
                               iconColor: const Color(0xFFD97706),
@@ -506,7 +506,7 @@ class _MenuCategoryManagementScreenState
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: Text(
-            'Semua pengaturan cabang tersinkronisasi otomatis dengan cloud Mangga POS.',
+            'Semua pengaturan cabang tersinkronisasi otomatis dengan cloud Syupeo.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 11,
@@ -910,7 +910,7 @@ class _MenuCategoryManagementScreenState
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFFEA580C),
+                          color: Color(0xFF005ECC),
                         ),
                       ),
                     ),
@@ -1048,7 +1048,7 @@ class _MenuCategoryManagementScreenState
                             ),
                             const SizedBox(width: 5),
                             const Text(
-                              'Mangga POS',
+                              'Syupeo',
                               style: TextStyle(
                                 color: Color(0xFF16A34A),
                                 fontSize: 11,
@@ -1249,13 +1249,13 @@ class _MenuCategoryManagementScreenState
                     Expanded(
                       child: _buildTabletSummaryCard(
                         title: 'DISTRIBUSI KHUSUS',
-                        titleColor: const Color(0xFFEA580C),
+                        titleColor: const Color(0xFF005ECC),
                         badgeText:
                             '$specificOutletsCovered/$totalOutlets Cabang',
                         badgeBgColor: const Color(0xFFFEF3C7),
                         badgeTextColor: const Color(0xFFD97706),
                         count: '$specificCategories',
-                        countColor: const Color(0xFFEA580C),
+                        countColor: const Color(0xFF005ECC),
                         countLabel: 'Kategori (Outlet Tertentu)',
                         subtext: 'Hanya ditugaskan ke cabang promosi aktif',
                         icon: Icons.location_on_outlined,
@@ -1395,7 +1395,7 @@ class _MenuCategoryManagementScreenState
               ),
               const SizedBox(width: 8),
               const Text(
-                'Semua pengaturan cabang tersinkronisasi otomatis dengan cloud Mangga POS tablet.',
+                'Semua pengaturan cabang tersinkronisasi otomatis dengan cloud Syupeo tablet.',
                 style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
               ),
               const Spacer(),
@@ -1424,7 +1424,7 @@ class _MenuCategoryManagementScreenState
                     Icon(
                       Icons.sync_rounded,
                       size: 16,
-                      color: Color(0xFFEA580C),
+                      color: Color(0xFF005ECC),
                     ),
                     SizedBox(width: 4),
                     Text(
@@ -1432,7 +1432,7 @@ class _MenuCategoryManagementScreenState
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFFEA580C),
+                        color: Color(0xFF005ECC),
                       ),
                     ),
                   ],
@@ -1740,7 +1740,7 @@ class _MenuCategoryManagementScreenState
                   vertical: 4,
                 ),
                 decoration: const BoxDecoration(
-                  color: Color(0xFFEA580C),
+                  color: Color(0xFF005ECC),
                   borderRadius: BorderRadius.only(
                     topRight: Radius.circular(16),
                     bottomLeft: Radius.circular(12),
@@ -1829,7 +1829,7 @@ class _MenuCategoryManagementScreenState
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFFEA580C),
+                                    color: Color(0xFF005ECC),
                                   ),
                                 )
                               else
@@ -1910,7 +1910,7 @@ class _MenuCategoryManagementScreenState
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFFEA580C),
+                              color: Color(0xFF005ECC),
                             ),
                           ),
                         ),

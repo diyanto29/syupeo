@@ -3,9 +3,9 @@ name: dpos-thermal-printer
 description: Panduan integrasi printer thermal Bluetooth ESC/POS (58mm dan 80mm), layout struk kasir, cetak QRIS, tiket dapur, perintah cash drawer, dan penanganan koneksi printer.
 ---
 
-# DPOS Thermal Printer & ESC/POS Protocol Guide
+# Syupeo Thermal Printer & ESC/POS Protocol Guide
 
-Dokumen skill ini memberikan spesifikasi teknis untuk modul pencetakan struk thermal Bluetooth di aplikasi DPOS.
+Dokumen skill ini memberikan spesifikasi teknis untuk modul pencetakan struk thermal Bluetooth di aplikasi Syupeo.
 
 ---
 
@@ -48,7 +48,7 @@ KEMBALIAN                35.650
 ================================
   Metode Bayar: CASH / TUNAI
   Terima Kasih Atas Kunjungan Anda!
-   Powered by Mangga POS (DPOS)
+   Powered by Syupeo
 ================================
 ```
 

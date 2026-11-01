@@ -169,7 +169,24 @@ export default function MerchantDashboardPage() {
         items.forEach((it: any) => {
           const qty = Number(it.quantity || 1);
           const price = Number(it.unit_price ?? it.price ?? 0);
-          const cost = Number(it.cost_price || 0);
+          let cost = Number(it.cost_price || 0);
+
+          // Normalisasi cerdas jika HPP mencatat harga modal induk penuh untuk varian fraksi/eceran (1/2 kg, 1/4 kg)
+          if (it.variant_name && cost > 0) {
+            const vLower = String(it.variant_name).toLowerCase().replace(/\s+/g, '');
+            let mult = 1.0;
+            if (vLower.includes('1/4') || vLower.includes('seperempat') || vLower.includes('250g') || vLower.includes('0.25')) {
+              mult = 0.25;
+            } else if (vLower.includes('1/2') || vLower.includes('setengah') || vLower.includes('500g') || vLower.includes('0.5')) {
+              mult = 0.5;
+            } else if (vLower.includes('3/4') || vLower.includes('750g') || vLower.includes('0.75')) {
+              mult = 0.75;
+            }
+            if (mult < 1.0 && cost >= price && (cost * mult) < price) {
+              cost = cost * mult;
+            }
+          }
+
           itemsCount += qty;
           totalCost += cost * qty;
 

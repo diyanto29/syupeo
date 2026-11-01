@@ -26,7 +26,7 @@ class ReportPdfService {
     final pdf = pw.Document(
       title: 'Laporan Penjualan - $businessName',
       author: businessName,
-      creator: 'Mangga POS',
+      creator: 'Syupeo',
     );
 
     // ── Theme ────────────────────────────────────────────────
@@ -338,7 +338,7 @@ class ReportPdfService {
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Text(
-            'Dibuat oleh Mangga POS (mudahkan.online)',
+            'Dibuat oleh Syupeo (mudahkan.online)',
             style: pw.TextStyle(fontSize: 7, color: PdfColors.grey500),
           ),
           pw.Text(

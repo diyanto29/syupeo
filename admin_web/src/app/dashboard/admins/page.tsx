@@ -32,6 +32,7 @@ const MASTER_EMAIL = 'diyanto2911@gmail.com';
 export default function AdminManagementPage() {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [registeredProfiles, setRegisteredProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'ALL' | 'super_admin' | 'admin' | 'partner'>('ALL');
@@ -74,7 +75,78 @@ export default function AdminManagementPage() {
         .select('*')
         .order('name', { ascending: true });
 
-      setAdmins(data || []);
+      // Ambil juga profil terdaftar dari public.profiles untuk quick-picker tambah admin
+      try {
+        const { data: profData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, role')
+          .order('created_at', { ascending: false });
+        if (profData) {
+          setRegisteredProfiles(profData);
+        }
+      } catch (e) {
+        console.warn('Could not fetch profiles:', e);
+      }
+
+      let adminList: AdminUser[] = (data as AdminUser[]) || [];
+
+      // Pastikan Master Super Admin selalu ada di daftar (auto-inject jika belum ada di DB)
+      const masterExists = adminList.some(
+        (a) => a.email.toLowerCase() === MASTER_EMAIL.toLowerCase()
+      );
+
+      if (!masterExists) {
+        try {
+          const { data: upserted } = await supabase
+            .from('admin_users')
+            .upsert(
+              {
+                email: MASTER_EMAIL.toLowerCase(),
+                name: 'Diyanto (Super Admin)',
+                role: 'super_admin',
+                is_active: true,
+                can_manage_licenses: true,
+              },
+              { onConflict: 'email' }
+            )
+            .select('*, partners(*)')
+            .maybeSingle();
+
+          if (upserted) {
+            adminList = [upserted as AdminUser, ...adminList];
+          } else {
+            adminList = [
+              {
+                id: 'master-super-admin',
+                email: MASTER_EMAIL.toLowerCase(),
+                name: 'Diyanto (Super Admin)',
+                role: 'super_admin',
+                is_active: true,
+                can_manage_licenses: true,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              } as AdminUser,
+              ...adminList,
+            ];
+          }
+        } catch {
+          adminList = [
+            {
+              id: 'master-super-admin',
+              email: MASTER_EMAIL.toLowerCase(),
+              name: 'Diyanto (Super Admin)',
+              role: 'super_admin',
+              is_active: true,
+              can_manage_licenses: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            } as AdminUser,
+            ...adminList,
+          ];
+        }
+      }
+
+      setAdmins(adminList);
       setPartners((partnerData as Partner[]) || []);
     } catch (err: any) {
       console.error('Gagal mengambil data admin:', err);
@@ -269,8 +341,8 @@ export default function AdminManagementPage() {
   return (
     <div className="space-y-8 pb-12">
       <Navbar
-        title="Kelola Akses Admin"
-        description="Atur rekan tim dan pengguna yang memiliki hak akses ke panel kontrol Mangga POS"
+        title="Kelola Tim Admin Syupeo"
+        description="Atur rekan tim dan pengguna yang memiliki hak akses ke Super Admin Control Hub Syupeo"
       />
 
       {/* Action Alerts */}
@@ -598,8 +670,8 @@ export default function AdminManagementPage() {
             {/* Modal Header */}
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
-                  {editingAdmin ? <Edit2 className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0070fc] flex items-center justify-center font-bold border border-blue-100">
+                  {editingAdmin ? <Edit2 className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-slate-900">
@@ -620,6 +692,37 @@ export default function AdminManagementPage() {
 
             {/* Modal Form */}
             <form onSubmit={handleSaveAdmin} className="p-6 space-y-4">
+              {/* Quick Select from Registered Profiles */}
+              {!editingAdmin && registeredProfiles.length > 0 && (
+                <div className="p-3 bg-blue-50/70 rounded-2xl border border-blue-200/80 space-y-1.5">
+                  <label className="block text-[11px] font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5 text-[#0070fc]" />
+                    <span>Pilih dari Pengguna Terdaftar (Opsional)</span>
+                  </label>
+                  <select
+                    onChange={(e) => {
+                      const selected = registeredProfiles.find((p) => p.email === e.target.value);
+                      if (selected) {
+                        setFormEmail(selected.email || '');
+                        setFormName(selected.full_name || '');
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-blue-200 text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>-- Klik untuk memilih akun terdaftar --</option>
+                    {registeredProfiles.map((p) => (
+                      <option key={p.id} value={p.email}>
+                        {p.full_name || 'Tanpa Nama'} — {p.email}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-blue-700">
+                    Pilih akun di atas untuk mengisi otomatis nama & email di bawah.
+                  </p>
+                </div>
+              )}
+
               {/* Email */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
@@ -634,7 +737,7 @@ export default function AdminManagementPage() {
                     placeholder="contoh@gmail.com"
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm disabled:bg-slate-100 disabled:text-slate-500"
                   />
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">
@@ -768,7 +871,7 @@ export default function AdminManagementPage() {
                       )}
                     </div>
                     <div className="text-[11px] text-slate-500 mt-0.5">
-                      Izinkan admin ini membuat Serial Key (BatiKu, KosanKu & ManggoPOS) serta mengakses rekap bagi komisi.
+                      Izinkan admin ini mengelola alokasi stok Starter Kit retail, persetujuan restock, serta rekap bagi hasil mitra.
                     </div>
                   </div>
                 </label>

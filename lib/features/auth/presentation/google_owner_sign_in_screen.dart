@@ -17,17 +17,7 @@ class GoogleOwnerSignInScreen extends ConsumerStatefulWidget {
 
 class _GoogleOwnerSignInScreenState
     extends ConsumerState<GoogleOwnerSignInScreen> {
-  final _identifierController = TextEditingController();
-  final _passwordController = TextEditingController();
   bool _isSubmitting = false;
-  bool _obscurePassword = true;
-
-  @override
-  void dispose() {
-    _identifierController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   Future<void> _submitGoogle() async {
     if (_isSubmitting) return;
@@ -74,58 +64,6 @@ class _GoogleOwnerSignInScreenState
     }
   }
 
-  Future<void> _submitStaffLogin() async {
-    final identifier = _identifierController.text.trim();
-    final password = _passwordController.text;
-    if (identifier.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Isi Staff ID dan password terlebih dahulu.'),
-        ),
-      );
-      return;
-    }
-
-    if (_isSubmitting) return;
-    setState(() => _isSubmitting = true);
-    try {
-      await ref
-          .read(authRepositoryProvider)
-          .signInWithStaffCredentials(
-            identifier: identifier,
-            password: password,
-          );
-      final bootstrap = await ref.refresh(homeBootstrapProvider.future);
-      if (!mounted) {
-        return;
-      }
-      context.goNamed(
-        bootstrap.needsOwnerOnboarding
-            ? RouteNames.ownerOnboarding
-            : bootstrap.needsOutletSelection
-            ? RouteNames.outletPicker
-            : RouteNames.dashboard,
-      );
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_resolveLoginError(error, source: 'staff'))),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
-    }
-  }
-
-  void _showComingSoon(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
   String _resolveLoginError(Object error, {required String source}) {
     final raw = error.toString();
     final normalized = raw.toLowerCase();
@@ -159,7 +97,7 @@ class _GoogleOwnerSignInScreenState
     if (normalized.contains('sign_in_failed') &&
         (normalized.contains('apiexception: 10') ||
             normalized.contains('developer error'))) {
-      return 'Google Sign-In Android release belum cocok dengan konfigurasi Firebase. Tambahkan SHA-1 dan SHA-256 dari keystore release & Play App Signing ke app Android `online.mudahkan.manggapos`, download ulang `android/app/google-services.json`, lalu build ulang APK/AAB release.';
+      return 'Google Sign-In Android release belum cocok dengan konfigurasi Firebase. Tambahkan SHA-1 dan SHA-256 dari keystore release & Play App Signing ke app Android `online.mudahkan.syupeo`, download ulang `android/app/google-services.json`, lalu build ulang APK/AAB release.';
     }
 
     return 'Login $source gagal: $raw';
@@ -260,7 +198,7 @@ class _GoogleOwnerSignInScreenState
                           ),
                           const SizedBox(width: 14),
                           Text(
-                            'Mangga POS',
+                            'Syupeo',
                             style: theme.textTheme.headlineMedium?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
@@ -324,7 +262,7 @@ class _GoogleOwnerSignInScreenState
                       const Spacer(),
                       // Bottom tagline
                       Text(
-                        '© 2026 DPOS — Built for F&B teams.',
+                        '© 2026 Syupeo — Solusi POS & Kemitraan Ritel.',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.white.withValues(alpha: 0.45),
                         ),
@@ -375,7 +313,7 @@ class _GoogleOwnerSignInScreenState
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Sign in to manage your outlets and staff.',
+                            'Masuk untuk mengelola toko ritel & kasir POS Anda.',
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: scheme.onSurface.withValues(alpha: 0.65),
                             ),
@@ -500,7 +438,7 @@ class _GoogleOwnerSignInScreenState
               ),
               const SizedBox(width: 12),
               Text(
-                'Mangga POS',
+                'Syupeo',
                 style: theme.textTheme.displayMedium?.copyWith(
                   fontSize: 26,
                   color: scheme.secondary,
@@ -518,7 +456,7 @@ class _GoogleOwnerSignInScreenState
           ),
           const SizedBox(height: 8),
           Text(
-            'Please sign in to start your floor rotation.',
+            'Masuk untuk mengelola toko ritel & kasir POS Anda.',
             style: theme.textTheme.bodyLarge?.copyWith(
               color: scheme.onSurface.withValues(alpha: 0.70),
             ),
@@ -536,11 +474,10 @@ class _GoogleOwnerSignInScreenState
   Widget _buildLoginFormCard(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final tokens = theme.extension<ConciergeThemeTokens>();
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 18, 14, 16),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(28),
@@ -548,129 +485,62 @@ class _GoogleOwnerSignInScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _LoginFieldLabel(label: 'Email / Staff ID'),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _identifierController,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              hintText: 'SF-2024-001',
-              prefixIcon: Icon(Icons.badge_outlined),
+          Text(
+            'Masuk sebagai Mitra Toko',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const Expanded(child: _LoginFieldLabel(label: 'Password')),
-              TextButton(
-                onPressed: () =>
-                    _showComingSoon('Flow lupa password sedang disiapkan.'),
-                child: Text(
-                  'Lupa Password?',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: scheme.secondary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          TextField(
-            controller: _passwordController,
-            obscureText: _obscurePassword,
-            decoration: InputDecoration(
-              hintText: '••••••••',
-              prefixIcon: const Icon(Icons.lock_outline_rounded),
-              suffixIcon: IconButton(
-                onPressed: () {
-                  setState(() => _obscurePassword = !_obscurePassword);
-                },
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                ),
-              ),
+          const SizedBox(height: 6),
+          Text(
+            'Gunakan akun Google Anda untuk mengakses POS kasir, katalog kulakan langsung dari pabrik, dan laporan toko.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.65),
+              height: 1.4,
             ),
           ),
-          const SizedBox(height: 18),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient:
-                  tokens?.ctaGradient ??
-                  const LinearGradient(
-                    colors: [Color(0xFFFF8C00), Color(0xFFCE7000)],
-                  ),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: scheme.primary.withValues(alpha: 0.24),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _isSubmitting ? null : _submitStaffLogin,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: Colors.white,
-                  shadowColor: Colors.transparent,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(_isSubmitting ? 'Memproses...' : 'Masuk'),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward_rounded, size: 18),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: Divider(
-                  color: scheme.outline.withValues(alpha: 0.25),
-                  height: 1,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text(
-                  'atau',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurface.withValues(alpha: 0.68),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Divider(
-                  color: scheme.outline.withValues(alpha: 0.25),
-                  height: 1,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
+            height: 54,
+            child: FilledButton.icon(
               onPressed: _isSubmitting ? null : _submitGoogle,
-              icon: const _GoogleMark(),
-
+              icon: _isSubmitting
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const _GoogleMark(),
               label: Text(
                 _isSubmitting
                     ? 'Menghubungkan Google...'
                     : 'Masuk dengan Google',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              style: OutlinedButton.styleFrom(
-                backgroundColor: scheme.surfaceContainerLow,
-                side: BorderSide.none,
-                foregroundColor: scheme.onSurface,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF0070FC),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 2,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: Text(
+              'Aman • 100% Gratis Tanpa Biaya Berlangganan',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: scheme.onSurface.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -680,33 +550,27 @@ class _GoogleOwnerSignInScreenState
   }
 }
 
-class _LoginFieldLabel extends StatelessWidget {
-  const _LoginFieldLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      style: Theme.of(
-        context,
-      ).textTheme.labelSmall?.copyWith(letterSpacing: 1.3),
-    );
-  }
-}
-
 class _GoogleMark extends StatelessWidget {
   const _GoogleMark();
 
   @override
   Widget build(BuildContext context) {
-    return const Text(
-      'G',
-      style: TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.w800,
-        color: Color(0xFF4285F4),
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        'G',
+        style: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF0070FC),
+          height: 1.05,
+        ),
       ),
     );
   }

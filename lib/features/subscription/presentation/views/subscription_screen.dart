@@ -1,75 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:dpos/core/domain/subscription_models.dart';
 import 'package:dpos/core/providers/bootstrap_provider.dart';
-import 'package:dpos/features/subscription/data/subscription_repository.dart';
+import 'package:dpos/core/theme/app_theme.dart';
+import 'package:dpos/core/widgets/syupeo_shimmer.dart';
+import 'package:dpos/core/widgets/syupeo_starter_kit_carousel.dart';
+import 'package:dpos/features/subscription/domain/starter_kit_model.dart';
+import 'package:dpos/features/subscription/presentation/providers/starter_kit_provider.dart';
+import 'package:dpos/features/subscription/presentation/views/starter_kit_orders_sheet.dart';
 
-class _ProDuration {
+enum _KitViewMode {
+  carousel('Tampilan Swipe', Icons.view_carousel_rounded),
+  list('Daftar Lengkap', Icons.grid_view_rounded);
+
   final String label;
-  final String code;
-  final int months;
-  final bool isLifetime;
-  final num price;
-  final double? originalPrice;
-  final String subtitle;
-  final String? badge;
-
-  const _ProDuration({
-    required this.label,
-    required this.code,
-    required this.months,
-    this.isLifetime = false,
-    required this.price,
-    this.originalPrice,
-    required this.subtitle,
-    this.badge,
-  });
-
-  bool get hasDiscount => originalPrice != null && originalPrice! > price;
-
-  int? get discountPercentage {
-    if (!hasDiscount) return null;
-    return (((originalPrice! - price) / originalPrice!) * 100).round();
-  }
+  final IconData icon;
+  const _KitViewMode(this.label, this.icon);
 }
 
-List<_ProDuration> _buildProDurationOptions(SubscriptionPlan? proPlan) {
-  if (proPlan != null) {
-    final activeTiers = proPlan.getActiveProTiers();
-    if (activeTiers.isNotEmpty) {
-      return activeTiers
-          .map(
-            (t) => _ProDuration(
-              label: t.label,
-              code: t.code,
-              months: t.months,
-              isLifetime: t.isLifetime,
-              price: t.price,
-              originalPrice: t.originalPrice,
-              subtitle: t.subtitle,
-              badge: t.badge,
-            ),
-          )
-          .toList();
-    }
-  }
-
-  // Fallback default jika data paket belum termuat dari server
-  return const [
-    _ProDuration(
-      label: '1 Bulan',
-      code: '1_month',
-      months: 1,
-      price: 49000.0,
-      subtitle: '/bulan',
-    ),
-  ];
-}
-
+/// ── HALAMAN PAKET USAHA SYUPEO (CLOSED-LOOP SUPPLY CHAIN) ──
+/// Menggantikan sistem lisensi SaaS lama dengan katalog paket usaha fisik:
+/// 1. Bebas biaya langganan / lisensi software kasir (100% Gratis Seumur Hidup).
+/// 2. Menampilkan 4 paket starter kit resmi (@ Rp 200rb) dengan stok fisik barang siap display.
+/// 3. Dukungan dua mode tampilan: Parallaks Carousel (seperti onboarding) & Grid/List cards.
+/// 4. Akses cepat ke Riwayat Pesanan & Pengiriman Paket (Tracking & Audit Screen).
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
 
@@ -78,642 +36,153 @@ class SubscriptionScreen extends ConsumerStatefulWidget {
 }
 
 class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
-  final currencyFormat = NumberFormat.currency(
+  static final _currencyFormat = NumberFormat.currency(
     locale: 'id_ID',
     symbol: 'Rp ',
     decimalDigits: 0,
   );
 
-  String? selectedPlanCode;
-  int selectedDurationIndex = 4; // Default to Lifetime (paling menarik)
+  _KitViewMode _viewMode = _KitViewMode.carousel;
+  StarterKit? _selectedKit;
 
-  Future<void> _launchWhatsApp({
-    required String businessName,
-    required String businessId,
-    required String durationLabel,
-    required num price,
-  }) async {
+  Future<void> _orderViaWhatsApp(StarterKit kit) async {
+    HapticFeedback.mediumImpact();
     const phone = '6285624277920';
-    final formattedPrice = currencyFormat.format(price);
-    final message =
-        'Halo Admin Mangga POS, saya ingin upgrade ke Paket Pro ($durationLabel - $formattedPrice) untuk bisnis $businessName (ID: $businessId). Mohon info langkah aktivasi selanjutnya. Terima kasih!';
+
+    final bootstrap = ref.read(homeBootstrapProvider).value;
+    final business = bootstrap?.business;
+    final outlet = bootstrap?.currentOutlet;
+
+    final formattedPrice = _currencyFormat.format(kit.price);
+    final discount = kit.originalPrice != null && kit.originalPrice! > kit.price
+        ? _currencyFormat.format(kit.originalPrice! - kit.price)
+        : null;
+
+    final message = 'Halo Admin Syupeo, saya ingin pesan Paket Usaha untuk toko saya:\n\n'
+        '📦 *Paket:* ${kit.name}\n'
+        '🏷️ *Harga Promo:* $formattedPrice ${discount != null ? "(Hemat $discount)" : ""}\n'
+        '🏪 *Nama Toko:* ${business?.name ?? "Toko Saya"}\n'
+        '🆔 *ID Toko:* ${business?.id ?? "-"}\n'
+        '📍 *Alamat Pengiriman:* ${outlet?.address ?? business?.address ?? "-"}\n\n'
+        'Mohon info nomor rekening pembayaran dan proses pengiriman dari gudang regional terdekat. Terima kasih!';
+
     final url = 'https://wa.me/$phone?text=${Uri.encodeComponent(message)}';
 
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tidak dapat membuka WhatsApp. Silakan hubungi 0856-2427-7920.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bootstrap = ref.watch(homeBootstrapProvider).value;
-    final plansAsync = ref.watch(subscriptionPlansProvider);
-    final business = bootstrap?.business;
-    final currentPlanCode = business?.plan?.code ?? 'free';
-
-    final businessName = business?.name ?? 'Bisnis Saya';
-    final businessId = business?.id ?? '-';
-    final isCurrentlyPro = business?.isPro ?? false;
-    final isTrial = business?.isTrialActive ?? false;
-    final isLifetime = business?.isLifetime ?? false;
-    final isExpired = business?.isExpired ?? false;
-    final remainingDays = business?.remainingDays;
-
-    selectedPlanCode ??= currentPlanCode;
+    final theme = Theme.of(context);
+    final starterKitsAsync = ref.watch(starterKitsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Paket & Langganan'),
+        title: Text(
+          'Paket Usaha',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
         centerTitle: false,
-      ),
-      body: plansAsync.when(
-        data: (allPlans) {
-          final plans = allPlans
-              .where((p) => p.code == 'free' || p.code == 'pro')
-              .toList();
-
-          final freePlan = plans.firstWhere(
-            (p) => p.code == 'free',
-            orElse: () => plans.isNotEmpty ? plans.first : const SubscriptionPlan(
-              id: 'free',
-              name: 'Free Plan',
-              code: 'free',
-              maxTransactionsMonth: 150,
-              maxProducts: 50,
-              maxOutlets: 1,
-              features: {},
-              priceMonthly: 0,
+        actions: [
+          // Tombol Buka Riwayat Pesanan Paket
+          TextButton.icon(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              StarterKitOrdersSheet.show(context);
+            },
+            icon: const Icon(
+              Icons.local_shipping_rounded,
+              size: 18,
+              color: Color(0xFF0070FC),
             ),
-          );
-          final proPlan = plans.firstWhere(
-            (p) => p.code == 'pro',
-            orElse: () => plans.isNotEmpty ? plans.last : const SubscriptionPlan(
-              id: 'pro',
-              name: 'Pro Plan',
-              code: 'pro',
-              maxTransactionsMonth: 999999,
-              maxProducts: 999999,
-              maxOutlets: 5,
-              features: {},
-              priceMonthly: 49000,
-            ),
-          );
-
-          final selectedPlan = plans.firstWhere(
-            (p) => p.code == selectedPlanCode,
-            orElse: () => freePlan,
-          );
-
-          final proDurationOptions = _buildProDurationOptions(proPlan);
-          final safeDurationIndex = selectedDurationIndex.clamp(0, proDurationOptions.length - 1);
-          final selectedDuration = proDurationOptions[safeDurationIndex];
-
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      // ── Current Status Banner (jika Pro, Trial, atau Expired) ──
-                      if (isCurrentlyPro || isTrial || isExpired) ...[
-                        _CurrentSubscriptionBanner(
-                          isLifetime: isLifetime,
-                          isTrial: isTrial,
-                          isExpired: isExpired,
-                          remainingDays: remainingDays,
-                          endDate: business?.subscriptionEndAt,
-                          showAds: business?.showAds,
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // Toggle Free / Pro Only
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: plans
-                              .map(
-                                (plan) => _PlanToggleButton(
-                                  label: plan.name.split(' ').first,
-                                  isActive: selectedPlanCode == plan.code,
-                                  isHot: plan.code == 'pro',
-                                  onTap: () => setState(
-                                    () => selectedPlanCode = plan.code,
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Duration Selector (Khusus untuk Paket Pro)
-                      if (selectedPlanCode == 'pro') ...[
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Pilih Durasi Paket Pro:',
-                            style: GoogleFonts.manrope(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF475569),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: List.generate(
-                              proDurationOptions.length,
-                              (index) {
-                                final opt = proDurationOptions[index];
-                                final isSelected =
-                                    safeDurationIndex == index;
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: ChoiceChip(
-                                    label: Text(
-                                      opt.badge != null
-                                          ? '${opt.label} (${opt.badge})'
-                                          : opt.label,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: isSelected
-                                            ? FontWeight.w800
-                                            : FontWeight.w600,
-                                        color: isSelected
-                                            ? Colors.white
-                                            : const Color(0xFF334155),
-                                      ),
-                                    ),
-                                    selected: isSelected,
-                                    selectedColor: const Color(0xFFFF7A00),
-                                    backgroundColor: Colors.white,
-                                    side: BorderSide(
-                                      color: isSelected
-                                          ? const Color(0xFFFF7A00)
-                                          : const Color(0xFFE2E8F0),
-                                    ),
-                                    onSelected: (selected) {
-                                      if (selected) {
-                                        setState(() {
-                                          selectedDurationIndex = index;
-                                        });
-                                      }
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // Display selected plan card
-                      _PriceCard(
-                        title: selectedPlanCode == 'pro'
-                            ? (selectedDuration.isLifetime
-                                ? 'Paket Pro Lifetime'
-                                : 'Paket Pro ${selectedDuration.label}')
-                            : selectedPlan.name,
-                        price: selectedPlanCode == 'free'
-                            ? 'Gratis'
-                            : currencyFormat.format(selectedDuration.price),
-                        originalPrice: (selectedPlanCode == 'pro' &&
-                                selectedDuration.hasDiscount)
-                            ? currencyFormat.format(selectedDuration.originalPrice!)
-                            : null,
-                        discountBadge: (selectedPlanCode == 'pro' &&
-                                selectedDuration.discountPercentage != null)
-                            ? 'HEMAT ${selectedDuration.discountPercentage}%'
-                            : null,
-                        subtitle: selectedPlanCode == 'free'
-                            ? ''
-                            : selectedDuration.subtitle,
-                        description: selectedPlanCode == 'free'
-                            ? 'Solusi kasir esensial untuk memulai bisnis Anda tanpa biaya langganan selamanya.'
-                            : (selectedDuration.isLifetime
-                                ? 'Sekali bayar aktif selamanya! Nikmati fitur dapur pintar, multi-outlet, dan laporan lengkap tanpa biaya bulanan.'
-                                : 'Luncurkan efisiensi maksimal dengan fitur dapur pintar dan sistem pemesanan mandiri.'),
-                        features: selectedPlanCode == 'free'
-                            ? [
-                                'Dashboard Penjualan Dasar',
-                                'Riwayat Transaksi & Cetak Struk',
-                                'Manajemen Staf & Hak Akses',
-                                'Katalog Produk & Retail POS',
-                                'Manajemen Diskon & Voucher',
-                                'Refund & Pembatalan Transaksi',
-                                'Notifikasi Pesanan Masuk (App)',
-                                'Maks. ${selectedPlan.maxProducts} Produk',
-                              ]
-                            : [
-                                'SEMUA FITUR PAKET FREE',
-                                'Arus Kas & Manajemen Shift Kasir',
-                                'Cetak Bluetooth Thermal Printer',
-                                'Notifikasi Push Real-time ke HP',
-                                'Kitchen Display System (KDS)',
-                                'Self-Ordering QR Meja Resto',
-                                'Manajemen Stok & Inventori',
-                                'Harga Bertingkat (Grosir/Member)',
-                                'Multi-Outlet Cabang Bisnis',
-                                'Ekspor Laporan PDF/Excel/CSV',
-                                'Bebas Iklan Selamanya',
-                              ],
-                        isPopular: selectedPlanCode == 'pro',
-                        isCurrent: selectedPlanCode == currentPlanCode &&
-                            !isExpired &&
-                            (selectedPlanCode == 'free' ||
-                                (isLifetime == selectedDuration.isLifetime)),
-                        buttonText: selectedPlanCode == 'free'
-                            ? (currentPlanCode == 'free'
-                                ? 'Paket Aktif Saat Ini'
-                                : 'Paket Free')
-                            : (isCurrentlyPro
-                                ? 'Perpanjang (${selectedDuration.label})'
-                                : 'Upgrade (${selectedDuration.label})'),
-                        onUpgrade: () => _launchWhatsApp(
-                          businessName: businessName,
-                          businessId: businessId,
-                          durationLabel: selectedDuration.label,
-                          price: selectedDuration.price,
-                        ),
-                      ),
-
-                      const SizedBox(height: 36),
-
-                      // Full Comparison Table
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.compare_arrows_rounded,
-                            color: Color(0xFF64748B),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Perbandingan Fitur Lengkap',
-                            style: GoogleFonts.manrope(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF1E293B),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      _ComparisonTable(freePlan: freePlan, proPlan: proPlan),
-
-                      const SizedBox(height: 40),
-                      _ElevateBanner(),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Gagal memuat paket: $err')),
-      ),
-    );
-  }
-}
-
-// ── Banner Status Langganan Saat Ini ─────────────────────────
-class _CurrentSubscriptionBanner extends StatelessWidget {
-  final bool isLifetime;
-  final bool isTrial;
-  final bool isExpired;
-  final int? remainingDays;
-  final DateTime? endDate;
-  final bool? showAds;
-
-  const _CurrentSubscriptionBanner({
-    required this.isLifetime,
-    this.isTrial = false,
-    required this.isExpired,
-    this.remainingDays,
-    this.endDate,
-    this.showAds,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final dateFormat = DateFormat('d MMMM yyyy', 'id_ID');
-
-    if (isExpired) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFEF2F2),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFF87171)),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 28),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Masa Aktif Paket Telah Berakhir',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF991B1B),
-                      fontSize: 14,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Perpanjang paket sekarang untuk mengaktifkan kembali fitur Pro Anda.',
-                    style: TextStyle(color: Color(0xFFB91C1C), fontSize: 12),
-                  ),
-                ],
+            label: Text(
+              'Riwayat Pesanan',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF0070FC),
               ),
             ),
-          ],
-        ),
-      );
-    }
-
-    if (isTrial) {
-      final isAdFree = showAds == false;
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
           ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.4)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF6366F1).withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Text('🎁', style: TextStyle(fontSize: 28)),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isLifetime
-                        ? 'Masa Uji Coba Pro Aktif (Selamanya)'
-                        : 'Masa Uji Coba Pro (Sisa ${remainingDays ?? 0} Hari)',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF312E81),
-                      fontSize: 14.5,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    isAdFree
-                        ? 'Fitur Pro terbuka penuh tanpa iklan untuk toko Anda.'
-                        : 'Fitur Pro aktif. Upgrade ke Pro Berbayar untuk menghilangkan iklan secara permanen.',
-                    style: const TextStyle(
-                      color: Color(0xFF4338CA),
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (isLifetime) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFFFBEB), Color(0xFFFEF3C7)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: const Row(
-          children: [
-            Text('👑', style: TextStyle(fontSize: 28)),
-            SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Paket Pro Lifetime Aktif',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF92400E),
-                      fontSize: 15,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Bisnis Anda aktif seumur hidup tanpa batas waktu.',
-                    style: TextStyle(color: Color(0xFFB45309), fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Pro berjangka
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF86EFAC)),
+          const SizedBox(width: 8),
+        ],
       ),
-      child: Row(
-        children: [
-          const Icon(Icons.verified_rounded, color: Color(0xFF16A34A), size: 28),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Paket Pro Aktif (Sisa ${remainingDays ?? 0} Hari)',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF166534),
-                    fontSize: 14,
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── 1. HERO BANNER: CLOSED-LOOP SUPPLY CHAIN ──────────────
+                  _buildHeroHeader(context),
+                  const SizedBox(height: 16),
+
+                  // ── 2. VIEW TOGGLE BAR ─────────────────────────────────────
+                  _buildViewSwitcher(),
+                  const SizedBox(height: 16),
+
+                  // ── 3. LIST / CAROUSEL PAKET USAHA ────────────────────────
+                  starterKitsAsync.when(
+                    loading: () => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: StarterKitCardSkeleton(),
+                    ),
+                    error: (_, __) => _buildKitsContent(StarterKit.defaultKits),
+                    data: (kits) => _buildKitsContent(kits),
                   ),
-                ),
-                if (endDate != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'Berlaku hingga ${dateFormat.format(endDate!)}',
-                    style: const TextStyle(color: Color(0xFF15803D), fontSize: 12),
-                  ),
+                  const SizedBox(height: 24),
+
+                  // ── 4. EDUKASI ALUR PASOKAN GUDANG REGIONAL ────────────────
+                  _buildSupplyChainGuarantees(theme),
+                  const SizedBox(height: 32),
                 ],
-              ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
-}
 
-// ── Tombol Switch Plan ─────────────────────────────────────────
-class _PlanToggleButton extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final bool isHot;
-  final VoidCallback onTap;
-
-  const _PlanToggleButton({
-    required this.label,
-    required this.isActive,
-    this.isHot = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-        decoration: BoxDecoration(
-          color: isActive ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.manrope(
-                fontWeight: FontWeight.w700,
-                color: isActive
-                    ? const Color(0xFF0F172A)
-                    : const Color(0xFF64748B),
-              ),
-            ),
-            if (isHot) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF7A00),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  'HOT',
-                  style: GoogleFonts.manrope(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
+  /// ── Hero Header dengan Akses Cepat Riwayat Pesanan ─────────────────────
+  Widget _buildHeroHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0F172A),
+            Color(0xFF1E293B),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ── Kartu Harga ───────────────────────────────────────────────
-class _PriceCard extends StatelessWidget {
-  final String title;
-  final String price;
-  final String? originalPrice;
-  final String? discountBadge;
-  final String subtitle;
-  final String description;
-  final List<String> features;
-  final bool isPopular;
-  final bool isCurrent;
-  final String buttonText;
-  final VoidCallback onUpgrade;
-
-  const _PriceCard({
-    required this.title,
-    required this.price,
-    this.originalPrice,
-    this.discountBadge,
-    required this.subtitle,
-    required this.description,
-    required this.features,
-    this.isPopular = false,
-    this.isCurrent = false,
-    this.buttonText = 'Pilih Paket',
-    required this.onUpgrade,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: isPopular
-              ? const Color(0xFFFF7A00).withValues(alpha: 0.4)
-              : const Color(0xFFE2E8F0),
-          width: isPopular ? 1.5 : 1,
-        ),
-        boxShadow: [
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: const [
           BoxShadow(
-            color: isPopular
-                ? const Color(0xFFFF7A00).withValues(alpha: 0.08)
-                : const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 32,
-            offset: const Offset(0, 16),
+            color: Color(0x1F0F172A),
+            blurRadius: 18,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -721,371 +190,656 @@ class _PriceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: GoogleFonts.manrope(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF0F172A),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0070FC).withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                  border: Border.all(
+                    color: const Color(0xFF0070FC).withValues(alpha: 0.4),
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: isPopular
-                      ? const Color(0xFFFFF7ED)
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(14),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.storefront_rounded,
+                      size: 13,
+                      color: Color(0xFF60A5FA),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'SUPPLY CHAIN RESMI SYUPEO',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF93C5FD),
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  isPopular
-                      ? Icons.workspace_premium_rounded
-                      : Icons.storefront_rounded,
-                  color: isPopular
-                      ? const Color(0xFFFF7A00)
-                      : const Color(0xFF64748B),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                  border: Border.all(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Text(
+                  'Promo @ Rp 200rb',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFFDE68A),
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          if (originalPrice != null && originalPrice!.isNotEmpty) ...[
-            Row(
-              children: [
-                Text(
-                  originalPrice!,
-                  style: GoogleFonts.manrope(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF94A3B8),
-                    decoration: TextDecoration.lineThrough,
-                    decorationColor: const Color(0xFFEF4444),
-                    decorationThickness: 2,
+          Text(
+            'Katalog Paket Usaha Siap Jual',
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Setiap paket sudah mencakup stok fisik barang siap display, aplikasi kasir Syupeo 100% GRATIS seumur hidup, QRIS toko resmi, dan jaminan restok dari gudang regional terdekat.',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: const Color(0xFF94A3B8),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Baris Tombol Aksi Cepat
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    StarterKitOrdersSheet.show(context);
+                  },
+                  icon: const Icon(Icons.local_shipping_outlined, size: 16),
+                  label: Text(
+                    'Riwayat & Status Kirim',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0070FC),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-                if (discountBadge != null && discountBadge!.isNotEmpty) ...[
-                  const SizedBox(width: 8),
+              ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  HapticFeedback.lightImpact();
+                  const phone = '6285624277920';
+                  final url = 'https://wa.me/$phone?text=${Uri.encodeComponent('Halo Admin Syupeo, saya ingin konsultasi mengenai pilihan paket usaha retail untuk toko saya.')}';
+                  if (await canLaunchUrl(Uri.parse(url))) {
+                    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                  }
+                },
+                icon: const Icon(Icons.chat_outlined, size: 16),
+                label: Text(
+                  'Tanya Admin',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.25)),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ── Switcher Mode Carousel vs List ───────────────────────────────────────
+  Widget _buildViewSwitcher() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      ),
+      child: Row(
+        children: _KitViewMode.values.map((mode) {
+          final isSelected = _viewMode == mode;
+          return Expanded(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              onTap: () {
+                if (_viewMode != mode) {
+                  HapticFeedback.selectionClick();
+                  setState(() => _viewMode = mode);
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                  boxShadow: isSelected
+                      ? const [
+                          BoxShadow(
+                            color: Color(0x0F000000),
+                            blurRadius: 4,
+                            offset: Offset(0, 1),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      mode.icon,
+                      size: 16,
+                      color: isSelected
+                          ? const Color(0xFF0070FC)
+                          : const Color(0xFF64748B),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      mode.label,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        color: isSelected
+                            ? const Color(0xFF0F172A)
+                            : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  /// ── Switcher Konten (Carousel vs List) ────────────────────────────────────
+  Widget _buildKitsContent(List<StarterKit> kits) {
+    if (kits.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text(
+            'Belum ada data paket usaha tersedia.',
+            style: GoogleFonts.inter(color: AppTheme.textMuted),
+          ),
+        ),
+      );
+    }
+
+    if (_viewMode == _KitViewMode.carousel) {
+      return SyupeoStarterKitCarousel(
+        kits: kits,
+        selectedKitId: _selectedKit?.id,
+        onSelectKit: (kit) {
+          setState(() => _selectedKit = kit);
+        },
+        ctaButtonText: 'Pesan Paket Ini via WhatsApp',
+        isActionWhatsApp: true,
+        onCtaPressed: (kit) => _orderViaWhatsApp(kit),
+      );
+    }
+
+    // Tampilan Mode List / Grid Responsif
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 600;
+        if (isWide) {
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              mainAxisExtent: 490,
+            ),
+            itemCount: kits.length,
+            itemBuilder: (context, index) => _buildPackageCard(kits[index]),
+          );
+        }
+
+        return Column(
+          children: kits.map((kit) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildPackageCard(kit),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  /// ── Kartu Paket Detail Mode List/Grid ─────────────────────────────────────
+  Widget _buildPackageCard(StarterKit kit) {
+    final discount = kit.originalPrice != null && kit.originalPrice! > kit.price
+        ? kit.originalPrice! - kit.price
+        : null;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        border: Border.all(
+          color: kit.isPopular ? const Color(0xFF0070FC) : const Color(0xFFE2E8F0),
+          width: kit.isPopular ? 1.5 : 1,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header Badge Notch
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: kit.isPopular
+                  ? const Color(0xFF0070FC)
+                  : const Color(0xFFF1F5F9),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppTheme.radiusLg - 1),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    kit.badge ?? 'PAKET RESMI SYUPEO',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: kit.isPopular ? Colors.white : const Color(0xFF475569),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                if (kit.isPopular)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFFCA5A5)),
+                      color: const Color(0xFFF59E0B),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      discountBadge!,
-                      style: GoogleFonts.manrope(
-                        fontSize: 10,
+                      'BEST SELLER',
+                      style: GoogleFonts.inter(
+                        fontSize: 9,
                         fontWeight: FontWeight.w900,
-                        color: const Color(0xFFDC2626),
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                ],
               ],
             ),
-            const SizedBox(height: 2),
-          ],
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.end,
-            alignment: WrapAlignment.start,
-            spacing: 6,
-            runSpacing: 2,
-            children: [
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  price,
-                  style: GoogleFonts.manrope(
-                    fontSize: 34,
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Nama Paket
+                Text(
+                  kit.name,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF0F172A),
                   ),
                 ),
-              ),
-              if (subtitle.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(
-                    subtitle,
-                    style: GoogleFonts.manrope(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF64748B),
+                if (kit.suitableFor != null && kit.suitableFor!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.person_pin_circle_outlined,
+                        size: 14,
+                        color: Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          kit.suitableFor!,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: const Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 12),
+
+                // Harga
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      _currencyFormat.format(kit.price),
+                      style: GoogleFonts.inter(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF0070FC),
+                      ),
                     ),
+                    if (kit.originalPrice != null && kit.originalPrice! > kit.price) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        _currencyFormat.format(kit.originalPrice),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF94A3B8),
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                    ],
+                    if (discount != null) ...[
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Hemat ${_currencyFormat.format(discount)}',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF15803D),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Deskripsi
+                if (kit.description != null && kit.description!.isNotEmpty)
+                  Text(
+                    kit.description!,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: const Color(0xFF475569),
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                const SizedBox(height: 12),
+                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const SizedBox(height: 12),
+
+                // Kelengkapan Item
+                Text(
+                  'Item & Fasilitas Termasuk (${kit.itemsIncluded.length} item):',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF334155),
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            description,
-            style: GoogleFonts.manrope(
-              fontSize: 13,
-              color: const Color(0xFF64748B),
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 20),
-          ...features.map(
-            (f) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.check_circle_rounded,
-                    color: Color(0xFF15803D),
-                    size: 18,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
+                const SizedBox(height: 8),
+                ...kit.itemsIncluded.take(5).map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          size: 15,
+                          color: Color(0xFF10B981),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            item,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: const Color(0xFF1E293B),
+                              height: 1.35,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                if (kit.itemsIncluded.length > 5)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      f,
-                      style: GoogleFonts.manrope(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF334155),
+                      '+ ${kit.itemsIncluded.length - 5} item pelengkap lainnya',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0070FC),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: ElevatedButton(
-              onPressed: isCurrent ? null : onUpgrade,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF7A00),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    buttonText,
-                    style: GoogleFonts.manrope(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
+
+                const SizedBox(height: 16),
+                // Tombol Pesan via WhatsApp
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _orderViaWhatsApp(kit),
+                    icon: const Icon(Icons.chat_outlined, size: 16),
+                    label: Text(
+                      'Pesan Paket via WhatsApp',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Tabel Perbandingan ────────────────────────────────────────
-class _ComparisonTable extends StatelessWidget {
-  final SubscriptionPlan freePlan;
-  final SubscriptionPlan proPlan;
-
-  const _ComparisonTable({required this.freePlan, required this.proPlan});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        children: [
-          _ComparisonRow(
-            title: 'Cetak Printer Bluetooth',
-            subtitle: 'Struk kasir thermal 58mm/80mm',
-            isFreeEnabled: true,
-            isProEnabled: true,
-          ),
-          _ComparisonRow(
-            title: 'Arus Kas & Shift Kasir',
-            subtitle: 'Kontrol kas laci, kas operasional, & selisih shift',
-            isFreeEnabled: freePlan.isFeatureEnabled('cash_flow'),
-            isProEnabled: proPlan.isFeatureEnabled('cash_flow') || true,
-          ),
-          _ComparisonRow(
-            title: 'Kitchen Display (KDS)',
-            subtitle: 'Layar pesanan dapur real-time',
-            isFreeEnabled: freePlan.isFeatureEnabled('kds'),
-            isProEnabled: proPlan.isFeatureEnabled('kds'),
-          ),
-          _ComparisonRow(
-            title: 'Self-Ordering QR Meja',
-            subtitle: 'Pelanggan pesan mandiri via scan QR',
-            isFreeEnabled: freePlan.isFeatureEnabled('qr_ordering'),
-            isProEnabled: proPlan.isFeatureEnabled('qr_ordering'),
-          ),
-          _ComparisonRow(
-            title: 'Stok & Inventori Bahan',
-            subtitle: 'Audit stok otomatis saat transaksi',
-            isFreeEnabled: freePlan.isFeatureEnabled('inventory_management'),
-            isProEnabled: proPlan.isFeatureEnabled('inventory_management'),
-          ),
-          _ComparisonRow(
-            title: 'Harga Grosir & Member',
-            subtitle: 'Tiered pricing per kategori pembeli',
-            isFreeEnabled: freePlan.isFeatureEnabled('tiered_pricing'),
-            isProEnabled: proPlan.isFeatureEnabled('tiered_pricing'),
-          ),
-          _ComparisonRow(
-            title: 'Ekspor Laporan Lengkap',
-            subtitle: 'Download rekap penjualan ke Excel & PDF',
-            isFreeEnabled: freePlan.isFeatureEnabled('advanced_reports'),
-            isProEnabled: proPlan.isFeatureEnabled('advanced_reports'),
-          ),
-          _ComparisonRow(
-            title: 'Batas Produk & Cabang',
-            subtitle: 'Kapasitas menu dan outlet toko',
-            freeLabel: '${freePlan.maxProducts} Menu • 1 Cabang',
-            proLabel: 'Unlimited Menu • Multi-Cabang',
-            isFreeEnabled: true,
-            isProEnabled: true,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ComparisonRow extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String? freeLabel;
-  final String? proLabel;
-  final bool isFreeEnabled;
-  final bool isProEnabled;
-
-  const _ComparisonRow({
-    required this.title,
-    required this.subtitle,
-    this.freeLabel,
-    this.proLabel,
-    required this.isFreeEnabled,
-    required this.isProEnabled,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.manrope(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: const Color(0xFF1E293B),
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.manrope(
-                    fontSize: 11,
-                    color: const Color(0xFF64748B),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0070FC),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          _StatusIcon(isEnabled: isFreeEnabled, label: freeLabel, isPro: false),
-          const SizedBox(width: 20),
-          _StatusIcon(isEnabled: isProEnabled, label: proLabel, isPro: true),
         ],
       ),
     );
   }
-}
 
-class _StatusIcon extends StatelessWidget {
-  final bool isEnabled;
-  final String? label;
-  final bool isPro;
-
-  const _StatusIcon({required this.isEnabled, this.label, required this.isPro});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(
-          isEnabled ? Icons.check_circle_rounded : Icons.cancel_rounded,
-          color: isEnabled
-              ? (isPro ? const Color(0xFFFF7A00) : const Color(0xFF15803D))
-              : const Color(0xFFCBD5E1),
-          size: 18,
-        ),
-        if (label != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              label!,
-              style: GoogleFonts.manrope(
-                fontSize: 9,
-                fontWeight: FontWeight.w800,
-                color: isPro
-                    ? const Color(0xFFFF7A00)
-                    : const Color(0xFF64748B),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _ElevateBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
+  /// ── Edukasi Ekosistem Supply Chain Syupeo ─────────────────────────────────
+  Widget _buildSupplyChainGuarantees(ThemeData theme) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF18181B),
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Mangga POS Pro', style: TextStyle(color: Color(0xFFFF7A00), fontWeight: FontWeight.w800, fontSize: 12)),
-          const SizedBox(height: 6),
-          Text(
-            'Tingkatkan skala bisnis kasir Anda ke level berikutnya.',
-            style: GoogleFonts.manrope(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              height: 1.3,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.verified_outlined,
+                  size: 20,
+                  color: Color(0xFF0070FC),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Jaminan Kemitraan Toko Syupeo',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      'Bagaimana paket usaha bekerja langsung di kasir Anda',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildGuaranteeStep(
+            number: '1',
+            title: 'Pilih & Pesan Paket Usaha',
+            description:
+                'Tentukan paket awal sesuai segmen pasar konsumen Anda (Sembako, Aksesori Gen Z, Produk Kecantikan, atau Air Galon).',
+          ),
+          const SizedBox(height: 12),
+          _buildGuaranteeStep(
+            number: '2',
+            title: 'Pengemasan & Kirim dari Gudang Regional',
+            description:
+                'Gudang regional Syupeo mengemas stok fisik barang dan mengirimkan langsung ke alamat toko Anda lengkap dengan surat jalan dan nomor resi pengiriman.',
+          ),
+          const SizedBox(height: 12),
+          _buildGuaranteeStep(
+            number: '3',
+            title: 'Audit & Cross-Check Barang di Kasir',
+            description:
+                'Saat paket sampai di toko, kasir melakukan verifikasi fisik via halaman audit. Sekali konfirmasi, seluruh barang otomatis terkonversi menjadi master produk siap jual.',
+          ),
+          const SizedBox(height: 12),
+          _buildGuaranteeStep(
+            number: '4',
+            title: 'Aplikasi Kasir POS 100% Gratis & Restok Rutin',
+            description:
+                'Seluruh fitur aplikasi kasir, QRIS kasir, dan analitik laporan bisnis tersedia gratis seumur hidup tanpa biaya langganan software. Toko dapat pesan restok berkala melalui menu Restok Gudang.',
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildGuaranteeStep({
+    required String number,
+    required String title,
+    required String description,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xFF0070FC).withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            number,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF0070FC),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: const Color(0xFF64748B),
+                  height: 1.45,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

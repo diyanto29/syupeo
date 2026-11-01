@@ -37,6 +37,7 @@ class NotificationService {
 
   RealtimeChannel? _orderChannel;
   RealtimeChannel? _inventoryChannel;
+  RealtimeChannel? _fulfillmentChannel;
   StreamSubscription? _fcmSubscription;
 
   Future<void> initialize() async {
@@ -93,7 +94,7 @@ class NotificationService {
     _setupSupabaseRealtime(outletId, businessId: businessId);
   }
 
-  Future<void> subscribeToBusiness(String businessId) async {
+  Future<void> subscribeToBusiness(String businessId, {List<String>? phones}) async {
     // Subscribe to FCM topic
     if (_isFcmSupported) {
       try {
@@ -105,6 +106,9 @@ class NotificationService {
 
     // Subscribe to Inventory Realtime
     _setupInventoryRealtime(businessId);
+
+    // Subscribe to Fulfillment Order Dispatch Realtime
+    _setupFulfillmentRealtime(businessId, phones: phones);
   }
 
   Future<void> unsubscribeFromOutlet(String outletId) async {
@@ -127,6 +131,7 @@ class NotificationService {
       }
     }
     await _inventoryChannel?.unsubscribe();
+    await _fulfillmentChannel?.unsubscribe();
   }
 
   void _setupSupabaseRealtime(String outletId, {String? businessId}) {
@@ -228,6 +233,97 @@ class NotificationService {
     }
   }
 
+  void _setupFulfillmentRealtime(String businessId, {List<String>? phones}) {
+    _fulfillmentChannel?.unsubscribe();
+
+    _fulfillmentChannel = SupabaseService.client
+        .channel('public:package_fulfillment_orders:tracking')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'package_fulfillment_orders',
+          callback: (payload) {
+            final newOrder = payload.newRecord;
+            final oldOrder = payload.oldRecord;
+            _handleFulfillmentStatusUpdateRealtime(oldOrder, newOrder, phones);
+          },
+        )
+        .subscribe();
+  }
+
+  void _handleFulfillmentStatusUpdateRealtime(
+    Map<String, dynamic> oldRecord,
+    Map<String, dynamic> newRecord,
+    List<String>? targetPhones,
+  ) {
+    final oldStatus = oldRecord['status'] as String?;
+    final newStatus = newRecord['status'] as String?;
+
+    // Abaikan jika tidak ada pergantian status
+    if (newStatus == null || oldStatus == newStatus) return;
+
+    // Filter nomor telepon toko/pembeli
+    if (targetPhones != null && targetPhones.isNotEmpty) {
+      final recipientPhone =
+          (newRecord['recipient_phone'] as String?)?.replaceAll(RegExp(r'\D'), '') ?? '';
+
+      final matches = targetPhones.any((p) {
+        final cleanP = p.replaceAll(RegExp(r'\D'), '');
+        if (cleanP.isEmpty) return false;
+        return recipientPhone.endsWith(cleanP) || cleanP.endsWith(recipientPhone);
+      });
+
+      if (!matches && recipientPhone.isNotEmpty) return;
+    }
+
+    final orderCode = newRecord['order_code'] ?? 'ORD-0000';
+    final kitName = newRecord['kit_name'] ?? 'Paket Usaha';
+    final driverName = newRecord['driver_name'];
+    final trackingNumber = newRecord['tracking_number'];
+
+    String title;
+    String body;
+
+    switch (newStatus) {
+      case 'packing':
+        title = '📦 Paket Restok Sedang Dikemas!';
+        body =
+            'Pesanan $orderCode ($kitName) sedang disiapkan & dikemas oleh Gudang Syupeo.';
+        break;
+      case 'in_transit':
+        final kurirInfo = driverName != null ? ' oleh $driverName' : '';
+        final resiInfo =
+            trackingNumber != null ? ' (No. Resi: $trackingNumber)' : '';
+        title = '🚚 Paket Restok Sedang Dikirim!';
+        body =
+            'Pesanan $orderCode sedang menuju toko Anda$kurirInfo$resiInfo. Mohon siapkan toko Anda.';
+        break;
+      case 'delivered':
+        title = '✅ Paket Restok Telah Diterima!';
+        body =
+            'Pesanan $orderCode telah sampai. Stok produk kasir POS Anda telah otomatis bertambah.';
+        break;
+      case 'cancelled':
+        title = '⚠️ Pesanan Restok Dibatalkan';
+        body =
+            'Pesanan $orderCode ($kitName) telah dibatalkan oleh pihak gudang.';
+        break;
+      default:
+        title = 'Status Pengiriman Paket Diperbarui';
+        body = 'Pesanan $orderCode kini berstatus $newStatus.';
+    }
+
+    _showInstantAlert(title: title, body: body);
+    _playNotificationSound();
+
+    _eventController.add(
+      NotificationEvent(
+        type: NotificationEventType.statusUpdate,
+        data: newRecord,
+      ),
+    );
+  }
+
   Future<void> _showLocalNotification(RemoteMessage message) async {
     try {
       const notificationDetails = NotificationDetails(
@@ -254,6 +350,10 @@ class NotificationService {
       debugPrint('Local notification display warning: $e');
     }
   }
+
+  Future<void> showInstantAlert(
+      {required String title, required String body}) =>
+      _showInstantAlert(title: title, body: body);
 
   Future<void> _showInstantAlert(
       {required String title, required String body}) async {
@@ -297,6 +397,7 @@ class NotificationService {
     _fcmSubscription?.cancel();
     _orderChannel?.unsubscribe();
     _inventoryChannel?.unsubscribe();
+    _fulfillmentChannel?.unsubscribe();
     _audioPlayer.dispose();
   }
 }

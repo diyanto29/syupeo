@@ -1,11 +1,11 @@
 ---
 name: dpos-admin-web
-description: Panduan arsitektur dan standar pengembangan untuk portal Admin Web DPOS (Next.js 16 App Router, Tailwind CSS, @supabase/ssr, Server Actions, otorisasi Super Admin, sistem lisensi offline, dan CRM kemitraan).
+description: Panduan arsitektur dan standar pengembangan untuk portal Admin Web Syupeo (Next.js 16 App Router, Tailwind CSS, @supabase/ssr, Server Actions, otorisasi Super Admin, sistem lisensi offline, dan CRM kemitraan).
 ---
 
-# DPOS Admin Web Architecture & Standards Guide
+# Syupeo Admin Web Architecture & Standards Guide
 
-Dokumen skill ini adalah referensi pengembangan untuk aplikasi **Admin Web** (`/admin_web`), portal web terpusat untuk pemilik bisnis, kasir/staf, dan Super Admin DPOS.
+Dokumen skill ini adalah referensi pengembangan untuk aplikasi **Admin Web** (`/admin_web`), portal web terpusat untuk pemilik bisnis, kasir/staf, dan Super Admin Syupeo.
 
 ---
 
@@ -53,3 +53,14 @@ Dokumen skill ini adalah referensi pengembangan untuk aplikasi **Admin Web** (`/
   ```
 - **Multi-Project Supabase (KosanKu Cloud Super Admin):**
   - Menggunakan helper `getKosankuAdminSupabase()` dari `@/lib/supabase/kosankuServer` yang membaca `KOSANKU_SUPABASE_SERVICE_ROLE_KEY` dari environment variable server.
+
+---
+
+## 4. Standar Query & Pengurutan Data (Descending Rule)
+
+- **Aturan Baku Pengurutan List Data (Mandatory):**
+  - Setiap query daftar data (misal: Node Gudang/Warehouses, Starter Kits/Paket Usaha, Outlets, Pesanan Fulfillment/Dispatch, Master Catalog, CRM Leads, dll) **WAJIB diurutkan secara DESCENDING** berdasarkan waktu pembuatan:
+    ```typescript
+    .order('created_at', { ascending: false })
+    ```
+  - **Tujuan**: Memastikan entri atau data yang baru saja diinput oleh admin/merchant selalu langsung tampil di posisi paling atas (urutan pertama) secara instan tanpa perlu mencari atau menggulir ke bawah.

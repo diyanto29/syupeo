@@ -1,11 +1,11 @@
-# Dokumentasi Fitur Aplikasi DPOS (Digital Point of Sale)
+# Dokumentasi Fitur Aplikasi Syupeo (Point of Sale & Retail Platform)
 
-Dokumen ini merangkum fitur-fitur utama yang tersedia dalam aplikasi DPOS, dikategorikan berdasarkan jenis usaha dan detail teknis lokasinya di dalam kode program.
+Dokumen ini merangkum fitur-fitur utama yang tersedia dalam aplikasi Syupeo, dikategorikan berdasarkan jenis usaha dan detail teknis lokasinya di dalam kode program.
 
 ---
 
 ## 🚀 Fitur Baru: Dynamic Business Type & Feature Mapping
-Mulai Mei 2026, DPOS menggunakan sistem **Dynamic Template** yang memungkinkan setiap bisnis memiliki fitur yang terpersonalisasi namun tetap fleksibel.
+Mulai Mei 2026, Syupeo menggunakan sistem **Dynamic Template** yang memungkinkan setiap bisnis memiliki fitur yang terpersonalisasi namun tetap fleksibel.
 
 ### A. Template Tipe Bisnis (Preset)
 Setiap pemilik bisnis memilih tipe saat pendaftaran untuk mendapatkan konfigurasi awal:
@@ -90,10 +90,10 @@ Fokus pada mobilitas dan kemudahan penggunaan di layar kecil.
 ---
 
 ## 4. Manajemen Bisnis (Owner & Admin)
-*   **Profil Bisnis:** `/Users/diyanto/dpos/lib/features/business_profile/`
-*   **Laporan Penjualan (Analytics):** `/Users/diyanto/dpos/lib/features/reports/`
-*   **Manajemen Outlet:** `/Users/diyanto/dpos/lib/features/outlet_management/`
-*   **Manajemen Staf/Pegawai:** `/Users/diyanto/dpos/lib/features/staff_management/`
+*   **Profil Bisnis:** `/Users/diyanto/syupeo/lib/features/business_profile/`
+*   **Laporan Penjualan (Analytics):** `/Users/diyanto/syupeo/lib/features/reports/`
+*   **Manajemen Outlet:** `/Users/diyanto/syupeo/lib/features/outlet_management/`
+*   **Manajemen Staf/Pegawai:** `/Users/diyanto/syupeo/lib/features/staff_management/`
 
 ---
 

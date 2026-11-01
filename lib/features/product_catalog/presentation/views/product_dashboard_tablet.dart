@@ -117,7 +117,7 @@ class ProductDashboardTablet extends StatelessWidget {
       drawer: const AppOwnerDrawer(),
       appBar: AppTabletHeader(
         title: const Text('Manajemen Produk & Diskon'),
-        badge: const AppTabletBadge(label: 'Mangga POS'),
+        badge: const AppTabletBadge(label: 'Syupeo'),
         actions: [
           IconButton(
             onPressed: () => props.onRefresh(),

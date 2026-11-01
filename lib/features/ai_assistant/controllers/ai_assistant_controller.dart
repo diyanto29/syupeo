@@ -35,7 +35,7 @@ class AiAssistantState {
     this.recordingDurationSeconds = 0,
     this.voiceErrorMessage,
     this.apiKey,
-    this.businessName = 'Mangga POS Store',
+    this.businessName = 'Syupeo Store',
     this.isTtsEnabled = true,
     this.isSpeaking = false,
     this.currentlySpeakingMsgId,
@@ -102,12 +102,12 @@ class AiAssistantController extends StateNotifier<AiAssistantState> {
   Future<void> _init() async {
     final key = await _gemini.getApiKey();
     final bootstrap = _ref.read(homeBootstrapProvider).value;
-    final bName = bootstrap?.business?.name ?? 'Mangga POS Store';
+    final bName = bootstrap?.business?.name ?? 'Syupeo Store';
 
     final welcomeMessage = AiMessageModel(
       id: 'welcome-1',
       content:
-          'Halo! Saya **Asisten AI Mangga POS** siap membantu operasional dan analitik bisnis **$bName** hari ini.\n\n'
+          'Halo! Saya **Asisten AI Syupeo** siap membantu operasional dan analitik bisnis **$bName** hari ini.\n\n'
           'Anda bisa bertanya langsung dengan mengetik atau **menekan tombol mikrofon 🎙️**:\n'
           '• 💰 **Laporan & Penjualan:** *"Berapa pendapatan & laba bersih hari ini?"*\n'
           '• 📦 **Katalog & Stok:** *"Ada stok apa yang menipis?"* atau *"Berapa harga produk X?"*\n'
@@ -334,7 +334,7 @@ $sampleProducts
           : 'STATUS SHIFT KASIR: Shift kasir saat ini tidak aktif / belum dibuka (Catatan: Shift kasir bersifat opsional khusus kas laci fisik, transaksi di atas tetap tercatat otomatis di dashboard POS).';
 
       final systemPrompt = '''
-Kamu adalah "Asisten AI Mangga POS", asisten bisnis cerdas & konsultan eksekutif untuk pemilik toko & kasir aplikasi Mangga POS.
+Kamu adalah "Asisten AI Syupeo", asisten bisnis cerdas & konsultan eksekutif untuk pemilik toko & kasir aplikasi Syupeo.
 Bisnis: ${state.businessName}
 Outlet: ${bootstrap?.currentOutlet?.name ?? 'Outlet Utama'}
 
@@ -350,7 +350,7 @@ PANDUAN PERILAKU & ANALISIS BISNIS CERDAS:
 3. PREDIKSI STOK (BURN RATE): Untuk stok yang menipis (<15 unit), berikan estimasi hari kehabisan stok berdasarkan kecepatan penjualan rata-rata dan sarankan kapan harus kulak/belanja.
 4. PROMO BUNDLING & MENU ENGINEERING: Jika ditanya cara menaikkan omzet atau ide promo, sarankan bundling antara produk terlaris dengan produk bermargin tinggi agar nilai transaksi (AOV) naik.
 5. DATA PENJUALAN REAL-TIME: Untuk pertanyaan omzet, laba, atau transaksi, SELALU gunakan data real-time dashboard di atas. Shift kasir bersifat opsional, jangan menjawab Rp 0 hanya karena shift belum dibuka!
-6. PANDUAN APLIKASI: Jika ditanya cara penggunaan Mangga POS (buka/tutup shift, cetak struk, diskon), berikan panduan praktis to-the-point.
+6. PANDUAN APLIKASI: Jika ditanya cara penggunaan Syupeo (buka/tutup shift, cetak struk, diskon), berikan panduan praktis to-the-point.
 7. FORMAT TAMPILAN BERSIH & RAPI:
    - JANGAN MENUMPUK SIMBOL MARKDOWN seperti `### **Judul**` atau `* **Poin:**`. Cukup gunakan judul bersih (misal: "### 1. Nama Paket") dan poin rapi (misal: "- Konsep: ..." atau penomoran 1, 2, 3).
    - HINDARI penggunaan garis pemisah `---` berulang-ulang yang mengotori layar.

@@ -123,16 +123,16 @@ class _SettingsTabletViewState extends ConsumerState<SettingsTabletView> {
 
   @override
   Widget build(BuildContext context) {
-    final bootstrap = ref.watch(homeBootstrapProvider).value;
+    final bootstrap = ref.watch(homeBootstrapProvider).valueOrNull;
     final outlet = bootstrap?.currentOutlet;
     final outletName =
-        outlet?.name ?? bootstrap?.business?.name ?? 'Mangga POS Station';
+        outlet?.name ?? bootstrap?.business?.name ?? 'Syupeo Station';
 
-    final qrisSettings = ref.watch(qrisSettingsProvider).value;
-    final printerSettings = ref.watch(printerSettingsProvider).value;
-    final notifSettings = ref.watch(paymentNotificationProvider).value;
+    final qrisSettings = ref.watch(qrisSettingsProvider).valueOrNull;
+    final printerSettings = ref.watch(printerSettingsProvider).valueOrNull;
+    final notifSettings = ref.watch(paymentNotificationProvider).valueOrNull;
     final methodsAsync = ref.watch(paymentMethodsProvider);
-    final methods = methodsAsync.value ?? const <PaymentMethodConfig>[];
+    final methods = methodsAsync.valueOrNull ?? const <PaymentMethodConfig>[];
 
     final isQrisActive = qrisSettings != null &&
         (qrisSettings.hasQrisImage || qrisSettings.hasQrisPayload);
@@ -163,7 +163,7 @@ class _SettingsTabletViewState extends ConsumerState<SettingsTabletView> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        badge: const AppTabletBadge(label: 'Mangga POS'),
+        badge: const AppTabletBadge(label: 'Syupeo'),
         actions: [
           OutlinedButton.icon(
             onPressed: _isSyncing ? null : _syncTerminal,
@@ -349,7 +349,7 @@ class _SettingsTabletViewState extends ConsumerState<SettingsTabletView> {
                                 ),
                                 child: const Icon(
                                   Icons.payments_rounded,
-                                  color: Color(0xFFEA580C),
+                                  color: Color(0xFF005ECC),
                                   size: 22,
                                 ),
                               ),
@@ -417,7 +417,7 @@ class _SettingsTabletViewState extends ConsumerState<SettingsTabletView> {
                           _buildPaymentMethodTile(
                             icon: Icons.qr_code_scanner_rounded,
                             iconBg: const Color(0xFFFFEDD5),
-                            iconColor: const Color(0xFFEA580C),
+                            iconColor: const Color(0xFF005ECC),
                             title: 'QRIS Dinamis & Statis',
                             subtitle: 'ASPI QRIS Universal',
                             isActive: _getIsActive(
@@ -546,7 +546,7 @@ class _SettingsTabletViewState extends ConsumerState<SettingsTabletView> {
                               ? const Color(0xFFFFEDD5)
                               : const Color(0xFFFEE2E2),
                           iconColor: isQrisActive
-                              ? const Color(0xFFEA580C)
+                              ? const Color(0xFF005ECC)
                               : const Color(0xFFDC2626),
                           title: 'QRIS Toko',
                           badgeLabel: isQrisActive

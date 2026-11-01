@@ -933,7 +933,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen>
       appBar: isTablet
           ? AppTabletHeader(
               title: const Text('Pengaturan Printer'),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
               actions: [
                 IconButton(
                   tooltip: 'Refresh',

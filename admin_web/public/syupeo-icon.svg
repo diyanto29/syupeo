@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <!-- Sun Rays on Top-Left -->
+  <path d="M 12 20 L 2 14" stroke="#ffd000" stroke-width="4.5" stroke-linecap="round" />
+  <path d="M 24 10 L 19 0" stroke="#ffd000" stroke-width="4.5" stroke-linecap="round" />
+  <path d="M 38 4 L 40 -6" stroke="#ffd000" stroke-width="4.5" stroke-linecap="round" />
+
+  <!-- Main Blue Squircle Badge -->
+  <rect x="18" y="10" width="94" height="94" rx="26" fill="#0070fc" />
+
+  <!-- Text Syupeo inside icon -->
+  <text x="65" y="65" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="21" text-anchor="middle" letter-spacing="-0.5">Syupeo</text>
+  
+  <!-- Golden Smile under icon text -->
+  <path d="M 45 76 Q 65 89 85 76" fill="none" stroke="#ffd000" stroke-width="4" stroke-linecap="round" />
+</svg>
+

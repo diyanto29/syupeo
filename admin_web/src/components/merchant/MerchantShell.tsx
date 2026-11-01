@@ -277,14 +277,14 @@ export default function MerchantShell({ children }: { children: React.ReactNode 
           {/* Logo & Store Header */}
           <div className="p-5 border-b border-slate-100 flex items-center justify-between">
             <Link href="/merchant" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl overflow-hidden bg-orange-50 border border-orange-100 flex items-center justify-center flex-shrink-0">
-                <Image src="/logo.png" alt="Mangga POS" width={40} height={40} className="w-full h-full object-cover" />
+              <div className="w-10 h-10 rounded-md overflow-hidden bg-blue-50 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                <Image src="/logo.png" alt="Syupeo" width={40} height={40} className="w-full h-full object-cover" />
               </div>
               <div>
                 <span className="font-black text-sm tracking-tight text-slate-900 block leading-tight">
-                  Mangga POS
+                  Syupeo
                 </span>
-                <span className="text-[11px] font-semibold text-orange-600 block">
+                <span className="text-[11px] font-semibold text-primary block">
                   Merchant Backoffice
                 </span>
               </div>

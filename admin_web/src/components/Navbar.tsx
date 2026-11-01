@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ExternalLink, Store } from 'lucide-react';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function Navbar({ title, description }: { title: string; description?: string }) {
   return (
@@ -10,10 +11,13 @@ export default function Navbar({ title, description }: { title: string; descript
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+        {/* Lonceng Notifikasi Toko Pending & Pesanan Baru */}
+        <NotificationBell />
+
         {/* Merchant Portal Quick Switcher */}
         <Link
           href="/merchant"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-[11px] sm:text-xs font-bold transition-all shadow-sm shadow-orange-600/20"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary hover:bg-primary-hover text-white text-[11px] sm:text-xs font-bold transition-all shadow-sm shadow-primary/20"
         >
           <Store className="w-3.5 h-3.5 flex-shrink-0" />
           <span>Buka Portal Toko</span>
@@ -27,10 +31,10 @@ export default function Navbar({ title, description }: { title: string; descript
 
         {/* Portal Info */}
         <a
-          href="https://kjekiseloobdxomicolo.supabase.co"
+          href={process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://fgzmwmtssrviptflsjqy.supabase.co'}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] sm:text-xs font-semibold transition-colors"
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] sm:text-xs font-semibold transition-colors"
         >
           <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="hidden xs:inline sm:inline">Supabase Console</span>

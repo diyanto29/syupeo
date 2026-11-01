@@ -174,7 +174,7 @@ class _CashFlowTabletViewState extends ConsumerState<CashFlowTabletView>
             fontWeight: FontWeight.w500,
           ),
         ),
-        badge: const AppTabletBadge(label: 'Mangga POS'),
+        badge: const AppTabletBadge(label: 'Syupeo'),
         actions: [
           ElevatedButton.icon(
             onPressed: () => _showAddEntry(CashFlowType.cashIn, shift?.id),

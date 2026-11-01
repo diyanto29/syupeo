@@ -32,14 +32,14 @@ export default function SettingsPage() {
 
       <div className="space-y-6 mt-6 max-w-4xl">
         {/* Super Admin Info */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-[12px] p-6 border border-[rgba(26,26,26,0.12)] shadow-sm">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-[8px] bg-[#eff6ff] text-[#0070fc] flex items-center justify-center font-bold">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-slate-900 text-base">Super Admin Whitelist</h3>
-              <p className="text-xs text-slate-500">Akun dengan hak akses mutlak kontrol platform Mangga POS</p>
+              <p className="text-xs text-slate-500">Akun dengan hak akses mutlak kontrol platform Syupeo HQ</p>
             </div>
           </div>
 
@@ -113,13 +113,13 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <strong className="text-orange-600 block mb-1">1. Hubungkan ke Vercel</strong>
-              Push repository DPOS ini ke GitHub. Di dashboard Vercel, pilih <strong>Import Project</strong>, lalu atur <strong>Root Directory</strong> ke folder <code className="text-orange-700 font-mono bg-orange-100 px-1.5 py-0.5 rounded">admin_web</code>.
+            <div className="p-4 rounded-[8px] bg-slate-50 border border-slate-200">
+              <strong className="text-[#0070fc] block mb-1">1. Hubungkan ke Vercel</strong>
+              Push repository Syupeo ini ke GitHub. Di dashboard Vercel, pilih <strong>Import Project</strong>, lalu atur <strong>Root Directory</strong> ke folder <code className="text-[#0070fc] font-mono bg-[#eff6ff] px-1.5 py-0.5 rounded">admin_web</code>.
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <strong className="text-orange-600 block mb-1">2. Environment Variables di Vercel</strong>
+            <div className="p-4 rounded-[8px] bg-slate-50 border border-slate-200">
+              <strong className="text-[#0070fc] block mb-1">2. Environment Variables di Vercel</strong>
               Tambahkan 3 variable berikut di menu Settings &gt; Environment Variables di project Vercel:
               <ul className="list-disc pl-5 mt-1.5 space-y-1 font-mono text-[11px] text-slate-700">
                 <li>NEXT_PUBLIC_SUPABASE_URL</li>
@@ -128,11 +128,11 @@ export default function SettingsPage() {
               </ul>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <strong className="text-orange-600 block mb-1">3. Tambahkan Domain Vercel ke Google OAuth &amp; Supabase</strong>
-              Setelah Vercel memberikan domain (misal: <code className="text-orange-700 font-mono bg-orange-100 px-1.5 py-0.5 rounded">https://dpos-admin.vercel.app</code>):
+            <div className="p-4 rounded-[8px] bg-slate-50 border border-slate-200">
+              <strong className="text-[#0070fc] block mb-1">3. Tambahkan Domain Vercel ke Google OAuth &amp; Supabase</strong>
+              Setelah Vercel memberikan domain (misal: <code className="text-[#0070fc] font-mono bg-[#eff6ff] px-1.5 py-0.5 rounded">https://syupeo-admin.vercel.app</code>):
               <ul className="list-disc pl-5 mt-1.5 space-y-1">
-                <li>Buka <strong>Supabase Dashboard &gt; Authentication &gt; URL Configuration &gt; Redirect URLs</strong> dan tambahkan <code className="text-orange-700 font-mono bg-orange-100 px-1.5 py-0.5 rounded">https://dpos-admin.vercel.app/auth/callback</code></li>
+                <li>Buka <strong>Supabase Dashboard &gt; Authentication &gt; URL Configuration &gt; Redirect URLs</strong> dan tambahkan <code className="text-[#0070fc] font-mono bg-[#eff6ff] px-1.5 py-0.5 rounded">https://syupeo-admin.vercel.app/auth/callback</code></li>
                 <li>Buka <strong>Google Cloud Console &gt; Credentials &gt; OAuth 2.0 Client IDs</strong> dan tambahkan origin serta redirect URI yang sama.</li>
               </ul>
             </div>

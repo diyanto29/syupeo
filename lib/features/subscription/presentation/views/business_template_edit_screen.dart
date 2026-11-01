@@ -67,11 +67,11 @@ class _BusinessTemplateEditScreenState
       'label': 'Antrian Dapur',
       'icon': Icons.grid_view_rounded,
     },
-    {
-      'key': 'inventory',
-      'label': 'Inventori / Stok',
-      'icon': Icons.inventory_2_rounded,
-    },
+    // {
+    //   'key': 'inventory',
+    //   'label': 'Inventori / Stok',
+    //   'icon': Icons.inventory_2_rounded,
+    // },
     {
       'key': 'tiered_pricing',
       'label': 'Harga Bertingkat / Grosir',
@@ -189,7 +189,7 @@ class _BusinessTemplateEditScreenState
       appBar: isTablet
           ? AppTabletHeader(
               title: Text(isEdit ? 'Edit Template' : 'Template Baru'),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
               actions: [
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -213,7 +213,10 @@ class _BusinessTemplateEditScreenState
               title: Text(isEdit ? 'Edit Template' : 'Template Baru'),
               actions: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: FilledButton.icon(
                     onPressed: _save,
                     icon: const Icon(Icons.save_rounded, size: 18),

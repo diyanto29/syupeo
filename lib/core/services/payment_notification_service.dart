@@ -711,7 +711,7 @@ class PaymentNotificationNotifier
     }
 
     debugPrint(
-      '🔔 [DPOS AUTO PAYMENT DETECTED LOKAL]: ${paymentEvent.appName} -> Rp ${paymentEvent.amount}',
+      '🔔 [SYUPEO AUTO PAYMENT DETECTED LOKAL]: ${paymentEvent.appName} -> Rp ${paymentEvent.amount}',
     );
   }
 

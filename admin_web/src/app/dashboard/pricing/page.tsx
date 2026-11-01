@@ -483,10 +483,10 @@ export default function PricingPage() {
         </div>
       )}
 
-      {/* Info Banner in Mangga Palette */}
-      <div className="p-4 rounded-2xl bg-orange-50 border border-orange-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* Info Banner in Syupeo Palette */}
+      <div className="p-4 rounded-[12px] bg-[#eff6ff] border border-[#bfdbfe] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-[8px] bg-[#0070fc] text-white flex items-center justify-center font-bold">
             <Crown className="w-5 h-5" />
           </div>
           <div>
@@ -949,7 +949,7 @@ export default function PricingPage() {
                     Pesan Otomatis WhatsApp:
                   </div>
                   <div className="font-mono text-[10px] bg-white p-2 rounded border border-emerald-200 text-slate-700 shadow-2xs">
-                    "Halo Admin Mangga POS, saya ingin upgrade ke Paket Pro ({previewHeadlineTier?.name || 'Pro'} - {formatIDR(previewHeadlineTier?.price || 0)})..."
+                    "Halo Tim Syupeo, saya ingin konsultasi aktivasi paket retail ({previewHeadlineTier?.name || 'Paket'} - {formatIDR(previewHeadlineTier?.price || 0)})..."
                   </div>
                 </div>
               </div>

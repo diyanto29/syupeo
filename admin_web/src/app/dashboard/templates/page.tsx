@@ -167,7 +167,7 @@ export default function TemplatesPage() {
     const { data, error } = await supabase
       .from('business_type_templates')
       .select('*')
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false });
 
     if (!error && data) {
       setTemplates(data as BusinessTypeTemplate[]);
@@ -390,8 +390,8 @@ export default function TemplatesPage() {
   return (
     <div>
       <Navbar
-        title="Kelola Template Bisnis"
-        description="Atur jenis usaha Mangga POS, custom role labels, konfigurasi fitur & tiering (Free vs Pro), serta batas kuota"
+        title="Kategori & Template Toko"
+        description="Atur kategori bisnis Toko Retail Syupeo, custom role labels, konfigurasi fitur & batas kuota produk"
       />
 
       <div className="space-y-6 mt-6">

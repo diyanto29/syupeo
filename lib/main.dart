@@ -4,9 +4,7 @@ import 'package:dpos/core/supabase/supabase_service.dart';
 import 'package:dpos/pos_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:dpos/core/services/ad_interstitial_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:dpos/core/services/notification_service.dart';
@@ -79,26 +77,6 @@ Future<void> main() async {
     debugPrint('Initializing Supabase...');
     await SupabaseService.initialize();
     OfflineSyncService.instance.initialize(null);
-    
-    final isMobile = !kIsWeb &&
-        (defaultTargetPlatform == TargetPlatform.android ||
-            defaultTargetPlatform == TargetPlatform.iOS);
-    if (isMobile) {
-      unawaited(
-        MobileAds.instance.initialize().then((_) {
-          MobileAds.instance.updateRequestConfiguration(
-            RequestConfiguration(
-              testDeviceIds: [
-                'A594C7FE6D077EAF071717E96F673800',
-              ],
-            ),
-          );
-          AdInterstitialService.loadAd();
-        }).catchError((e) {
-          debugPrint('MobileAds initialization error (non-fatal): $e');
-        }),
-      );
-    }
     
     debugPrint('Initializing Date Formatting...');
     await initializeDateFormatting('id');

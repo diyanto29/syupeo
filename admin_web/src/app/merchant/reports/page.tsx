@@ -203,7 +203,7 @@ export default function MerchantReportsPage() {
   // Export Report to Excel
   const handleExportReportExcel = () => {
     const summaryData = [
-      { Indikator: 'Nama Bisnis', Nilai: business?.name || 'DPOS' },
+      { Indikator: 'Nama Bisnis', Nilai: business?.name || 'Syupeo' },
       { Indikator: 'Periode Laporan', Nilai: dateRange },
       { Indikator: 'Total Transaksi Sukses', Nilai: reportData.totalOrders },
       { Indikator: 'Penjualan Kotor (Subtotal)', Nilai: reportData.totalGrossRevenue },
@@ -225,7 +225,7 @@ export default function MerchantReportsPage() {
     XLSX.utils.book_append_sheet(workbook, sheet1, 'Ringkasan Keuangan');
     XLSX.utils.book_append_sheet(workbook, sheet2, 'Metode Pembayaran');
 
-    const fileName = `Laporan_Keuangan_${business?.name || 'DPOS'}_${dateRange}.xlsx`;
+    const fileName = `Laporan_Keuangan_${business?.name || 'Syupeo'}_${dateRange}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 

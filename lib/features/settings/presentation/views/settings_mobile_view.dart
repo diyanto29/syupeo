@@ -19,7 +19,7 @@ class SettingsMobileView extends ConsumerWidget {
     final scheme = theme.colorScheme;
     final tokens = theme.extension<ConciergeThemeTokens>();
     final paymentMethodsAsync = ref.watch(paymentMethodsProvider);
-    final bootstrap = ref.watch(homeBootstrapProvider).value;
+    final bootstrap = ref.watch(homeBootstrapProvider).valueOrNull;
 
     return Material(
       color: tokens?.baseSurface ?? scheme.surface,
@@ -215,7 +215,7 @@ class SettingsMobileView extends ConsumerWidget {
             child: Column(
               children: [
                 Text(
-                  'MANGGA POS',
+                  'SYUPEO',
                   style: GoogleFonts.manrope(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
@@ -255,15 +255,15 @@ class SettingsMobileView extends ConsumerWidget {
   String _paymentMethodsSubtitle(
     AsyncValue<List<PaymentMethodConfig>> methodsAsync,
   ) {
-    if (methodsAsync.isLoading && methodsAsync.value == null) {
+    if (methodsAsync.isLoading && methodsAsync.valueOrNull == null) {
       return 'Memuat metode...';
     }
 
-    if (methodsAsync.hasError && methodsAsync.value == null) {
-      return 'Gagal memuat metode';
+    if (methodsAsync.hasError && methodsAsync.valueOrNull == null) {
+      return 'Standar (Tunai, QRIS, Transfer)';
     }
 
-    final methods = methodsAsync.value ?? const <PaymentMethodConfig>[];
+    final methods = methodsAsync.valueOrNull ?? const <PaymentMethodConfig>[];
     final activeMethods = methods.where((method) => method.isActive).toList();
     if (activeMethods.isEmpty) {
       return 'Belum ada metode aktif';

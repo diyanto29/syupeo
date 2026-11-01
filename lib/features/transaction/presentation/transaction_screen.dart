@@ -6,9 +6,7 @@ import 'package:dpos/features/transaction/presentation/widgets/product_grid.dart
 import 'package:dpos/features/transaction/presentation/widgets/product_view_mode_toggle.dart';
 import 'package:dpos/features/transaction/presentation/widgets/embedded_scanner.dart';
 import 'package:dpos/features/transaction/presentation/widgets/draft_orders_sheet.dart';
-import 'package:dpos/features/transaction/presentation/widgets/kitchen_status_sheet.dart';
 import 'package:dpos/features/transaction/presentation/widgets/incoming_orders_sheet.dart';
-import 'package:dpos/features/kitchen/presentation/kitchen_queue_screen.dart';
 import 'package:dpos/features/transaction/data/transaction_repository.dart';
 import 'package:dpos/features/menu_management/data/menu_repository.dart';
 
@@ -19,7 +17,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter/services.dart';
 import 'package:dpos/features/menu_management/domain/menu_models.dart';
-import 'package:dpos/core/widgets/ad_banner_widget.dart';
 import 'package:dpos/core/providers/feature_gate_provider.dart';
 import 'package:dpos/core/widgets/pro_feature_dialog.dart';
 import 'package:dpos/features/product_catalog/presentation/widgets/quick_add_product_sheet.dart';
@@ -226,8 +223,6 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
                   child: _buildSearchField(),
                 ),
                 const SizedBox(width: 8),
-                _KitchenActionChip(onTap: () => _showKitchenStatus(context)),
-                const SizedBox(width: 8),
                 _IncomingOrdersActionChip(
                   onTap: () => _showIncomingOrders(context),
                 ),
@@ -253,8 +248,6 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _KitchenActionChip(onTap: () => _showKitchenStatus(context)),
-                  const SizedBox(width: 8),
                   _IncomingOrdersActionChip(
                     onTap: () => _showIncomingOrders(context),
                   ),
@@ -271,12 +264,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
             ),
           ),
         ],
-        // Ad banner between Search and Category chips (only when not in scan mode)
         if (!_isScanMode) ...[
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 4),
-            child: AdBannerWidget(),
-          ),
           Row(
             children: [
               Expanded(
@@ -514,15 +502,6 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const DraftOrdersSheet(),
-    );
-  }
-
-  void _showKitchenStatus(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const KitchenStatusSheet(),
     );
   }
 
@@ -825,62 +804,6 @@ class _TieredPricingToggleChip extends ConsumerWidget {
   }
 }
 
-class _KitchenActionChip extends ConsumerWidget {
-  const _KitchenActionChip({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final kitchenOrdersAsync = ref.watch(kitchenOrdersProvider);
-    final count = kitchenOrdersAsync.valueOrNull?.length ?? 0;
-    final hasActive = count > 0;
-
-    return Material(
-      color: hasActive ? const Color(0xFFFFF7ED) : Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      elevation: 0,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: hasActive
-                  ? const Color(0xFFFDBA74)
-                  : const Color(0xFFE2E8F0),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.soup_kitchen_rounded,
-                size: 18,
-                color: hasActive
-                    ? const Color(0xFFEA580C)
-                    : const Color(0xFF64748B),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Dapur${count > 0 ? ' ($count)' : ''}',
-                style: GoogleFonts.manrope(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: hasActive
-                      ? const Color(0xFFEA580C)
-                      : const Color(0xFF475569),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _IncomingOrdersActionChip extends ConsumerWidget {
   const _IncomingOrdersActionChip({required this.onTap});

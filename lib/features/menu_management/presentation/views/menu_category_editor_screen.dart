@@ -1088,7 +1088,7 @@ class _MenuCategoryEditorScreenState
               ),
               Switch.adaptive(
                 value: _tampilDiPOS,
-                activeColor: const Color(0xFFEA580C),
+                activeColor: const Color(0xFF005ECC),
                 onChanged: (val) => setState(() => _tampilDiPOS = val),
               ),
             ],
@@ -1243,7 +1243,7 @@ class _MenuCategoryEditorScreenState
             ),
             Checkbox(
               value: isChecked,
-              activeColor: const Color(0xFFEA580C),
+              activeColor: const Color(0xFF005ECC),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),

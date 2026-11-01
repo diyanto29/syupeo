@@ -42,7 +42,7 @@ class PaymentGatewayBackgroundHelper {
     }
   }
 
-  /// Cek apakah aplikasi Mangga POS sudah diizinkan bebas dari optimasi baterai Doze mode
+  /// Cek apakah aplikasi Syupeo sudah diizinkan bebas dari optimasi baterai Doze mode
   static Future<bool> isIgnoringBatteryOptimizations() async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return true;
     try {

@@ -5,6 +5,7 @@ import 'package:dpos/core/routes/routes_name.dart';
 import 'package:dpos/core/theme/app_theme.dart';
 import 'package:dpos/core/providers/bootstrap_provider.dart';
 import 'package:dpos/core/widgets/app_tablet_nav.dart';
+import 'package:dpos/core/widgets/syupeo_shimmer.dart';
 import 'package:dpos/features/auth/data/auth_repository.dart';
 import 'package:dpos/features/auth/domain/auth_models.dart';
 import 'package:flutter/material.dart';
@@ -165,7 +166,14 @@ class _UserManagementViewState extends ConsumerState<UserManagementView> {
       },
       error: (error, _) =>
           Center(child: Text('Gagal memuat anggota tim: $error')),
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        children: const [
+          GeneralCardSkeleton(),
+          GeneralCardSkeleton(),
+          GeneralCardSkeleton(),
+        ],
+      ),
     );
   }
 
@@ -202,7 +210,7 @@ class _UserManagementAppBar extends StatelessWidget
     if (isTablet) {
       return const AppTabletHeader(
         title: Text('Manajemen Staf'),
-        badge: AppTabletBadge(label: 'Mangga POS'),
+        badge: AppTabletBadge(label: 'Syupeo'),
       );
     }
     return AppBar(
@@ -527,7 +535,7 @@ class _AddUserPageState extends ConsumerState<AddUserPage> {
       appBar: isTablet
           ? AppTabletHeader(
               title: Text(_isEditMode ? 'Edit Pengguna' : 'Tambah Pengguna Baru'),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
             )
           : AppBar(
               title: Text(_isEditMode ? 'Edit Pengguna' : 'Tambah Pengguna Baru'),

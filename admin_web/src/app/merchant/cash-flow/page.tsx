@@ -256,7 +256,7 @@ export default function MerchantCashFlowPage() {
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Arus Kas');
-      XLSX.writeFile(wb, `Arus_Kas_${business?.name || 'DPOS'}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      XLSX.writeFile(wb, `Arus_Kas_${business?.name || 'Syupeo'}_${new Date().toISOString().split('T')[0]}.xlsx`);
     } else {
       if (shifts.length === 0) {
         alert('Tidak ada data shift untuk diekspor.');
@@ -277,7 +277,7 @@ export default function MerchantCashFlowPage() {
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Shift Kasir');
-      XLSX.writeFile(wb, `Shift_Kasir_${business?.name || 'DPOS'}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      XLSX.writeFile(wb, `Shift_Kasir_${business?.name || 'Syupeo'}_${new Date().toISOString().split('T')[0]}.xlsx`);
     }
   };
 

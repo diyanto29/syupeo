@@ -48,7 +48,7 @@ class ReportTabletView extends ConsumerWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        badge: const AppTabletBadge(label: 'Mangga POS'),
+        badge: const AppTabletBadge(label: 'Syupeo'),
         actions: [
           reportAsync.maybeWhen(
             data: (report) => _ExportExcelTabletButton(report: report),

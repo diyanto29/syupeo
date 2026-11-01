@@ -429,7 +429,7 @@ export default function CrmPage() {
       await supabase.from('subscription_histories').insert(histPayload);
 
       setSuccessMsg(
-        `Selamat! Toko "${selectedLead.business_name}" resmi menjadi klien aktif Mangga POS (${convertForm.plan_mode.toUpperCase()})!`
+        `Selamat! Toko "${selectedLead.business_name}" resmi menjadi mitra Toko Retail Syupeo aktif!`
       );
       setIsConvertModalOpen(false);
       await loadData();

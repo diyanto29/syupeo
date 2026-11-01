@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "Mudahkan.online" "\0"
-            VALUE "FileDescription", "Mangga POS Desktop" "\0"
+            VALUE "FileDescription", "Syupeo Desktop" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "Mangga POS" "\0"
+            VALUE "InternalName", "Syupeo" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 Mudahkan.online. All rights reserved." "\0"
-            VALUE "OriginalFilename", "Mangga POS.exe" "\0"
-            VALUE "ProductName", "Mangga POS" "\0"
+            VALUE "OriginalFilename", "Syupeo.exe" "\0"
+            VALUE "ProductName", "Syupeo" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

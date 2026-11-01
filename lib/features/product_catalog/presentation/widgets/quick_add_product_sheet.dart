@@ -242,12 +242,12 @@ class _QuickAddProductSheetState extends ConsumerState<QuickAddProductSheet> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF7A00).withValues(alpha: 0.12),
+                        color: const Color(0xFF0070FC).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(
                         Icons.qr_code_2_rounded,
-                        color: Color(0xFFFF7A00),
+                        color: Color(0xFF0070FC),
                         size: 26,
                       ),
                     ),
@@ -446,7 +446,7 @@ class _QuickAddProductSheetState extends ConsumerState<QuickAddProductSheet> {
                 FilledButton.icon(
                   onPressed: _isSaving ? null : () => _saveAndSubmit(categories),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF7A00),
+                    backgroundColor: const Color(0xFF0070FC),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(

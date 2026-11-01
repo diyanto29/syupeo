@@ -407,7 +407,7 @@ export default function MerchantInventoryPage() {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Inventaris Bahan');
-    XLSX.writeFile(wb, `Inventaris_${business?.name || 'DPOS'}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `Inventaris_${business?.name || 'Syupeo'}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   // Filter Categories

@@ -48,6 +48,7 @@ import {
   Download,
   AlertTriangle,
   RefreshCw,
+  UserCheck,
 } from 'lucide-react';
 
 interface MenuItem {
@@ -128,23 +129,6 @@ export default function BusinessDetailPage() {
   const [ordersStatusFilter, setOrdersStatusFilter] = useState('ALL');
   const [loadingOrders, setLoadingOrders] = useState(false);
 
-  // Quick Action Modals
-  const [showPlanModal, setShowPlanModal] = useState(false);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [showLimitsModal, setShowLimitsModal] = useState(false);
-
-  // Modal form states
-  const [selectedPlanId, setSelectedPlanId] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('active');
-  const [durationMonths, setDurationMonths] = useState(1);
-  const [isLifetime, setIsLifetime] = useState(false);
-  const [selectedTemplateCode, setSelectedTemplateCode] = useState('');
-  const [customLimitsData, setCustomLimitsData] = useState({
-    max_outlets: 1,
-    max_products: 50,
-    max_transactions: 100,
-  });
-
   const [isUpdating, setIsUpdating] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState(false);
@@ -157,14 +141,47 @@ export default function BusinessDetailPage() {
     setLoading(true);
 
     try {
-      const [bizRes, tplRes, planRes, outletRes, catRes] = await Promise.all([
-        supabase
-          .from('businesses')
-          .select('*, profiles(id, full_name, email, phone), subscription_plans(*)')
-          .eq('id', businessId)
-          .single(),
+      // 1. Query businesses directly without joins to prevent schema cache / foreign key errors
+      let bizData: any = null;
+      const bizRes = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('id', businessId)
+        .maybeSingle();
+
+      if (bizRes.data) {
+        bizData = bizRes.data;
+
+        // Fetch starter kit details independently if available
+        if (bizData.starter_kit_id) {
+          const { data: kitData } = await supabase
+            .from('retail_starter_kits')
+            .select('*')
+            .eq('id', bizData.starter_kit_id)
+            .maybeSingle();
+          if (kitData) {
+            bizData.retail_starter_kits = kitData;
+          }
+        }
+
+        // Fetch owner profile independently if available
+        if (bizData.owner_user_id) {
+          const { data: profData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', bizData.owner_user_id)
+            .maybeSingle();
+          if (profData) {
+            bizData.profiles = profData;
+          }
+        }
+
+        const b = bizData as Business;
+        setBusiness(b);
+      }
+
+      const [tplRes, outletRes, catRes] = await Promise.all([
         supabase.from('business_type_templates').select('*').order('name'),
-        supabase.from('subscription_plans').select('*').order('price_monthly', { ascending: true }),
         supabase
           .from('outlets')
           .select('id, name, address, phone, created_at')
@@ -175,22 +192,7 @@ export default function BusinessDetailPage() {
           .eq('business_id', businessId),
       ]);
 
-      if (bizRes.data) {
-        const b = bizRes.data as Business;
-        setBusiness(b);
-        setSelectedPlanId(b.plan_id || '');
-        setSelectedStatus(b.subscription_status || 'active');
-        setIsLifetime(!b.subscription_end_at && b.subscription_status === 'active' && b.subscription_plans?.code === 'pro');
-        setSelectedTemplateCode(b.business_type || 'retail');
-        setCustomLimitsData({
-          max_outlets: b.max_outlets ?? 1,
-          max_products: b.max_products ?? 50,
-          max_transactions: b.max_transactions ?? 100,
-        });
-      }
-
       if (tplRes.data) setTemplates(tplRes.data as BusinessTypeTemplate[]);
-      if (planRes.data) setPlans(planRes.data as SubscriptionPlan[]);
       if (outletRes.data) setOutlets(outletRes.data);
 
       if (catRes.data) {
@@ -204,6 +206,49 @@ export default function BusinessDetailPage() {
       console.error('Error fetching business detail:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Aktivasi Akun Toko oleh Admin
+  const handleActivateBusiness = async () => {
+    if (!business) return;
+    if (
+      !confirm(
+        `Aktivasi akun toko "${business.name}"?\nStatus toko akan aktif dan pesanan paket usaha akan diteruskan ke tim gudang untuk packing.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const { error: rpcErr } = await supabase.rpc('activate_business', {
+        p_business_id: business.id,
+      });
+
+      if (rpcErr) {
+        console.warn('RPC activate_business warning, fallback direct update:', rpcErr);
+        const { error: bizErr } = await supabase
+          .from('businesses')
+          .update({
+            status: 'active',
+            subscription_status: 'active',
+          })
+          .eq('id', business.id);
+
+        if (bizErr) throw bizErr;
+
+        if (business.phone) {
+          await supabase
+            .from('package_fulfillment_orders')
+            .update({ status: 'packing' })
+            .eq('recipient_phone', business.phone)
+            .eq('status', 'pending_dispatch');
+        }
+      }
+
+      setSuccessMsg(`Toko "${business.name}" berhasil diaktivasi!`);
+      await loadBusinessProfile();
+    } catch (err: any) {
+      alert(`Gagal aktivasi toko: ${err?.message || err}`);
     }
   };
 
@@ -458,6 +503,29 @@ export default function BusinessDetailPage() {
     return allTopProducts.slice(from, from + TOP_PRODUCTS_PER_PAGE);
   }, [allTopProducts, topProductsPage]);
 
+  const fullAddressString = useMemo(() => {
+    if (!business) return '';
+    const parts = [
+      business.address,
+      business.village ? `Desa/Kel. ${business.village}` : null,
+      business.district ? `Kec. ${business.district}` : null,
+      business.city,
+      business.province ? `Prov. ${business.province}` : null,
+      business.postal_code ? `Kode Pos ${business.postal_code}` : null,
+    ].filter(Boolean);
+    return parts.join(', ');
+  }, [business]);
+
+  const googleMapsUrl = useMemo(() => {
+    if (business?.latitude && business?.longitude) {
+      return `https://www.google.com/maps?q=${business.latitude},${business.longitude}`;
+    }
+    if (fullAddressString) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddressString)}`;
+    }
+    return null;
+  }, [business?.latitude, business?.longitude, fullAddressString]);
+
   const topProductsTotalPages = Math.ceil(allTopProducts.length / TOP_PRODUCTS_PER_PAGE) || 1;
   const productsTotalPages = Math.ceil(productsTotalCount / PRODUCTS_PER_PAGE) || 1;
   const ordersTotalPages = Math.ceil(ordersTotalCount / ORDERS_PER_PAGE) || 1;
@@ -499,105 +567,14 @@ export default function BusinessDetailPage() {
     document.body.removeChild(link);
   };
 
-  // Modal Save Handlers
-  const handleSavePlan = async () => {
-    if (!business || !selectedPlanId) return;
-    setIsUpdating(true);
-    try {
-      const plan = plans.find((p) => p.id === selectedPlanId);
-      const isProPlan = plan?.code === 'pro';
-
-      let newEndAt: string | null = null;
-      if (isProPlan) {
-        if (!isLifetime) {
-          const d = new Date();
-          d.setMonth(d.getMonth() + durationMonths);
-          newEndAt = d.toISOString();
-        }
-      }
-
-      const { error } = await supabase
-        .from('businesses')
-        .update({
-          plan_id: selectedPlanId,
-          subscription_status: selectedStatus,
-          subscription_end_at: newEndAt,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', business.id);
-
-      if (error) throw error;
-      setSuccessMsg('Paket langganan bisnis berhasil diperbarui.');
-      setShowPlanModal(false);
-      await loadBusinessProfile();
-    } catch (err: any) {
-      alert(`Gagal menyimpan: ${err.message}`);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleSaveTemplate = async () => {
-    if (!business || !selectedTemplateCode) return;
-    setIsUpdating(true);
-    try {
-      const tpl = templates.find((t) => t.code === selectedTemplateCode);
-      const { error } = await supabase
-        .from('businesses')
-        .update({
-          business_type: selectedTemplateCode,
-          enabled_features: tpl?.default_enabled_features || [],
-          features_config: tpl?.features_config || {},
-          limits_config: tpl?.limits_config || {},
-          role_labels: tpl?.role_labels || {},
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', business.id);
-
-      if (error) throw error;
-      setSuccessMsg(`Template usaha berhasil diubah ke "${tpl?.name || selectedTemplateCode}".`);
-      setShowTemplateModal(false);
-      await loadBusinessProfile();
-    } catch (err: any) {
-      alert(`Gagal mengubah template: ${err.message}`);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleSaveLimits = async () => {
-    if (!business) return;
-    setIsUpdating(true);
-    try {
-      const { error } = await supabase
-        .from('businesses')
-        .update({
-          max_outlets: Number(customLimitsData.max_outlets),
-          max_products: Number(customLimitsData.max_products),
-          max_transactions: Number(customLimitsData.max_transactions),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', business.id);
-
-      if (error) throw error;
-      setSuccessMsg('Limit kuota bisnis berhasil disimpan.');
-      setShowLimitsModal(false);
-      await loadBusinessProfile();
-    } catch (err: any) {
-      alert(`Gagal menyimpan limit: ${err.message}`);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col">
         <Navbar title="Detail Akun Bisnis & Penjualan" />
         <div className="flex-1 flex items-center justify-center py-32">
           <div className="text-center">
-            <div className="w-10 h-10 border-3 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-sm font-semibold text-slate-600">Memuat profil bisnis, produk & analitik transaksi...</p>
+            <div className="w-10 h-10 border-3 border-[#0070fc] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-sm font-semibold text-slate-600">Memuat profil toko retail, produk & analitik transaksi...</p>
           </div>
         </div>
       </div>
@@ -609,13 +586,21 @@ export default function BusinessDetailPage() {
       <div className="min-h-screen bg-slate-50 flex flex-col">
         <Navbar title="Bisnis Tidak Ditemukan" />
         <div className="p-12 text-center space-y-4">
-          <p className="text-slate-500">Data bisnis dengan ID "{businessId}" tidak ditemukan.</p>
-          <Link
-            href="/dashboard/businesses"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-xl text-sm font-bold shadow-xs hover:bg-orange-500"
-          >
-            <ArrowLeft className="w-4 h-4" /> Kembali ke Daftar Bisnis
-          </Link>
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+            <Building2 className="w-8 h-8" />
+          </div>
+          <h2 className="text-lg font-bold text-slate-800">Toko Retail Tidak Ditemukan</h2>
+          <p className="text-slate-500 max-w-md mx-auto text-sm">
+            Data bisnis dengan ID <code className="bg-slate-100 px-2 py-0.5 rounded text-xs font-mono text-slate-700">{businessId}</code> tidak ditemukan di database. Pastikan toko sudah didaftarkan.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/dashboard/businesses"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0070fc] text-white rounded-xl text-sm font-bold shadow-md hover:bg-[#005cd0] transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" /> Kembali ke Daftar Bisnis
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -650,7 +635,7 @@ export default function BusinessDetailPage() {
     <div className="min-h-screen bg-slate-50/50 pb-20">
       <Navbar
         title={business.name}
-        description={`Profil & Analitik Toko • Owner: ${business.profiles?.full_name || 'Owner'}`}
+        description={`Profil & Analitik Toko • Owner: ${business.owner_name || business.profiles?.full_name || 'Owner'}`}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
@@ -680,31 +665,36 @@ export default function BusinessDetailPage() {
         {/* ======================================================== */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-start gap-5">
-            <div className="w-18 h-18 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 text-white font-black text-3xl flex items-center justify-center shadow-lg shadow-orange-500/20 flex-shrink-0">
-              {business.name?.charAt(0)?.toUpperCase() || 'B'}
+            <div className="w-16 h-16 rounded-2xl bg-[#0070fc] text-white font-black text-2xl flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+              {business.name?.charAt(0)?.toUpperCase() || 'T'}
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2.5">
                 <h1 className="text-2xl font-black text-slate-900 tracking-tight">{business.name}</h1>
-                {isPro ? (
-                  <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1.5 shadow-2xs">
-                    <Crown className="w-3.5 h-3.5 text-amber-600" /> PRO PLAN ({endAtFormatted})
+                {business.status === 'pending' ? (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1.5 shadow-2xs">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" /> Menunggu Aktivasi
                   </span>
                 ) : (
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5">
-                    <Store className="w-3.5 h-3.5 text-slate-500" /> FREE PLAN
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Aktif
                   </span>
                 )}
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-slate-500" /> {business.business_type || 'default'}
+                {business.retail_starter_kits && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1.5 shadow-2xs">
+                    <Package className="w-3.5 h-3.5 text-amber-600" /> {business.retail_starter_kits.name}
+                  </span>
+                )}
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1.5 capitalize">
+                  <Layers className="w-3.5 h-3.5 text-slate-500" /> {business.business_type || 'Retail'}
                 </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-slate-500">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-500">
                 <div className="flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="font-bold text-slate-800">{business.profiles?.full_name || 'Owner'}</span>
-                  <span className="text-slate-400">({business.profiles?.email || business.email || '-'})</span>
+                  <span className="font-bold text-slate-800">{business.owner_name || business.profiles?.full_name || 'Owner'}</span>
+                  <span className="text-slate-400">({business.email || business.profiles?.email || '-'})</span>
                 </div>
                 {waNumber && (
                   <a
@@ -727,32 +717,49 @@ export default function BusinessDetailPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Alamat Lengkap & Koordinat GPS */}
+              {fullAddressString && (
+                <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-700 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                    <MapPin className="w-3.5 h-3.5 text-[#0070fc] shrink-0" />
+                    <span className="font-medium text-slate-800">{fullAddressString}</span>
+                  </div>
+                  {business.latitude && business.longitude && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">
+                      GPS: {business.latitude.toFixed(6)}, {business.longitude.toFixed(6)}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-            <button
-              onClick={() => setShowPlanModal(true)}
-              className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-2 shadow-xs transition-colors"
-            >
-              <Crown className="w-4 h-4" />
-              <span>{isPro ? 'Atur Masa PRO' : 'Upgrade PRO'}</span>
-            </button>
-            <button
-              onClick={() => setShowTemplateModal(true)}
-              className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center gap-2 shadow-2xs transition-colors"
-            >
-              <Layers className="w-4 h-4 text-slate-500" />
-              <span>Ganti Template</span>
-            </button>
-            <button
-              onClick={() => setShowLimitsModal(true)}
-              className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center gap-2 shadow-2xs transition-colors"
-            >
-              <Sliders className="w-4 h-4 text-slate-500" />
-              <span>Limit Kuota</span>
-            </button>
+          {/* Action Buttons: Clean & Direct */}
+          <div className="flex items-center gap-2.5 w-full lg:w-auto">
+            {business.status === 'pending' && (
+              <button
+                type="button"
+                onClick={handleActivateBusiness}
+                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 shadow-xs transition-colors"
+                title="Aktivasi Akun Toko Sekarang"
+              >
+                <UserCheck className="w-4 h-4" />
+                <span>Aktivasi Akun Toko</span>
+              </button>
+            )}
+            {googleMapsUrl && (
+              <a
+                href={googleMapsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold bg-[#0070fc] hover:bg-[#005cd0] text-white flex items-center justify-center gap-2 shadow-xs transition-colors"
+              >
+                <MapPin className="w-4 h-4" />
+                <span>Buka di Google Maps</span>
+                <ArrowUpRight className="w-3.5 h-3.5 opacity-80" />
+              </a>
+            )}
           </div>
         </div>
 
@@ -821,7 +828,7 @@ export default function BusinessDetailPage() {
             onClick={() => setActiveTab('sales')}
             className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'sales'
-                ? 'border-orange-600 text-orange-600 bg-white rounded-t-2xl shadow-xs'
+                ? 'border-[#0070fc] text-[#0070fc] bg-white rounded-t-2xl shadow-xs'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -832,7 +839,7 @@ export default function BusinessDetailPage() {
             onClick={() => setActiveTab('products')}
             className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'products'
-                ? 'border-orange-600 text-orange-600 bg-white rounded-t-2xl shadow-xs'
+                ? 'border-[#0070fc] text-[#0070fc] bg-white rounded-t-2xl shadow-xs'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -843,7 +850,7 @@ export default function BusinessDetailPage() {
             onClick={() => setActiveTab('orders')}
             className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'orders'
-                ? 'border-orange-600 text-orange-600 bg-white rounded-t-2xl shadow-xs'
+                ? 'border-[#0070fc] text-[#0070fc] bg-white rounded-t-2xl shadow-xs'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -854,12 +861,12 @@ export default function BusinessDetailPage() {
             onClick={() => setActiveTab('profile')}
             className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'profile'
-                ? 'border-orange-600 text-orange-600 bg-white rounded-t-2xl shadow-xs'
+                ? 'border-[#0070fc] text-[#0070fc] bg-white rounded-t-2xl shadow-xs'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             <Building2 className="w-4 h-4" />
-            <span>Profil Usaha & Kuota</span>
+            <span>Profil Toko Retail</span>
           </button>
         </div>
 
@@ -1511,22 +1518,22 @@ export default function BusinessDetailPage() {
         )}
 
         {/* ======================================================== */}
-        {/* TAB 4: PROFIL LENGKAP USAHA & OWNER                      */}
+        {/* TAB 4: PROFIL LENGKAP TOKO RETAIL & ALAMAT               */}
         {/* ======================================================== */}
         {activeTab === 'profile' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Owner Info */}
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <User className="w-4 h-4 text-orange-600" />
+                  <User className="w-4 h-4 text-[#0070fc]" />
                   Identitas Pemilik (Owner)
                 </h3>
                 <div className="space-y-3.5 text-xs">
                   <div>
                     <span className="text-slate-400">Nama Lengkap:</span>
                     <div className="font-bold text-slate-900 text-sm mt-0.5">
-                      {business.profiles?.full_name || 'Tidak dicantumkan'}
+                      {business.owner_name || business.profiles?.full_name || 'Tidak dicantumkan'}
                     </div>
                   </div>
                   <div>
@@ -1535,7 +1542,7 @@ export default function BusinessDetailPage() {
                       <Mail className="w-3.5 h-3.5 text-slate-400" />
                       <a
                         href={`mailto:${business.profiles?.email || business.email}`}
-                        className="text-orange-600 hover:underline"
+                        className="text-[#0070fc] hover:underline"
                       >
                         {business.profiles?.email || business.email || '-'}
                       </a>
@@ -1561,37 +1568,10 @@ export default function BusinessDetailPage() {
                     </div>
                   </div>
                   <div>
-                    <span className="text-slate-400">User ID (Auth UID):</span>
-                    <code className="font-mono text-[11px] text-slate-700 bg-slate-100 px-2 py-1 rounded block mt-0.5 break-all">
-                      {business.owner_user_id}
-                    </code>
-                  </div>
-                </div>
-              </div>
-
-              {/* Store Identity */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <Store className="w-4 h-4 text-orange-600" />
-                  Identitas Toko & Alamat
-                </h3>
-                <div className="space-y-3.5 text-xs">
-                  <div>
-                    <span className="text-slate-400">Nama Bisnis:</span>
-                    <div className="font-black text-slate-900 text-base mt-0.5">{business.name}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400">Template Usaha:</span>
-                    <div className="font-bold text-slate-800 uppercase flex items-center gap-1.5 mt-0.5">
-                      <Layers className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{business.business_type || 'default'}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400">Alamat Usaha:</span>
-                    <div className="text-slate-800 flex items-start gap-1.5 mt-0.5">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
-                      <span>{business.address || 'Alamat belum diatur'}</span>
+                    <span className="text-slate-400">Metode Pendaftaran:</span>
+                    <div className="font-medium text-slate-700 flex items-center gap-1.5 mt-0.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{business.owner_user_id ? 'Akun Pengguna Mandiri' : 'Onboarding Terpadu (Super Admin / Sales Syupeo)'}</span>
                     </div>
                   </div>
                   <div>
@@ -1603,282 +1583,129 @@ export default function BusinessDetailPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Store Identity & Full Detailed Address */}
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-[#0070fc]" />
+                    Alamat Lengkap & Wilayah Toko
+                  </h3>
+                  {googleMapsUrl && (
+                    <a
+                      href={googleMapsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-blue-50 text-[#0070fc] hover:bg-blue-100 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" /> Buka Google Maps
+                    </a>
+                  )}
+                </div>
+
+                <div className="space-y-3.5 text-xs">
+                  <div>
+                    <span className="text-slate-400">Nama Toko Retail:</span>
+                    <div className="font-black text-slate-900 text-base mt-0.5">{business.name}</div>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Alamat Lengkap / Patokan Jalan</span>
+                    <div className="font-medium text-slate-800 text-xs">
+                      {business.address || 'Belum diisi'}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="p-2.5 bg-slate-50 border border-slate-200/60 rounded-xl">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase">Desa / Kelurahan</span>
+                      <div className="font-bold text-slate-800 text-xs mt-0.5">{business.village || '-'}</div>
+                    </div>
+                    <div className="p-2.5 bg-slate-50 border border-slate-200/60 rounded-xl">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase">Kecamatan</span>
+                      <div className="font-bold text-slate-800 text-xs mt-0.5">{business.district || '-'}</div>
+                    </div>
+                    <div className="p-2.5 bg-slate-50 border border-slate-200/60 rounded-xl">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase">Kabupaten / Kota</span>
+                      <div className="font-bold text-slate-800 text-xs mt-0.5">{business.city || '-'}</div>
+                    </div>
+                    <div className="p-2.5 bg-slate-50 border border-slate-200/60 rounded-xl">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase">Provinsi</span>
+                      <div className="font-bold text-slate-800 text-xs mt-0.5">{business.province || '-'}</div>
+                    </div>
+                  </div>
+
+                  {business.latitude && business.longitude ? (
+                    <div className="p-3 bg-emerald-50/60 border border-emerald-200/80 rounded-xl flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold text-emerald-800 uppercase">Koordinat GPS Presisi</span>
+                        <div className="font-mono text-xs text-emerald-900 font-bold mt-0.5">
+                          {business.latitude.toFixed(6)}, {business.longitude.toFixed(6)}
+                        </div>
+                      </div>
+                      {googleMapsUrl && (
+                        <a
+                          href={googleMapsUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold shadow-2xs flex items-center gap-1"
+                        >
+                          <MapPin className="w-3.5 h-3.5" /> Peta
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-slate-400 italic">Koordinat GPS belum dikunci.</div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Outlets & Limits */}
+            {/* Paket Starter Kit Usaha & Cabang Toko */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
               <h3 className="text-sm font-bold text-slate-900 flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-orange-600" />
-                  Daftar Outlet & Batasan Kuota Toko
+                  <Package className="w-4 h-4 text-[#0070fc]" />
+                  Informasi Paket Usaha Starter Kit & Outlet
                 </div>
-                <span className="text-xs font-semibold text-slate-500">
-                  Masa Aktif: <strong className="text-slate-900">{endAtFormatted}</strong>
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Siap Operasional POS
                 </span>
               </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                  <div className="text-xs text-slate-500">Cabang / Outlet:</div>
-                  <div className="text-2xl font-black text-slate-900 mt-1">
-                    {outlets.length} <span className="text-xs font-normal text-slate-500">/ {business.max_outlets ?? 1}</span>
+                  <div className="text-xs text-slate-500 font-medium">Paket Usaha Terdaftar:</div>
+                  <div className="text-base font-black text-slate-900 mt-1">
+                    {business.retail_starter_kits?.name || 'Paket Usaha Retail'}
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    {outlets.length > 0 ? outlets.map((o) => o.name).join(', ') : 'Belum ada outlet terdaftar'}
+                  <p className="text-xs font-bold text-emerald-700 mt-1">
+                    Investasi Awal: Rp 200.000 (1x di Muka)
                   </p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                  <div className="text-xs text-slate-500">Katalog Produk:</div>
+                  <div className="text-xs text-slate-500 font-medium">Katalog Menu & Stok Awal:</div>
                   <div className="text-2xl font-black text-slate-900 mt-1">
-                    {productsTotalCount}{' '}
-                    <span className="text-xs font-normal text-slate-500">
-                      / {business.max_products && business.max_products > 10000 ? 'Unlimited' : business.max_products ?? 50}
-                    </span>
+                    {productsTotalCount} <span className="text-xs font-normal text-slate-500">item produk</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">Menu aktif di database</p>
+                  <p className="text-[11px] text-slate-500 mt-1">Otomatis di-seed dari paket perdana</p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                  <div className="text-xs text-slate-500">Batas Transaksi / Bulan:</div>
+                  <div className="text-xs text-slate-500 font-medium">Outlet Aktif:</div>
                   <div className="text-2xl font-black text-slate-900 mt-1">
-                    {business.max_transactions && business.max_transactions > 10000
-                      ? 'Unlimited'
-                      : `${business.max_transactions ?? 100}`}
+                    {outlets.length} <span className="text-xs font-normal text-slate-500">outlet</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">Terpakai: {salesMetrics.paidCount} transaksi lunas</p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    {outlets.length > 0 ? outlets.map((o) => o.name).join(', ') : 'Toko Utama'}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* ======================================================== */}
-      {/* QUICK ACTION MODALS (PLAN, TEMPLATE, LIMITS)             */}
-      {/* ======================================================== */}
-
-      {/* MODAL PLAN */}
-      {showPlanModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white w-full max-w-lg rounded-2xl p-6 border border-slate-200 shadow-2xl relative">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Crown className="w-5 h-5 text-amber-500" />
-                Atur Paket Langganan (Free vs Pro)
-              </h3>
-              <button onClick={() => setShowPlanModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="py-4 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2">Pilih Paket:</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {plans.map((p) => {
-                    const isSel = selectedPlanId === p.id;
-                    const isProCode = p.code === 'pro';
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setSelectedPlanId(p.id)}
-                        className={`p-3.5 rounded-xl border text-left transition-all ${
-                          isSel
-                            ? 'border-orange-500 bg-orange-50/50 shadow-xs'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-sm text-slate-900">{p.name}</span>
-                          {isProCode && <Crown className="w-4 h-4 text-amber-500" />}
-                        </div>
-                        <div className="text-xs text-slate-500">{formatRupiah(p.price_monthly)} /bln</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {plans.find((p) => p.id === selectedPlanId)?.code === 'pro' && (
-                <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-amber-900">Akses Permanen (Lifetime)?</label>
-                    <input
-                      type="checkbox"
-                      checked={isLifetime}
-                      onChange={(e) => setIsLifetime(e.target.checked)}
-                      className="w-4 h-4 text-orange-600 rounded border-slate-300"
-                    />
-                  </div>
-
-                  {!isLifetime && (
-                    <div>
-                      <label className="block text-xs font-bold text-amber-900 mb-1">Durasi Langganan (Bulan):</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={120}
-                        value={durationMonths}
-                        onChange={(e) => setDurationMonths(parseInt(e.target.value) || 1)}
-                        className="w-full px-3 py-2 rounded-xl bg-white border border-amber-300 text-xs font-bold"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowPlanModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleSavePlan}
-                disabled={isUpdating}
-                className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-xs disabled:opacity-50"
-              >
-                {isUpdating ? 'Menyimpan...' : 'Simpan Paket'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL TEMPLATE */}
-      {showTemplateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white w-full max-w-lg rounded-2xl p-6 border border-slate-200 shadow-2xl relative">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Layers className="w-5 h-5 text-orange-500" />
-                Ubah Template Bisnis
-              </h3>
-              <button onClick={() => setShowTemplateModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="py-4 space-y-3">
-              <label className="block text-xs font-bold text-slate-700">Pilih Jenis Usaha Baru:</label>
-              <div className="space-y-2 max-h-72 overflow-y-auto">
-                {templates.map((t) => (
-                  <button
-                    key={t.code}
-                    type="button"
-                    onClick={() => setSelectedTemplateCode(t.code)}
-                    className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all ${
-                      selectedTemplateCode === t.code
-                        ? 'border-orange-500 bg-orange-50/50 shadow-xs'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-bold text-sm text-slate-900">{t.name}</div>
-                      <div className="text-[11px] text-slate-500">{t.description || `Kode: ${t.code}`}</div>
-                    </div>
-                    {selectedTemplateCode === t.code && <Check className="w-4 h-4 text-orange-600" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowTemplateModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleSaveTemplate}
-                disabled={isUpdating}
-                className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-xs disabled:opacity-50"
-              >
-                {isUpdating ? 'Menerapkan...' : 'Terapkan Template'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL LIMITS */}
-      {showLimitsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 border border-slate-200 shadow-2xl relative">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-orange-500" />
-                Override Limit Kuota Khusus
-              </h3>
-              <button onClick={() => setShowLimitsModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="py-4 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Maksimum Outlet / Cabang</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={customLimitsData.max_outlets}
-                  onChange={(e) =>
-                    setCustomLimitsData({ ...customLimitsData, max_outlets: parseInt(e.target.value) || 1 })
-                  }
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-sm font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Maksimum Produk</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={customLimitsData.max_products}
-                  onChange={(e) =>
-                    setCustomLimitsData({ ...customLimitsData, max_products: parseInt(e.target.value) || 50 })
-                  }
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-sm font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Maksimum Transaksi / Bulan</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={customLimitsData.max_transactions}
-                  onChange={(e) =>
-                    setCustomLimitsData({ ...customLimitsData, max_transactions: parseInt(e.target.value) || 100 })
-                  }
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-sm font-semibold"
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowLimitsModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleSaveLimits}
-                disabled={isUpdating}
-                className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-xs disabled:opacity-50"
-              >
-                {isUpdating ? 'Menyimpan...' : 'Simpan Limit'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

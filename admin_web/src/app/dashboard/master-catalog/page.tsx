@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import { createClient } from '@/lib/supabase/client';
 import { MasterCatalogItem } from '@/types/database';
+import UnitSelector from '@/components/UnitSelector';
 import {
   Barcode,
   Search,
@@ -54,13 +55,21 @@ export default function MasterCatalogPage() {
   const [editingItem, setEditingItem] = useState<MasterCatalogItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<MasterCatalogItem | null>(null);
 
-  // Form states
+  // Form states (Base / Eceran)
   const [formBarcode, setFormBarcode] = useState<string>('');
   const [formName, setFormName] = useState<string>('');
   const [formCategory, setFormCategory] = useState<string>('');
-  const [formUnit, setFormUnit] = useState<string>('PCs');
+  const [formUnit, setFormUnit] = useState<string>('Pcs');
   const [formBasePrice, setFormBasePrice] = useState<string>('0');
   const [formSellingPrice, setFormSellingPrice] = useState<string>('0');
+
+  // Form states (Grosir / Kemasan Karton Multi-UOM)
+  const [formHasWholesale, setFormHasWholesale] = useState<boolean>(false);
+  const [formWholesaleUnit, setFormWholesaleUnit] = useState<string>('Karton');
+  const [formConversionRatio, setFormConversionRatio] = useState<number>(24);
+  const [formWholesaleBarcode, setFormWholesaleBarcode] = useState<string>('');
+  const [formWholesaleBasePrice, setFormWholesaleBasePrice] = useState<string>('0');
+  const [formWholesaleSellingPrice, setFormWholesaleSellingPrice] = useState<string>('0');
 
   const [saving, setSaving] = useState<boolean>(false);
   const [copiedBarcode, setCopiedBarcode] = useState<string | null>(null);
@@ -163,9 +172,15 @@ export default function MasterCatalogPage() {
     setFormBarcode('');
     setFormName('');
     setFormCategory('');
-    setFormUnit('PCs');
+    setFormUnit('Pcs');
     setFormBasePrice('0');
     setFormSellingPrice('0');
+    setFormHasWholesale(false);
+    setFormWholesaleUnit('Karton');
+    setFormConversionRatio(24);
+    setFormWholesaleBarcode('');
+    setFormWholesaleBasePrice('0');
+    setFormWholesaleSellingPrice('0');
     setIsModalOpen(true);
   };
 
@@ -174,9 +189,15 @@ export default function MasterCatalogPage() {
     setFormBarcode(item.barcode || '');
     setFormName(item.name);
     setFormCategory(item.category || '');
-    setFormUnit(item.unit || 'PCs');
+    setFormUnit(item.unit || 'Pcs');
     setFormBasePrice(String(item.base_price || 0));
     setFormSellingPrice(String(item.selling_price || 0));
+    setFormHasWholesale(!!item.wholesale_unit || (item.conversion_ratio !== undefined && item.conversion_ratio > 1));
+    setFormWholesaleUnit(item.wholesale_unit || 'Karton');
+    setFormConversionRatio(item.conversion_ratio || 24);
+    setFormWholesaleBarcode(item.wholesale_barcode || '');
+    setFormWholesaleBasePrice(String(item.wholesale_base_price || 0));
+    setFormWholesaleSellingPrice(String(item.wholesale_selling_price || 0));
     setIsModalOpen(true);
   };
 
@@ -195,17 +216,24 @@ export default function MasterCatalogPage() {
       const sellingPriceNum = parseFloat(formSellingPrice) || 0;
       const cleanBarcode = formBarcode.trim() || null;
 
+      const payload: any = {
+        barcode: cleanBarcode,
+        name: formName.trim(),
+        category: formCategory.trim() || null,
+        unit: formUnit.trim() || 'Pcs',
+        base_price: basePriceNum,
+        selling_price: sellingPriceNum,
+        wholesale_unit: formHasWholesale ? formWholesaleUnit.trim() : null,
+        conversion_ratio: formHasWholesale ? Math.max(Number(formConversionRatio) || 1, 1) : 1,
+        wholesale_barcode: formHasWholesale && formWholesaleBarcode.trim() ? formWholesaleBarcode.trim() : null,
+        wholesale_base_price: formHasWholesale ? parseFloat(formWholesaleBasePrice) || 0 : 0,
+        wholesale_selling_price: formHasWholesale ? parseFloat(formWholesaleSellingPrice) || 0 : 0,
+      };
+
       if (editingItem) {
         const { error } = await supabase
           .from('master_catalog')
-          .update({
-            barcode: cleanBarcode,
-            name: formName.trim(),
-            category: formCategory.trim() || null,
-            unit: formUnit.trim() || 'PCs',
-            base_price: basePriceNum,
-            selling_price: sellingPriceNum,
-          })
+          .update(payload)
           .eq('id', editingItem.id);
 
         if (error) {
@@ -216,14 +244,7 @@ export default function MasterCatalogPage() {
         }
         setAlertSuccess(`Produk "${formName}" berhasil diperbarui!`);
       } else {
-        const { error } = await supabase.from('master_catalog').insert({
-          barcode: cleanBarcode,
-          name: formName.trim(),
-          category: formCategory.trim() || null,
-          unit: formUnit.trim() || 'PCs',
-          base_price: basePriceNum,
-          selling_price: sellingPriceNum,
-        });
+        const { error } = await supabase.from('master_catalog').insert(payload);
 
         if (error) {
           if (error.code === '23505') {
@@ -599,7 +620,7 @@ export default function MasterCatalogPage() {
             {/* Add Product Button */}
             <button
               onClick={openAddModal}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all duration-200"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0070fc] hover:bg-[#005cd0] text-white font-bold text-xs shadow-xs hover:shadow-md transition-all duration-200"
             >
               <Plus className="w-4 h-4" />
               <span>Tambah Produk Master</span>
@@ -683,7 +704,15 @@ export default function MasterCatalogPage() {
 
                     {/* Unit */}
                     <td className="py-4 px-6">
-                      <span className="text-xs font-medium text-slate-600">{item.unit || 'PCs'}</span>
+                      <div className="space-y-1">
+                        <span className="font-semibold text-slate-800 text-xs block">{item.unit || 'Pcs'}</span>
+                        {item.wholesale_unit && item.conversion_ratio && item.conversion_ratio > 1 && (
+                          <div className="text-[10px] font-mono font-medium text-[#0070fc] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/70 inline-flex items-center gap-1 shadow-2xs">
+                            <Package className="w-2.5 h-2.5 shrink-0" />
+                            <span>1 {item.wholesale_unit} = {item.conversion_ratio} {item.unit || 'Pcs'}</span>
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     {/* Base Price */}
@@ -696,7 +725,7 @@ export default function MasterCatalogPage() {
                     </td>
 
                     {/* Selling Price */}
-                    <td className="py-4 px-6 text-right font-mono font-bold text-xs text-orange-600">
+                    <td className="py-4 px-6 text-right font-mono font-bold text-xs text-[#0070fc]">
                       {item.selling_price && item.selling_price > 0 ? (
                         `Rp ${Number(item.selling_price).toLocaleString('id-ID')}`
                       ) : (
@@ -710,7 +739,7 @@ export default function MasterCatalogPage() {
                         <button
                           onClick={() => openEditModal(item)}
                           title="Edit Produk"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-[#0070fc] hover:bg-blue-50 transition-colors"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -992,98 +1021,97 @@ export default function MasterCatalogPage() {
 
       {/* Modal Add / Edit Single Product */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-3xl lg:max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center">
-                  <Barcode className="w-5 h-5" />
+                <div className="w-11 h-11 rounded-2xl bg-blue-50 text-[#0070fc] flex items-center justify-center border border-blue-100">
+                  <Barcode className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-slate-900">
+                  <h3 className="font-black text-xl text-slate-900">
                     {editingItem ? 'Edit Produk Master' : 'Tambah Produk Master'}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     {editingItem
-                      ? 'Perbarui informasi referensi produk master'
+                      ? 'Perbarui informasi referensi produk master dan konversi kemasan grosir'
                       : 'Data ini akan menjadi acuan saat kasir scan barcode baru'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl"
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-xl transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveProduct} className="p-6 space-y-4">
-              {/* Barcode */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Kode Barcode (EAN / UPC / Manual)
-                </label>
-                <div className="relative">
-                  <Barcode className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <form onSubmit={handleSaveProduct} className="p-6 sm:p-8 space-y-5">
+              {/* Barcode & Nama Barang */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Kode Barcode (EAN / UPC / Manual)
+                  </label>
+                  <div className="relative">
+                    <Barcode className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="cth: 8992388112233"
+                      value={formBarcode}
+                      onChange={(e) => setFormBarcode(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Nama Barang / Produk <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    placeholder="cth: 8992388112233"
-                    value={formBarcode}
-                    onChange={(e) => setFormBarcode(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm font-mono"
+                    required
+                    placeholder="cth: INDOMIE GORENG SPESIAL 85G"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-semibold text-slate-900"
                   />
                 </div>
               </div>
 
-              {/* Name */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Nama Barang / Produk <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="cth: INDOMIE GORENG SPESIAL 85G"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm font-medium"
-                />
-              </div>
-
-              {/* Category & Unit */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Category & Unit (Standarisasi Eceran) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     Kategori
                   </label>
                   <input
                     type="text"
-                    placeholder="cth: MIE, MINUMAN"
+                    placeholder="cth: MIE, MINUMAN, SEMBAKO"
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Satuan
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="cth: PCs, BUNGKUS, BOX"
+                  <UnitSelector
+                    label="Satuan Eceran (Terkecil)"
                     value={formUnit}
-                    onChange={(e) => setFormUnit(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm"
+                    onChange={setFormUnit}
+                    placeholder="Pilih satuan eceran..."
+                    categoryFilter="eceran"
+                    helperText="Satuan jual eceran di kasir"
                   />
                 </div>
               </div>
 
-              {/* Pricing (Base & Selling) */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Pricing Eceran (Base & Selling) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Rekomendasi Modal (HPP)
+                    Modal Eceran (HPP / {formUnit || 'Pcs'})
                   </label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
@@ -1095,14 +1123,14 @@ export default function MasterCatalogPage() {
                       placeholder="0"
                       value={formBasePrice}
                       onChange={(e) => setFormBasePrice(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm font-mono"
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-mono font-semibold"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Rekomendasi Harga Jual
+                    Rekomendasi Jual Eceran (HET)
                   </label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
@@ -1114,10 +1142,157 @@ export default function MasterCatalogPage() {
                       placeholder="0"
                       value={formSellingPrice}
                       onChange={(e) => setFormSellingPrice(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm font-mono font-bold"
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-mono font-bold text-[#0070fc]"
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* KEMASAN GROSIR / DUS (MULTI-UOM) */}
+              <div className="p-5 rounded-2xl bg-slate-50/90 border border-slate-200 space-y-4">
+                <div className="flex items-center justify-between p-3.5 sm:p-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                      formHasWholesale ? 'bg-[#0070fc] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
+                    }`}>
+                      <Package className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wide">
+                          Punya Kemasan Grosir / Karton / Dus?
+                        </span>
+                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider transition-colors ${
+                          formHasWholesale 
+                            ? 'bg-blue-100 text-[#0070fc] border border-blue-200' 
+                            : 'bg-slate-100 text-slate-500 border border-slate-200'
+                        }`}>
+                          {formHasWholesale ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+                        {formHasWholesale 
+                          ? 'Aktif — Sistem akan otomatis mengonversi stok karton/dus ke satuan eceran' 
+                          : 'Aktifkan jika produk ini kulakan atau dijual dalam kemasan dus / karton / bal'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* High-Contrast Interactive Toggle Button */}
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={formHasWholesale}
+                    onClick={() => setFormHasWholesale(!formHasWholesale)}
+                    className={`relative inline-flex h-8 w-15 shrink-0 cursor-pointer rounded-full p-1 transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/30 ${
+                      formHasWholesale ? 'bg-[#0070fc]' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span className="sr-only">Toggle kemasan grosir</span>
+                    <span
+                      className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        formHasWholesale ? 'translate-x-7' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {formHasWholesale && (
+                  <div className="pt-3 border-t border-slate-200/80 space-y-4 animate-in fade-in duration-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <UnitSelector
+                          label="Satuan Grosir"
+                          value={formWholesaleUnit}
+                          onChange={setFormWholesaleUnit}
+                          placeholder="Pilih kemasan grosir..."
+                          categoryFilter="kemasan_besar"
+                          helperText="Kemasan dus/karton saat kulakan"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                          <span>Isi per {formWholesaleUnit || 'Dus'}</span>
+                          <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                            Wajib Diisi
+                          </span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="2"
+                            required={formHasWholesale}
+                            placeholder="cth: 24 atau 40"
+                            value={formConversionRatio}
+                            onChange={(e) => setFormConversionRatio(parseInt(e.target.value) || 1)}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-bold text-slate-900"
+                          />
+                          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                            {formUnit || 'Pcs'} / {formWholesaleUnit || 'Dus'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          Berapa {formUnit || 'Pcs'} di dalam 1 {formWholesaleUnit || 'Dus'}.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Harga Grosir per Dus */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Modal per {formWholesaleUnit || 'Dus'}
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={formWholesaleBasePrice}
+                            onChange={(e) => setFormWholesaleBasePrice(e.target.value)}
+                            className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-semibold"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Rekomendasi Jual per {formWholesaleUnit || 'Dus'}
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={formWholesaleSellingPrice}
+                            onChange={(e) => setFormWholesaleSellingPrice(e.target.value)}
+                            className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-bold text-[#0070fc]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                        <span>Barcode Kardus Luar (Opsional)</span>
+                        <span className="text-[10px] text-slate-400 font-normal">Kosongkan jika tidak ada</span>
+                      </label>
+                      <div className="relative">
+                        <Barcode className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          placeholder="cth: 8991234500000 (Barcode luar dus)"
+                          value={formWholesaleBarcode}
+                          onChange={(e) => setFormWholesaleBarcode(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Submit Buttons */}
@@ -1132,7 +1307,7 @@ export default function MasterCatalogPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0070fc] hover:bg-[#005cd0] text-white text-xs font-bold shadow-xs hover:shadow-md transition-all disabled:opacity-50"
                 >
                   {saving ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

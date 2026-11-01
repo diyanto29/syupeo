@@ -155,7 +155,7 @@ class _InventoryHeader extends ConsumerWidget {
           onPressed: () => _generateAndShowReport(context, ref),
           icon: Icons.description_outlined,
           label: isCompact ? '' : 'Laporan',
-          iconColor: const Color(0xFFEA580C),
+          iconColor: const Color(0xFF005ECC),
           tooltip: 'Cetak Laporan PDF',
         ),
       ],
@@ -953,7 +953,7 @@ class _LowStockEntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCritical = entry.currentStock <= 0;
-    final alertColor = isCritical ? const Color(0xFFEF4444) : const Color(0xFFEA580C);
+    final alertColor = isCritical ? const Color(0xFFEF4444) : const Color(0xFF005ECC);
 
     return Container(
       padding: const EdgeInsets.all(10),

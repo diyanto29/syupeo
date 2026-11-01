@@ -49,24 +49,23 @@ export default function DashboardShell({
       {/* Mobile Top App Bar (Hanya tampil di layar ponsel/tablet < lg) */}
       <div className="lg:hidden sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shadow-xs">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center flex-shrink-0 shadow-xs">
+          <div className="w-8 h-8 rounded-[8px] overflow-hidden border border-slate-200 bg-white flex items-center justify-center flex-shrink-0 shadow-xs p-0.5">
             <Image
-              src="/logo.png"
-              alt="Mangga POS Logo"
+              src="/syupeo-icon.svg"
+              alt="Syupeo Logo"
               width={32}
               height={32}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform"
               priority
             />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-sm text-slate-900 tracking-tight leading-none">Mangga POS</span>
-              <span className={`px-1.5 py-0.2 text-[9px] font-bold rounded border ${
-                role === 'partner'
-                  ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                  : 'bg-orange-100 text-orange-700 border-orange-200'
-              }`}>
+              <span className="font-bold text-sm text-slate-900 tracking-tight leading-none">Syupeo</span>
+              <span className={`px-1.5 py-0.2 text-[9px] font-bold rounded-md border ${role === 'partner'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-[#eff6ff] text-[#0070fc] border-[#bfdbfe]'
+                }`}>
                 {role === 'partner' ? 'MITRA' : 'ADMIN'}
               </span>
             </div>
@@ -78,8 +77,8 @@ export default function DashboardShell({
 
         <div className="flex items-center gap-2">
           {isSuperAdmin && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-              <Shield className="w-3 h-3 text-orange-500" />
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold bg-[#eff6ff] text-[#0070fc] border border-[#bfdbfe]">
+              <Shield className="w-3 h-3 text-[#0070fc]" />
               <span>Super Admin</span>
             </span>
           )}
@@ -91,7 +90,7 @@ export default function DashboardShell({
 
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 border border-slate-200 transition-colors"
+            className="p-2 rounded-md text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 border border-slate-200 transition-colors"
             aria-label="Buka Menu Navigasi"
           >
             <Menu className="w-5 h-5" />

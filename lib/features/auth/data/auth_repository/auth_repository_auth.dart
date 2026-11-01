@@ -89,7 +89,7 @@ extension AuthRepositoryAuthContext on AuthRepository {
               <div class="card">
                 <div class="icon">✓</div>
                 <h1>Login Berhasil!</h1>
-                <p>Otentikasi Google berhasil. Anda dapat kembali ke aplikasi Mangga POS sekarang.</p>
+                <p>Otentikasi Google berhasil. Anda dapat kembali ke aplikasi Syupeo sekarang.</p>
                 <button class="btn" onclick="window.close()">Tutup Jendela Ini</button>
               </div>
               <script>setTimeout(function(){ window.close(); }, 2500);</script>
@@ -355,16 +355,13 @@ extension AuthRepositoryAuthContext on AuthRepository {
         user.email?.split('@').first ??
         'User';
     final avatarUrl = user.userMetadata?['avatar_url'] as String?;
-    final provider = user.appMetadata['provider'] as String? ?? 'google';
-
     final fallbackProfile = {
       'id': user.id,
       'email': user.email,
       'phone': user.phone,
       'full_name': fullName,
       'avatar_url': avatarUrl,
-      'auth_provider': provider,
-      'default_role': 'owner',
+      'role': 'owner',
     };
 
     try {

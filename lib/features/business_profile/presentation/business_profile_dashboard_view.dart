@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart';
 
 class BusinessProfileDashboardView extends StatelessWidget {
   const BusinessProfileDashboardView({
@@ -41,7 +40,7 @@ class BusinessProfileDashboardView extends StatelessWidget {
   Widget _buildMobileLayout(BuildContext context) {
     final business = bootstrap.business!;
     final profile = bootstrap.profile;
-    final menuUrl = 'https://pos.mudahkan.online/s/${business.slug ?? ''}';
+    final menuUrl = 'https://syupeo-admin.mudahkan.online/s/${business.slug ?? ''}';
 
     return ListView(
       padding: padding,
@@ -51,12 +50,7 @@ class BusinessProfileDashboardView extends StatelessWidget {
 
         const SizedBox(height: 18),
 
-        // ── 2. Status Paket & Masa Aktif Card ────────────────────────
-        _buildSubscriptionPlanCard(context, business),
-
-        const SizedBox(height: 18),
-
-        // ── 3. Link Menu Digital Card ────────────────────────────────
+        // ── 2. Link Menu Digital Card ────────────────────────────────
         _buildMobileMenuDigitalCard(context, menuUrl),
 
         const SizedBox(height: 18),
@@ -124,8 +118,8 @@ class BusinessProfileDashboardView extends StatelessWidget {
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Color(0xFFFF7A00),
-                      Color(0xFFEA580C),
+                      Color(0xFF0070FC),
+                      Color(0xFF005ECC),
                       Color(0xFFC2410C),
                     ],
                     begin: Alignment.topLeft,
@@ -424,214 +418,6 @@ class BusinessProfileDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildSubscriptionPlanCard(BuildContext context, dynamic business) {
-    final dateFormat = DateFormat('d MMMM yyyy', 'id_ID');
-    final isPro = business.isPro as bool? ?? false;
-    final isLifetime = business.isLifetime as bool? ?? false;
-    final isExpired = business.isExpired as bool? ?? false;
-    final remainingDays = business.remainingDays as int?;
-    final endAt = business.subscriptionEndAt as DateTime?;
-
-    Color badgeBg;
-    Color badgeBorder;
-    Color badgeText;
-    String statusTitle;
-    String statusSubtitle;
-    IconData statusIcon;
-
-    if (isLifetime) {
-      badgeBg = const Color(0xFFFFFBEB);
-      badgeBorder = const Color(0xFFFDE68A);
-      badgeText = const Color(0xFFB45309);
-      statusTitle = '👑 Paket Pro Lifetime';
-      statusSubtitle = 'Masa Aktif: Selamanya (Aktif Permanen)';
-      statusIcon = Icons.workspace_premium_rounded;
-    } else if (isPro && !isExpired) {
-      badgeBg = const Color(0xFFECFDF5);
-      badgeBorder = const Color(0xFFA7F3D0);
-      badgeText = const Color(0xFF047857);
-      statusTitle = '✨ Paket Pro Aktif';
-      final endStr = endAt != null ? dateFormat.format(endAt) : '-';
-      statusSubtitle = 'Sisa Masa Aktif: $remainingDays Hari (s/d $endStr)';
-      statusIcon = Icons.verified_rounded;
-    } else if (isExpired) {
-      badgeBg = const Color(0xFFFEF2F2);
-      badgeBorder = const Color(0xFFFECACA);
-      badgeText = const Color(0xFFB91C1C);
-      statusTitle = '⚠️ Paket Pro Kedaluwarsa';
-      final endStr = endAt != null ? dateFormat.format(endAt) : '-';
-      statusSubtitle = 'Berakhir pada: $endStr (Perpanjang sekarang)';
-      statusIcon = Icons.warning_amber_rounded;
-    } else {
-      badgeBg = const Color(0xFFF1F5F9);
-      badgeBorder = const Color(0xFFE2E8F0);
-      badgeText = const Color(0xFF475569);
-      statusTitle = '🌱 Paket Free (Gratis)';
-      statusSubtitle = 'Batas 50 produk & 150 transaksi/bln';
-      statusIcon = Icons.storefront_rounded;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isPro
-              ? const Color(0xFFFF7A00).withValues(alpha: 0.35)
-              : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: isPro
-                          ? const Color(0xFFFFF7ED)
-                          : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isPro
-                            ? const Color(0xFFFFEDD5)
-                            : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Icon(
-                      statusIcon,
-                      color: isPro
-                          ? const Color(0xFFFF7A00)
-                          : const Color(0xFF64748B),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'PAKET & MASA AKTIF',
-                        style: GoogleFonts.manrope(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0F172A),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      Text(
-                        'Status langganan akun toko',
-                        style: GoogleFonts.manrope(
-                          fontSize: 11,
-                          color: const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                decoration: BoxDecoration(
-                  color: badgeBg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: badgeBorder),
-                ),
-                child: Text(
-                  isPro
-                      ? (isLifetime ? '👑 LIFETIME' : 'PRO')
-                      : (isExpired ? 'EXPIRED' : 'FREE'),
-                  style: GoogleFonts.manrope(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: badgeText,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        statusTitle,
-                        style: GoogleFonts.manrope(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        statusSubtitle,
-                        style: GoogleFonts.manrope(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            height: 42,
-            child: ElevatedButton.icon(
-              onPressed: () => context.pushNamed(RouteNames.subscription),
-              icon: const Icon(Icons.workspace_premium_rounded, size: 16),
-              label: Text(
-                isPro && !isExpired
-                    ? 'Kelola / Cek Detail Paket'
-                    : 'Upgrade ke Paket Pro ⚡',
-                style: GoogleFonts.manrope(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isPro && !isExpired
-                    ? const Color(0xFF0F172A)
-                    : const Color(0xFFFF7A00),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildMobileMenuDigitalCard(BuildContext context, String menuUrl) {
     return Container(
@@ -654,7 +440,7 @@ class BusinessProfileDashboardView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                child: const Icon(Icons.link_rounded, color: Color(0xFFFF7A00), size: 20),
+                child: const Icon(Icons.link_rounded, color: Color(0xFF0070FC), size: 20),
               ),
               const SizedBox(width: 12),
               Column(
@@ -736,7 +522,7 @@ class BusinessProfileDashboardView extends StatelessWidget {
                       style: GoogleFonts.manrope(fontSize: 13, fontWeight: FontWeight.w700),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF7A00),
+                      backgroundColor: const Color(0xFF0070FC),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -969,7 +755,7 @@ class BusinessProfileDashboardView extends StatelessWidget {
   Widget _buildTabletLayout(BuildContext context) {
     final business = bootstrap.business!;
     final profile = bootstrap.profile;
-    final menuUrl = 'https://pos.mudahkan.online/s/${business.slug ?? ''}';
+    final menuUrl = 'https://syupeo-admin.mudahkan.online/s/${business.slug ?? ''}';
 
     return Column(
       children: [
@@ -1005,8 +791,6 @@ class BusinessProfileDashboardView extends StatelessWidget {
                       flex: 4,
                       child: Column(
                         children: [
-                          _buildSubscriptionPlanCard(context, business),
-                          const SizedBox(height: 20),
                           _buildTabletMenuDigitalCard(context, menuUrl),
                           const SizedBox(height: 20),
                           _buildTabletOperationalStatusCard(context),
@@ -1119,7 +903,7 @@ class BusinessProfileDashboardView extends StatelessWidget {
                   ),
                   const SizedBox(width: 5),
                   const Text(
-                    'Mangga POS',
+                    'Syupeo',
                     style: TextStyle(
                       color: Color(0xFF16A34A),
                       fontSize: 11,
@@ -1676,7 +1460,7 @@ class BusinessProfileDashboardView extends StatelessWidget {
                   style: GoogleFonts.manrope(fontSize: 13, fontWeight: FontWeight.w700),
                 ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF7A00),
+                  backgroundColor: const Color(0xFF0070FC),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1789,8 +1573,8 @@ class BusinessProfileDashboardView extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            Color(0xFFFF7A00),
-            Color(0xFFEA580C),
+            Color(0xFF0070FC),
+            Color(0xFF005ECC),
             Color(0xFFC2410C),
           ],
           begin: Alignment.topLeft,
@@ -1799,7 +1583,7 @@ class BusinessProfileDashboardView extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFF7A00).withValues(alpha: 0.25),
+            color: const Color(0xFF0070FC).withValues(alpha: 0.25),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),

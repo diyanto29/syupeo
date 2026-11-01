@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:dpos/core/providers/bootstrap_provider.dart';
 import 'package:dpos/core/utils/product_image_compression_helper.dart';
@@ -9,7 +8,6 @@ import 'package:dpos/features/menu_management/data/menu_category_repository.dart
 import 'package:dpos/features/menu_management/data/menu_repository.dart';
 import 'package:dpos/features/menu_management/domain/menu_category_models.dart';
 import 'package:dpos/features/menu_management/domain/menu_models.dart';
-import 'package:dpos/features/product_catalog/data/master_catalog_repository.dart';
 import 'package:dpos/features/product_catalog/domain/master_catalog_item.dart';
 import 'package:dpos/core/widgets/barcode_scanner_sheet.dart';
 import 'package:dpos/core/widgets/app_form_field.dart';
@@ -25,6 +23,11 @@ import 'package:dpos/core/providers/feature_gate_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dpos/core/routes/routes_name.dart';
 import 'package:dpos/features/product_catalog/presentation/widgets/ai_product_photo_sheet.dart';
+import 'package:dpos/features/product_catalog/presentation/widgets/variant_editor_card.dart';
+import 'package:dpos/features/product_catalog/presentation/widgets/tiered_price_editor_card.dart';
+import 'package:dpos/features/product_catalog/presentation/widgets/package_component_editor_card.dart';
+import 'package:dpos/features/product_catalog/presentation/widgets/add_product_form_components.dart';
+import 'package:dpos/features/product_catalog/presentation/widgets/master_catalog_picker_sheet.dart';
 
 class AddProductScreen extends ConsumerStatefulWidget {
   const AddProductScreen({super.key, this.initialItem});
@@ -53,9 +56,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final _barcodeController = TextEditingController();
   final _stockController = TextEditingController(text: '0');
   final _descriptionController = TextEditingController();
-  final List<_VariantDraft> _variantDrafts = [];
-  final List<_TieredPriceDraft> _tieredPriceDrafts = [];
-  final List<_PackageComponentDraft> _packageComponentDrafts = [];
+  final List<VariantDraft> _variantDrafts = [];
+  final List<TieredPriceDraft> _tieredPriceDrafts = [];
+  final List<PackageComponentDraft> _packageComponentDrafts = [];
 
   MasterCatalogItem? _selectedSample;
   String? _selectedCategoryId;
@@ -116,9 +119,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     _costPriceController.text = RupiahInputHelper.format(item.recipeCost);
     _sellingPriceController.text = RupiahInputHelper.format(item.price);
     _barcodeController.text = item.barcode ?? '';
-    _stockController.text = item.trackStockQuantity
-        ? '${item.stockQuantity}'
-        : '0';
+    _stockController.text = item.trackStockQuantity ? item.formattedStock : '0';
     _descriptionController.text = item.description;
     _selectedCategoryId = item.categoryId;
     _trackStockQuantity = item.trackStockQuantity;
@@ -155,7 +156,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
     for (final pkgItem in item.packageItems) {
       _packageComponentDrafts.add(
-        _PackageComponentDraft(
+        PackageComponentDraft(
           localId: _uuid.v4(),
           id: pkgItem.id,
           componentMenuItemId: pkgItem.componentMenuItemId,
@@ -232,9 +233,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => AiProductPhotoSheet(
-        initialProductName: productName,
-      ),
+      builder: (_) => AiProductPhotoSheet(initialProductName: productName),
     );
 
     if (imageBytes != null && mounted) {
@@ -295,16 +294,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     }
   }
 
-  void _updateStock(int delta) {
-    if (!_trackStockQuantity) {
-      return;
-    }
-
-    final currentStock = int.tryParse(_stockController.text) ?? 0;
-    final nextStock = math.max(0, currentStock + delta);
-    setState(() => _stockController.text = '$nextStock');
-  }
-
   void _removePhoto() {
     if (_selectedPhoto != null) {
       setState(() {
@@ -339,7 +328,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     final mainPriceText = _sellingPriceController.text;
     bool changed = false;
     for (final variant in _variantDrafts) {
-      if (variant.useMainPrice && variant.priceController.text != mainPriceText) {
+      if (variant.useMainPrice &&
+          variant.priceController.text != mainPriceText) {
         variant.priceController.text = mainPriceText;
         changed = true;
       }
@@ -358,7 +348,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     });
   }
 
-  _VariantDraft _createVariantDraft({
+  VariantDraft _createVariantDraft({
     String? variantId,
     String? name,
     String? priceText,
@@ -367,7 +357,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     bool stockAvailable = true,
     bool useMainPrice = false,
   }) {
-    return _VariantDraft(
+    return VariantDraft(
       localId: _uuid.v4(),
       variantId: variantId,
       name: name ?? '',
@@ -391,12 +381,12 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     });
   }
 
-  _TieredPriceDraft _createTieredPriceDraft({
+  TieredPriceDraft _createTieredPriceDraft({
     String? id,
     int? minQuantity,
     String? priceText,
   }) {
-    return _TieredPriceDraft(
+    return TieredPriceDraft(
       localId: _uuid.v4(),
       id: id,
       minQuantity: minQuantity ?? 1,
@@ -410,14 +400,14 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     });
   }
 
-  void _removeTieredPriceDraft(_TieredPriceDraft draft) {
+  void _removeTieredPriceDraft(TieredPriceDraft draft) {
     setState(() {
       _tieredPriceDrafts.removeWhere((item) => item.localId == draft.localId);
       draft.dispose();
     });
   }
 
-  void _removeVariantDraft(_VariantDraft draft) {
+  void _removeVariantDraft(VariantDraft draft) {
     setState(() {
       _variantDrafts.removeWhere((item) => item.localId == draft.localId);
       draft.dispose();
@@ -427,9 +417,11 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     });
   }
 
-  void _removePackageComponentDraft(_PackageComponentDraft draft) {
+  void _removePackageComponentDraft(PackageComponentDraft draft) {
     setState(() {
-      _packageComponentDrafts.removeWhere((item) => item.localId == draft.localId);
+      _packageComponentDrafts.removeWhere(
+        (item) => item.localId == draft.localId,
+      );
       draft.dispose();
     });
   }
@@ -455,7 +447,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     if (availableItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Belum ada menu lain yang dapat dijadikan komponen paket.'),
+          content: Text(
+            'Belum ada menu lain yang dapat dijadikan komponen paket.',
+          ),
         ),
       );
       return;
@@ -468,16 +462,18 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (sheetContext) => _SelectPackageComponentSheet(
+      builder: (sheetContext) => SelectPackageComponentSheet(
         items: availableItems,
-        alreadySelectedIds: _packageComponentDrafts.map((e) => e.componentMenuItemId).toSet(),
+        alreadySelectedIds: _packageComponentDrafts
+            .map((e) => e.componentMenuItemId)
+            .toSet(),
       ),
     );
 
     if (selected != null && mounted) {
       setState(() {
         _packageComponentDrafts.add(
-          _PackageComponentDraft(
+          PackageComponentDraft(
             localId: _uuid.v4(),
             componentMenuItemId: selected.id,
             componentName: selected.name,
@@ -542,13 +538,15 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       return;
     }
 
-    final businessId = ref.read(homeBootstrapProvider).value?.business?.id;
+    final businessId =
+        ref.read(homeBootstrapProvider).value?.business?.id ??
+        widget.initialItem?.businessId;
     final currentOutletId = ref
         .read(homeBootstrapProvider)
         .value
         ?.currentOutlet
         ?.id;
-    if (businessId == null) {
+    if (businessId == null || businessId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -604,7 +602,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       _costPriceController.text,
     );
     final parsedStock = _trackStockQuantity
-        ? int.tryParse(_stockController.text.trim()) ?? 0
+        ? num.tryParse(_stockController.text.trim()) ?? 0
         : 0;
     final effectiveStockQuantity = _trackStockQuantity
         ? parsedStock
@@ -622,7 +620,11 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               throw StateError('Semua varian wajib punya nama.');
             }
             return MenuItemVariant(
-              id: draft.variantId ?? _uuid.v4(),
+              id:
+                  (draft.variantId != null &&
+                      draft.variantId!.trim().isNotEmpty)
+                  ? draft.variantId!.trim()
+                  : _uuid.v4(),
               menuItemId: itemId,
               name: name,
               price: price,
@@ -785,7 +787,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       isScrollControlled: true,
       showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      builder: (context) => _MasterCatalogPickerSheet(initialQuery: initialQuery),
+      builder: (context) =>
+          MasterCatalogPickerSheet(initialQuery: initialQuery),
     );
 
     if (!mounted || selectedSample == null) {
@@ -793,23 +796,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     }
 
     _applyMasterCatalogSample(selectedSample, categories);
-  }
-
-  Future<void> _scanAndSearchMasterCatalog(
-    List<MenuCatalogCategory> categories,
-  ) async {
-    final String? code = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const BarcodeScannerSheet(
-        title: 'Scan Barcode Master Catalog',
-      ),
-    );
-
-    if (code != null && code.trim().isNotEmpty && mounted) {
-      await _openMasterCatalogPicker(categories, initialQuery: code.trim());
-    }
   }
 
   void _applyMasterCatalogSample(
@@ -947,7 +933,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     final horizontalPadding = screenWidth >= 600 ? 24.0 : 16.0;
     final bootstrapAsync = ref.watch(homeBootstrapProvider);
     final canManageProducts = ref.watch(canManageCatalogProvider);
-    final featureGate = ref.watch(featureGateProvider);
 
     if (bootstrapAsync.isLoading && bootstrapAsync.value == null) {
       return Scaffold(
@@ -971,7 +956,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           leading: isTablet ? const AppTabletLeading() : null,
           title: Text(_isEditMode ? 'Edit Product' : 'Add Product'),
         ),
-        body: const _ProductFormAccessDenied(),
+        body: const ProductFormAccessDenied(),
       );
     }
 
@@ -988,7 +973,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       appBar: isTablet
           ? AppTabletHeader(
               title: Text(_isEditMode ? 'Edit Produk' : 'Tambah Produk Baru'),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
               actions: [
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -1063,8 +1048,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   children: [
                     _buildPhotoPickerCard(theme, scheme),
                     const SizedBox(height: 20),
-                    if (featureGate.isEnabled('master_catalog')) ...[
-                      _SectionCard(
+
+                    if (!_isEditMode) ...[
+                      SectionCard(
                         title: 'Use Master Catalog Sample',
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1088,17 +1074,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                     icon: const Icon(Icons.search_rounded),
                                     label: const Text('Cari Master Catalog'),
                                   ),
-                                  FilledButton.tonalIcon(
-                                    onPressed: () =>
-                                        _scanAndSearchMasterCatalog(categories),
-                                    icon: const Icon(Icons.qr_code_scanner_rounded),
-                                    label: const Text('Scan Barcode Master'),
-                                  ),
                                 ],
                               ),
                             if (_selectedSample != null) ...[
-                              const SizedBox(height: 16),
-                              _SelectedSampleCard(
+                              SelectedSampleCard(
                                 sample: _selectedSample!,
                                 matchedCategory: _findMatchingCategory(
                                   categories,
@@ -1116,12 +1095,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                     icon: const Icon(Icons.sync_alt_rounded),
                                     label: const Text('Pilih Ulang'),
                                   ),
-                                  FilledButton.tonalIcon(
-                                    onPressed: () =>
-                                        _scanAndSearchMasterCatalog(categories),
-                                    icon: const Icon(Icons.qr_code_scanner_rounded),
-                                    label: const Text('Scan Barcode Lain'),
-                                  ),
                                   TextButton.icon(
                                     onPressed: () {
                                       setState(() => _selectedSample = null);
@@ -1137,7 +1110,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       ),
                       const SizedBox(height: 20),
                     ],
-                    _SectionCard(
+
+                    SectionCard(
                       title: 'Basic Details',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1243,7 +1217,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _SectionCard(
+                    SectionCard(
                       title: 'Inventaris & Harga',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1256,7 +1230,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                   children: [
                                     _buildCurrencyField(
                                       label: 'Harga Pokok Modal (HPP)',
-                                      topTrailing: const AppBadgeText('INTERNAL ONLY'),
+                                      topTrailing: const AppBadgeText(
+                                        'INTERNAL ONLY',
+                                      ),
                                       controller: _costPriceController,
                                       onChanged: (_) {
                                         _isCostPriceSyncedFromSample = false;
@@ -1280,7 +1256,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                   Expanded(
                                     child: _buildCurrencyField(
                                       label: 'Harga Pokok Modal (HPP)',
-                                      topTrailing: const AppBadgeText('INTERNAL ONLY'),
+                                      topTrailing: const AppBadgeText(
+                                        'INTERNAL ONLY',
+                                      ),
                                       controller: _costPriceController,
                                       onChanged: (_) {
                                         _isCostPriceSyncedFromSample = false;
@@ -1312,26 +1290,40 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Simpan produk terlebih dahulu sebelum mengatur komposisi resep bahan baku.'),
+                                    content: Text(
+                                      'Simpan produk terlebih dahulu sebelum mengatur komposisi resep bahan baku.',
+                                    ),
                                   ),
                                 );
                               }
                             },
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFEF2F2),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFFCA5A5).withValues(alpha: 0.5)),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFFCA5A5,
+                                  ).withValues(alpha: 0.5),
+                                ),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.receipt_long_rounded, color: Color(0xFFDC2626), size: 20),
+                                  const Icon(
+                                    Icons.receipt_long_rounded,
+                                    color: Color(0xFFDC2626),
+                                    size: 20,
+                                  ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Komposisi Resep & Bahan Baku (BOM)',
@@ -1353,7 +1345,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                       ],
                                     ),
                                   ),
-                                  const Icon(Icons.chevron_right_rounded, color: Color(0xFFDC2626)),
+                                  const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Color(0xFFDC2626),
+                                  ),
                                 ],
                               ),
                             ),
@@ -1399,16 +1394,26 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        'Lacak Stok',
-                                        style: theme.textTheme.titleSmall
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w800,
-                                            ),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.lock_outline_rounded,
+                                            size: 16,
+                                            color: scheme.primary,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Lacak Stok Fisik',
+                                            style: theme.textTheme.titleSmall
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                          ),
+                                        ],
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        'Aktifkan jika produk ini perlu stok kuantitas.',
+                                        'Wajib aktif demi integritas inventori dan rantai pasok Syupeo.',
                                         style: theme.textTheme.bodySmall
                                             ?.copyWith(
                                               color: scheme.onSurface
@@ -1419,116 +1424,102 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                   ),
                                 ),
                                 Switch.adaptive(
-                                  value: _trackStockQuantity,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _trackStockQuantity = value;
-                                      if (!value) {
-                                        _stockController.text = '0';
-                                      }
-                                    });
+                                  value: true,
+                                  onChanged: (_) {
+                                    HapticFeedback.lightImpact();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Pelacakan stok fisik wajib selalu aktif pada produk Syupeo.',
+                                        ),
+                                        behavior: SnackBarBehavior.floating,
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
                                   },
                                 ),
                               ],
                             ),
                           ),
                           const SizedBox(height: 16),
-                          AnimatedOpacity(
-                            duration: const Duration(milliseconds: 180),
-                            opacity: _trackStockQuantity ? 1 : 0.45,
-                            child: IgnorePointer(
-                              ignoring: !_trackStockQuantity,
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: AppTextInput(
-                                      label: 'Stok Awal',
-                                      controller: _stockController,
-                                      enabled: _trackStockQuantity,
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      onChanged: (_) => setState(() {}),
-                                      suffixIcon: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 14,
-                                          vertical: 12,
-                                        ),
-                                        child: Text(
-                                          _unitController.text.trim().isEmpty
-                                              ? _defaultUnit
-                                              : _unitController.text.trim(),
-                                          style: GoogleFonts.inter(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: const Color(0xFF64748B),
-                                          ),
-                                        ),
-                                      ),
-                                      validator: (value) {
-                                        if (!_trackStockQuantity) {
-                                          return null;
-                                        }
-                                        if (value == null || value.isEmpty) {
-                                          return 'Stok awal wajib diisi.';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 24),
-                                    child: Container(
-                                      height: 48,
-                                      decoration: BoxDecoration(
-                                        color: scheme.secondaryContainer
-                                            .withValues(alpha: 0.45),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          _StepperButton(
-                                            icon: Icons.remove,
-                                            enabled: _trackStockQuantity,
-                                            onTap: () => _updateStock(-1),
-                                          ),
-                                          Container(
-                                            width: 1,
-                                            height: 24,
-                                            color: scheme.outline.withValues(
-                                              alpha: 0.18,
-                                            ),
-                                          ),
-                                          _StepperButton(
-                                            icon: Icons.add,
-                                            enabled: _trackStockQuantity,
-                                            onTap: () => _updateStock(1),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
                               ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.verified_user_outlined,
+                                      size: 18,
+                                      color: Color(0xFF0070FC),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Stok Terkunci oleh Sistem Syupeo',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Untuk menjamin pasokan resmi, stok tidak dapat ditambah manual. Stok otomatis bertambah saat pesanan Kulakan / Starter Kit Syupeo diterima.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: const Color(0xFF64748B),
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          if (!_trackStockQuantity) ...[
-                            const SizedBox(height: 10),
-                            Text(
-                              'Toggle aktif diperlukan kalau kamu ingin isi stok awal produk.',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurface.withValues(alpha: 0.64),
+                          const SizedBox(height: 14),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: AppTextInput(
+                                  label: 'Kuantitas Stok Fisik Saat Ini',
+                                  controller: _stockController,
+                                  enabled:
+                                      false, // Merchant dilarang ubah stok manual
+                                  keyboardType: TextInputType.number,
+                                  suffixIcon: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
+                                    child: Text(
+                                      _unitController.text.trim().isEmpty
+                                          ? _defaultUnit
+                                          : _unitController.text.trim(),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _SectionCard(
+                    SectionCard(
                       title: '',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1576,6 +1567,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               Switch.adaptive(
                                 value: _hasVariants,
                                 onChanged: (value) {
+                                  HapticFeedback.lightImpact();
                                   setState(() {
                                     _hasVariants = value;
                                     if (value) {
@@ -1618,12 +1610,13 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               ),
                             for (var i = 0; i < _variantDrafts.length; i++) ...[
                               if (i > 0) const SizedBox(height: 12),
-                              _VariantEditorCard(
+                              VariantEditorCard(
                                 index: i + 1,
                                 draft: _variantDrafts[i],
                                 onChanged: () => setState(() {}),
                                 onToggleMainPrice: () =>
                                     _toggleVariantMainPrice(i),
+                                onScanBarcode: () => _scanVariantBarcode(i + 1),
                                 onRemove: _variantDrafts.length == 1
                                     ? null
                                     : () => _removeVariantDraft(
@@ -1666,7 +1659,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         ],
                       ),
                     ),
-                    _SectionCard(
+                    SectionCard(
                       title: 'Menu Paket / Bundling',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1679,18 +1672,20 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                   children: [
                                     Text(
                                       'Jadikan Menu Paket (Combo)',
-                                      style: theme.textTheme.titleSmall?.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                      ),
+                                      style: theme.textTheme.titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                          ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       'Gabungkan beberapa menu jadi satu paket penjualan (misal: Ayam + Nasi + Es Teh).',
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        color: scheme.onSurface.withValues(
-                                          alpha: 0.68,
-                                        ),
-                                      ),
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: scheme.onSurface.withValues(
+                                              alpha: 0.68,
+                                            ),
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -1698,6 +1693,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               Switch.adaptive(
                                 value: _isPackage,
                                 onChanged: (value) {
+                                  HapticFeedback.lightImpact();
                                   setState(() {
                                     _isPackage = value;
                                   });
@@ -1741,7 +1737,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               i++
                             ) ...[
                               if (i > 0) const SizedBox(height: 10),
-                              _PackageComponentEditorCard(
+                              PackageComponentEditorCard(
                                 index: i + 1,
                                 draft: _packageComponentDrafts[i],
                                 onChanged: () => setState(() {}),
@@ -1819,7 +1815,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _SectionCard(
+                    SectionCard(
                       title: 'Harga Bertingkat',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1838,7 +1834,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                             i++
                           ) ...[
                             if (i > 0) const SizedBox(height: 12),
-                            _TieredPriceEditorCard(
+                            TieredPriceEditorCard(
                               index: i + 1,
                               draft: _tieredPriceDrafts[i],
                               onChanged: () => setState(() {}),
@@ -1868,7 +1864,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
   Widget _buildPhotoPickerCard(ThemeData theme, ColorScheme scheme) {
     return CustomPaint(
-      painter: _DashedRoundedRectPainter(
+      painter: DashedRoundedRectPainter(
         color: scheme.primary.withValues(alpha: 0.28),
       ),
       child: Material(
@@ -2108,1285 +2104,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         }
         return null;
       },
-    );
-  }
-}
-
-class _ProductFormAccessDenied extends StatelessWidget {
-  const _ProductFormAccessDenied();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.lock_outline_rounded,
-                  size: 52,
-                  color: scheme.outline,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Akses produk terbatas',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Tambah dan edit produk hanya bisa dilakukan oleh Owner atau Admin.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurface.withValues(alpha: 0.66),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  child: const Text('Kembali'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _VariantDraft {
-  _VariantDraft({
-    required this.localId,
-    this.variantId,
-    required String name,
-    required String priceText,
-    required String sku,
-    required String barcode,
-    required this.stockAvailable,
-    this.useMainPrice = false,
-  }) : nameController = TextEditingController(text: name),
-       priceController = TextEditingController(text: priceText),
-       skuController = TextEditingController(text: sku),
-       barcodeController = TextEditingController(text: barcode);
-
-  final String localId;
-  final String? variantId;
-  final TextEditingController nameController;
-  final TextEditingController priceController;
-  final TextEditingController skuController;
-  final TextEditingController barcodeController;
-  bool stockAvailable;
-  bool useMainPrice;
-
-  void dispose() {
-    nameController.dispose();
-    priceController.dispose();
-    skuController.dispose();
-    barcodeController.dispose();
-  }
-}
-
-class _TieredPriceDraft {
-  _TieredPriceDraft({
-    required this.localId,
-    this.id,
-    int minQuantity = 1,
-    required String priceText,
-  }) : minQuantityController = TextEditingController(text: '$minQuantity'),
-       priceController = TextEditingController(text: priceText);
-
-  final String localId;
-  final String? id;
-  final TextEditingController minQuantityController;
-  final TextEditingController priceController;
-
-  void dispose() {
-    minQuantityController.dispose();
-    priceController.dispose();
-  }
-}
-
-class _VariantEditorCard extends StatelessWidget {
-  const _VariantEditorCard({
-    required this.index,
-    required this.draft,
-    required this.onChanged,
-    required this.onToggleMainPrice,
-    this.onRemove,
-  });
-
-  final int index;
-  final _VariantDraft draft;
-  final VoidCallback onChanged;
-  final VoidCallback onToggleMainPrice;
-  final VoidCallback? onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Varian $index',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const Spacer(),
-              if (onRemove != null)
-                IconButton(
-                  onPressed: onRemove,
-                  tooltip: 'Hapus varian',
-                  icon: Icon(Icons.delete_outline_rounded, color: scheme.error),
-                ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          AppTextInput(
-            label: 'Nama Varian',
-            isRequired: true,
-            controller: draft.nameController,
-            textInputAction: TextInputAction.next,
-            hintText: 'e.g. Kecil, Sedang, Besar',
-            onChanged: (_) => onChanged(),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Nama varian wajib diisi.';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 12),
-          AppCurrencyInput(
-            label: 'Harga Varian',
-            isRequired: true,
-            topTrailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Sama Harga Utama',
-                  style: theme.textTheme.labelSmall?.copyWith(color: scheme.primary),
-                ),
-                const SizedBox(width: 4),
-                Transform.scale(
-                  scale: 0.7,
-                  child: Switch(
-                    value: draft.useMainPrice,
-                    onChanged: (v) => onToggleMainPrice(),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-              ],
-            ),
-            controller: draft.priceController,
-            enabled: !draft.useMainPrice,
-            prefixBadge: 'IDR',
-            onChanged: (_) => onChanged(),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Harga varian wajib diisi.';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: AppTextInput(
-                  label: 'SKU (Opsional)',
-                  controller: draft.skuController,
-                  textInputAction: TextInputAction.next,
-                  hintText: 'SKU varian',
-                  onChanged: (_) => onChanged(),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: AppTextInput(
-                  label: 'Barcode (Opsional)',
-                  controller: draft.barcodeController,
-                  textInputAction: TextInputAction.done,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  hintText: 'Barcode varian',
-                  onChanged: (_) => onChanged(),
-                  suffixIcon: IconButton(
-                    icon: const Icon(
-                      Icons.qr_code_scanner_rounded,
-                      color: Color(0xFFF98B35),
-                      size: 20,
-                    ),
-                    onPressed: () =>
-                        (context
-                                .findAncestorStateOfType<
-                                  _AddProductScreenState
-                                >())
-                            ?._scanVariantBarcode(index),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerHigh.withValues(alpha: 0.45),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Variant Available',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Switch.adaptive(
-                  value: draft.stockAvailable,
-                  onChanged: (value) {
-                    draft.stockAvailable = value;
-                    onChanged();
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TieredPriceEditorCard extends StatelessWidget {
-  const _TieredPriceEditorCard({
-    required this.index,
-    required this.draft,
-    required this.onChanged,
-    required this.onRemove,
-  });
-
-  final int index;
-  final _TieredPriceDraft draft;
-  final VoidCallback onChanged;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: scheme.primary.withValues(alpha: 0.1),
-                child: Text(
-                  '$index',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Tier $index',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: onRemove,
-                icon: const Icon(Icons.delete_outline_rounded, size: 20),
-                color: scheme.error,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                visualDensity: VisualDensity.compact,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  controller: draft.minQuantityController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
-                    labelText: 'Min. Qty',
-                  ),
-                  onChanged: (_) => onChanged(),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 3,
-                child: TextFormField(
-                  controller: draft.priceController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: const [RupiahTextInputFormatter()],
-                  decoration: const InputDecoration(
-                    labelText: 'Harga per Unit',
-                    prefixText: 'Rp ',
-                  ),
-                  onChanged: (_) => onChanged(),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PackageComponentDraft {
-  _PackageComponentDraft({
-    required this.localId,
-    this.id,
-    required this.componentMenuItemId,
-    required this.componentName,
-    required this.componentPrice,
-    int initialQuantity = 1,
-  }) : quantityController = TextEditingController(text: '$initialQuantity');
-
-  final String localId;
-  final String? id;
-  final String componentMenuItemId;
-  final String componentName;
-  final double componentPrice;
-  final TextEditingController quantityController;
-
-  void dispose() {
-    quantityController.dispose();
-  }
-}
-
-class _PackageComponentEditorCard extends StatelessWidget {
-  const _PackageComponentEditorCard({
-    required this.index,
-    required this.draft,
-    required this.onChanged,
-    required this.onRemove,
-  });
-
-  final int index;
-  final _PackageComponentDraft draft;
-  final VoidCallback onChanged;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 12,
-            backgroundColor: scheme.primary.withValues(alpha: 0.1),
-            child: Text(
-              '$index',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: scheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  draft.componentName,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  RupiahInputHelper.format(draft.componentPrice),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 70,
-            child: TextFormField(
-              controller: draft.quantityController,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'Qty',
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              ),
-              onChanged: (_) => onChanged(),
-            ),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: onRemove,
-            icon: const Icon(Icons.delete_outline_rounded, size: 20),
-            color: scheme.error,
-            visualDensity: VisualDensity.compact,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SelectPackageComponentSheet extends StatefulWidget {
-  const _SelectPackageComponentSheet({
-    required this.items,
-    required this.alreadySelectedIds,
-  });
-
-  final List<MenuItem> items;
-  final Set<String> alreadySelectedIds;
-
-  @override
-  State<_SelectPackageComponentSheet> createState() =>
-      _SelectPackageComponentSheetState();
-}
-
-class _SelectPackageComponentSheetState
-    extends State<_SelectPackageComponentSheet> {
-  final _searchController = TextEditingController();
-  String _query = '';
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    final filteredItems = widget.items.where((item) {
-      if (_query.isEmpty) return true;
-      return item.name.toLowerCase().contains(_query.toLowerCase());
-    }).toList();
-
-    return Padding(
-      padding: EdgeInsets.only(
-        top: 16,
-        left: 16,
-        right: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Pilih Komponen Paket',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close_rounded),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Cari nama produk...',
-              prefixIcon: const Icon(Icons.search_rounded),
-              suffixIcon: _query.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear_rounded),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() => _query = '');
-                      },
-                    )
-                  : null,
-            ),
-            onChanged: (val) => setState(() => _query = val.trim()),
-          ),
-          const SizedBox(height: 12),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 350),
-            child: filteredItems.isEmpty
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text('Tidak ada produk ditemukan.'),
-                    ),
-                  )
-                : ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: filteredItems.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final item = filteredItems[index];
-                      final isSelected =
-                          widget.alreadySelectedIds.contains(item.id);
-
-                      return ListTile(
-                        title: Text(
-                          item.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: isSelected
-                                ? scheme.onSurface.withValues(alpha: 0.4)
-                                : scheme.onSurface,
-                          ),
-                        ),
-                        subtitle: Text(
-                          RupiahInputHelper.format(item.price),
-                          style: TextStyle(
-                            color: isSelected
-                                ? scheme.onSurface.withValues(alpha: 0.3)
-                                : scheme.primary,
-                          ),
-                        ),
-                        trailing: isSelected
-                            ? const Text(
-                                'Sudah Ada',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              )
-                            : const Icon(Icons.add_circle_outline_rounded),
-                        enabled: !isSelected,
-                        onTap: isSelected
-                            ? null
-                            : () => Navigator.of(context).pop(item),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final tokens = theme.extension<ConciergeThemeTokens>();
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: tokens?.raisedSurface ?? scheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: (tokens?.tintedShadow ?? scheme.shadow).withValues(
-              alpha: 0.08,
-            ),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (title.isNotEmpty) ...[
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _SelectedSampleCard extends StatelessWidget {
-  const _SelectedSampleCard({
-    required this.sample,
-    required this.matchedCategory,
-  });
-
-  final MasterCatalogItem sample;
-  final MenuCatalogCategory? matchedCategory;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: scheme.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: scheme.primary.withValues(alpha: 0.14)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: scheme.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.inventory_2_outlined,
-                  color: scheme.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  sample.name,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (sample.subtitle.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              sample.subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurface.withValues(alpha: 0.68),
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (sample.barcode != null && sample.barcode!.trim().isNotEmpty)
-                _InfoChip(label: 'Barcode ${sample.barcode}'),
-              if (sample.basePrice > 0)
-                _InfoChip(
-                  label:
-                      'Modal ${RupiahInputHelper.formatWithPrefix(sample.basePrice)}',
-                ),
-              if (sample.sellingPrice > 0)
-                _InfoChip(
-                  label:
-                      'Jual ${RupiahInputHelper.formatWithPrefix(sample.sellingPrice)}',
-                ),
-            ],
-          ),
-          if (sample.category != null &&
-              sample.category!.trim().isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(
-              matchedCategory != null
-                  ? 'Kategori master cocok ke: ${matchedCategory!.name}'
-                  : 'Kategori master: ${sample.category} belum cocok otomatis ke kategori bisnismu.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: matchedCategory != null ? scheme.primary : scheme.error,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-
-class _StepperButton extends StatelessWidget {
-  const _StepperButton({
-    required this.icon,
-    required this.onTap,
-    this.enabled = true,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return InkWell(
-      onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-        width: 44,
-        height: 56,
-        child: Icon(
-          icon,
-          color: enabled
-              ? scheme.onSurface
-              : scheme.onSurface.withValues(alpha: 0.35),
-        ),
-      ),
-    );
-  }
-}
-
-class _DashedRoundedRectPainter extends CustomPainter {
-  const _DashedRoundedRectPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const strokeWidth = 1.4;
-    const radius = 28.0;
-    const dashWidth = 6.0;
-    const dashGap = 5.0;
-
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-
-    final rect = Offset.zero & size;
-    final rrect = RRect.fromRectAndRadius(
-      rect.deflate(strokeWidth / 2),
-      Radius.circular(radius),
-    );
-    final path = Path()..addRRect(rrect);
-
-    for (final metric in path.computeMetrics()) {
-      var distance = 0.0;
-      while (distance < metric.length) {
-        final currentDash = math.min(dashWidth, metric.length - distance);
-        canvas.drawPath(
-          metric.extractPath(distance, distance + currentDash),
-          paint,
-        );
-        distance += dashWidth + dashGap;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DashedRoundedRectPainter oldDelegate) {
-    return oldDelegate.color != color;
-  }
-}
-
-class _MasterCatalogPickerSheet extends ConsumerStatefulWidget {
-  const _MasterCatalogPickerSheet({this.initialQuery});
-
-  final String? initialQuery;
-
-  @override
-  ConsumerState<_MasterCatalogPickerSheet> createState() =>
-      _MasterCatalogPickerSheetState();
-}
-
-class _MasterCatalogPickerSheetState
-    extends ConsumerState<_MasterCatalogPickerSheet> {
-  final _searchController = TextEditingController();
-  final _scrollController = ScrollController();
-  Timer? _debounce;
-  final List<MasterCatalogItem> _items = [];
-  String _searchQuery = '';
-  Object? _error;
-  bool _isInitialLoading = true;
-  bool _isLoadingMore = false;
-  bool _hasMore = true;
-  bool _exactBarcodeMatched = false;
-  int _generalOffset = 0;
-  int _requestVersion = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initialQuery != null && widget.initialQuery!.trim().isNotEmpty) {
-      _searchController.text = widget.initialQuery!.trim();
-      _searchQuery = widget.initialQuery!.trim();
-    }
-    _scrollController.addListener(_handleScroll);
-    scheduleMicrotask(() => _loadSamples(reset: true));
-  }
-
-  Future<void> _scanBarcodeForSearch() async {
-    final String? code = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const BarcodeScannerSheet(
-        title: 'Scan Barcode Master Catalog',
-      ),
-    );
-
-    if (code != null && code.trim().isNotEmpty && mounted) {
-      _searchController.text = code.trim();
-      _debounce?.cancel();
-      setState(() => _searchQuery = code.trim());
-      _loadSamples(reset: true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    _scrollController.dispose();
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _handleSearchChanged(String value) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 280), () {
-      if (!mounted) {
-        return;
-      }
-      setState(() => _searchQuery = value.trim());
-      _loadSamples(reset: true);
-    });
-  }
-
-  void _handleScroll() {
-    if (!_scrollController.hasClients || _isLoadingMore || !_hasMore) {
-      return;
-    }
-
-    final position = _scrollController.position;
-    if (position.pixels >= position.maxScrollExtent - 240) {
-      _loadSamples();
-    }
-  }
-
-  Future<void> _loadSamples({bool reset = false}) async {
-    if (_isLoadingMore) {
-      return;
-    }
-
-    final requestVersion = ++_requestVersion;
-    final startingOffset = reset ? 0 : _generalOffset;
-
-    setState(() {
-      _error = null;
-      if (reset) {
-        _isInitialLoading = true;
-        _items.clear();
-        _hasMore = true;
-        _generalOffset = 0;
-        _exactBarcodeMatched = false;
-      } else {
-        _isLoadingMore = true;
-      }
-    });
-
-    try {
-      final page = await ref
-          .read(masterCatalogRepositoryProvider)
-          .searchSamples(_searchQuery, generalOffset: startingOffset);
-
-      if (!mounted || requestVersion != _requestVersion) {
-        return;
-      }
-
-      final mergedItems = reset
-          ? page.items
-          : _mergeWithoutDuplicates(_items, page.items);
-
-      setState(() {
-        _items
-          ..clear()
-          ..addAll(mergedItems);
-        _generalOffset = page.nextGeneralOffset;
-        _hasMore = page.hasMore;
-        _exactBarcodeMatched = reset && page.exactBarcodeMatched;
-        _isInitialLoading = false;
-        _isLoadingMore = false;
-      });
-    } catch (error) {
-      if (!mounted || requestVersion != _requestVersion) {
-        return;
-      }
-
-      setState(() {
-        _error = error;
-        _isInitialLoading = false;
-        _isLoadingMore = false;
-      });
-    }
-  }
-
-  List<MasterCatalogItem> _mergeWithoutDuplicates(
-    List<MasterCatalogItem> existing,
-    List<MasterCatalogItem> incoming,
-  ) {
-    final existingIds = existing.map((item) => item.id).toSet();
-    return [
-      ...existing,
-      ...incoming.where((item) => !existingIds.contains(item.id)),
-    ];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + bottomInset),
-        child: SizedBox(
-          height: 560,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Master Catalog',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Cari berdasarkan nama, barcode, brand, atau kategori.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withValues(alpha: 0.68),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _searchController,
-                onChanged: (value) {
-                  setState(() {});
-                  _handleSearchChanged(value);
-                },
-                decoration: InputDecoration(
-                  hintText: 'Cari nama, barcode, atau brand...',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_searchController.text.isNotEmpty)
-                        IconButton(
-                          onPressed: () {
-                            _searchController.clear();
-                            _handleSearchChanged('');
-                            setState(() {});
-                          },
-                          icon: const Icon(Icons.close_rounded),
-                        ),
-                      IconButton(
-                        tooltip: 'Scan Barcode',
-                        onPressed: _scanBarcodeForSearch,
-                        icon: const Icon(Icons.qr_code_scanner_rounded),
-                        color: scheme.primary,
-                      ),
-                      const SizedBox(width: 4),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (_exactBarcodeMatched) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: scheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    'Exact barcode match ditaruh paling atas.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-              Expanded(child: _buildResults(theme, scheme)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildResults(ThemeData theme, ColorScheme scheme) {
-    if (_isInitialLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Gagal memuat master catalog: $_error'),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => _loadSamples(reset: true),
-              child: const Text('Coba Lagi'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_items.isEmpty) {
-      return _EmptyMasterCatalogState(query: _searchQuery);
-    }
-
-    final itemCount = _items.length + (_isLoadingMore || _hasMore ? 1 : 0);
-    return ListView.separated(
-      controller: _scrollController,
-      itemCount: itemCount,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        if (index >= _items.length) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Center(
-              child: _isLoadingMore
-                  ? const CircularProgressIndicator()
-                  : Text(
-                      'Scroll lagi untuk memuat sample berikutnya',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurface.withValues(alpha: 0.62),
-                      ),
-                    ),
-            ),
-          );
-        }
-
-        final item = _items[index];
-        return Material(
-          color: scheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(18),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: () => Navigator.of(context).pop(item),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: scheme.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      Icons.content_copy_rounded,
-                      color: scheme.primary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.name,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        if (item.subtitle.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            item.subtitle,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurface.withValues(alpha: 0.64),
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            if (item.barcode != null &&
-                                item.barcode!.trim().isNotEmpty)
-                              _InfoChip(label: 'Barcode ${item.barcode}'),
-                            if (item.basePrice > 0)
-                              _InfoChip(
-                                label: 'Modal Rp ${item.basePrice.round()}',
-                              ),
-                            if (item.sellingPrice > 0)
-                              _InfoChip(
-                                label: 'Jual Rp ${item.sellingPrice.round()}',
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(Icons.chevron_right_rounded, color: scheme.outline),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _EmptyMasterCatalogState extends StatelessWidget {
-  const _EmptyMasterCatalogState({required this.query});
-
-  final String query;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search_off_rounded,
-            size: 52,
-            color: scheme.outline.withValues(alpha: 0.48),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            query.isEmpty
-                ? 'Belum ada sample yang tampil.'
-                : 'Sample tidak ditemukan.',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            query.isEmpty
-                ? 'Coba cari produk berdasarkan nama atau barcode.'
-                : 'Coba kata kunci lain atau barcode yang lebih spesifik.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurface.withValues(alpha: 0.66),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

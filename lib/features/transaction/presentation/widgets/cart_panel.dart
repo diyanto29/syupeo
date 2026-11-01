@@ -5,7 +5,6 @@ import 'package:dpos/core/routes/routes_path.dart';
 import 'package:dpos/core/domain/app_enums.dart';
 import 'package:dpos/core/providers/bootstrap_provider.dart';
 import 'package:dpos/core/providers/feature_gate_provider.dart';
-import 'package:dpos/core/services/ad_interstitial_service.dart';
 import 'package:dpos/core/services/payment_notification_models.dart';
 import 'package:dpos/core/services/payment_notification_service.dart';
 import 'package:dpos/core/widgets/pro_feature_dialog.dart';
@@ -29,7 +28,6 @@ import 'package:intl/intl.dart';
 import 'package:dpos/features/menu_management/domain/menu_models.dart';
 import 'package:dpos/features/menu_management/data/menu_repository.dart';
 import 'package:dpos/features/customer_debt/presentation/widgets/customer_picker_sheet.dart';
-
 
 final _currency = NumberFormat.currency(
   locale: 'id_ID',
@@ -161,15 +159,16 @@ class _CartPanelState extends ConsumerState<CartPanel> {
     final bxgyPromos = ref.watch(buyXGetYPromosProvider).valueOrNull;
     final tebusPromos = ref.watch(tebusMurahPromosProvider).valueOrNull;
 
-    final eligibleBxgyPromos =
-        ref.read(cartProvider.notifier).getEligibleBxgyOffers(customPromos: bxgyPromos);
-    final eligibleTebusPromos =
-        ref.read(cartProvider.notifier).getEligibleTebusMurahPromos(customPromos: tebusPromos);
+    final eligibleBxgyPromos = ref
+        .read(cartProvider.notifier)
+        .getEligibleBxgyOffers(customPromos: bxgyPromos);
+    final eligibleTebusPromos = ref
+        .read(cartProvider.notifier)
+        .getEligibleTebusMurahPromos(customPromos: tebusPromos);
 
     if (cart.isEmpty) {
       return _EmptyCart(onClose: onClose, compact: compact);
     }
-
 
     return Column(
       children: [
@@ -251,16 +250,10 @@ class _CartPanelState extends ConsumerState<CartPanel> {
           ),
 
         if (eligibleBxgyPromos.isNotEmpty)
-          _BxgyOfferBanner(
-            promos: eligibleBxgyPromos,
-            compact: compact,
-          ),
+          _BxgyOfferBanner(promos: eligibleBxgyPromos, compact: compact),
 
         if (eligibleTebusPromos.isNotEmpty)
-          _TebusMurahOfferBanner(
-            promos: eligibleTebusPromos,
-            compact: compact,
-          ),
+          _TebusMurahOfferBanner(promos: eligibleTebusPromos, compact: compact),
 
         // Items
         Expanded(
@@ -446,44 +439,43 @@ class _CartPanelState extends ConsumerState<CartPanel> {
               ),
               SizedBox(height: compact ? 8 : 12),
 
-              if (!isWaiter) ...[
-                Padding(
-                  padding: EdgeInsets.only(bottom: compact ? 8 : 10),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: compact ? 38 : 44,
-                    child: OutlinedButton.icon(
-                      onPressed: cart.isSaving || _isProcessingAutoConfirm
-                          ? null
-                          : () => _sendToKitchen(context, ref),
-                      icon: const Icon(
-                        Icons.soup_kitchen_rounded,
-                        size: 18,
-                        color: Color(0xFFEA580C),
-                      ),
-                      label: Text(
-                        'Kirim ke Dapur (KOT)',
-                        style: GoogleFonts.manrope(
-                          fontSize: compact ? 12.5 : 14,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFFEA580C),
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                          color: Color(0xFFFDBA74),
-                          width: 1.2,
-                        ),
-                        backgroundColor: const Color(0xFFFFF7ED),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(compact ? 14 : 18),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-
+              // if (!isWaiter) ...[
+              //   Padding(
+              //     padding: EdgeInsets.only(bottom: compact ? 8 : 10),
+              //     child: SizedBox(
+              //       width: double.infinity,
+              //       height: compact ? 38 : 44,
+              //       child: OutlinedButton.icon(
+              //         onPressed: cart.isSaving || _isProcessingAutoConfirm
+              //             ? null
+              //             : () => _sendToKitchen(context, ref),
+              //         icon: const Icon(
+              //           Icons.soup_kitchen_rounded,
+              //           size: 18,
+              //           color: Color(0xFF005ECC),
+              //         ),
+              //         label: Text(
+              //           'Kirim ke Dapur (KOT)',
+              //           style: GoogleFonts.manrope(
+              //             fontSize: compact ? 12.5 : 14,
+              //             fontWeight: FontWeight.w700,
+              //             color: const Color(0xFF005ECC),
+              //           ),
+              //         ),
+              //         style: OutlinedButton.styleFrom(
+              //           side: const BorderSide(
+              //             color: Color(0xFFFDBA74),
+              //             width: 1.2,
+              //           ),
+              //           backgroundColor: const Color(0xFFFFF7ED),
+              //           shape: RoundedRectangleBorder(
+              //             borderRadius: BorderRadius.circular(compact ? 14 : 18),
+              //           ),
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ],
               if (isWaiter)
                 _WaiterOrderSummaryCard(
                   cart: cart,
@@ -495,7 +487,12 @@ class _CartPanelState extends ConsumerState<CartPanel> {
 
               // Notifikasi Pembayaran Terdeteksi (QRIS / Transfer Masuk)
               if (!isWaiter && _detectedPayments.isNotEmpty) ...[
-                _buildDetectedPaymentsBanner(context, cart.grandTotal, scheme, theme),
+                _buildDetectedPaymentsBanner(
+                  context,
+                  cart.grandTotal,
+                  scheme,
+                  theme,
+                ),
                 SizedBox(height: compact ? 6 : 8),
               ],
 
@@ -523,7 +520,9 @@ class _CartPanelState extends ConsumerState<CartPanel> {
                         foregroundColor: Colors.white,
                         elevation: 1,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(compact ? 16 : 24),
+                          borderRadius: BorderRadius.circular(
+                            compact ? 16 : 24,
+                          ),
                         ),
                       ),
                     ),
@@ -627,14 +626,19 @@ class _CartPanelState extends ConsumerState<CartPanel> {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: (isExact ? const Color(0xFF10B981) : const Color(0xFF3B82F6))
-                  .withValues(alpha: 0.15),
+              color:
+                  (isExact ? const Color(0xFF10B981) : const Color(0xFF3B82F6))
+                      .withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              isExact ? Icons.check_circle_rounded : Icons.notifications_active_rounded,
+              isExact
+                  ? Icons.check_circle_rounded
+                  : Icons.notifications_active_rounded,
               size: 16,
-              color: isExact ? const Color(0xFF047857) : const Color(0xFF1D4ED8),
+              color: isExact
+                  ? const Color(0xFF047857)
+                  : const Color(0xFF1D4ED8),
             ),
           ),
           const SizedBox(width: 8),
@@ -649,7 +653,9 @@ class _CartPanelState extends ConsumerState<CartPanel> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
-                        color: isExact ? const Color(0xFF065F46) : const Color(0xFF1E40AF),
+                        color: isExact
+                            ? const Color(0xFF065F46)
+                            : const Color(0xFF1E40AF),
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -658,7 +664,9 @@ class _CartPanelState extends ConsumerState<CartPanel> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
-                        color: isExact ? const Color(0xFF047857) : const Color(0xFF1D4ED8),
+                        color: isExact
+                            ? const Color(0xFF047857)
+                            : const Color(0xFF1D4ED8),
                       ),
                     ),
                   ],
@@ -668,7 +676,10 @@ class _CartPanelState extends ConsumerState<CartPanel> {
                     'Pengirim: ${event.sender}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF475569)),
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      color: Color(0xFF475569),
+                    ),
                   ),
               ],
             ),
@@ -676,13 +687,20 @@ class _CartPanelState extends ConsumerState<CartPanel> {
           ElevatedButton(
             onPressed: () => _applyDetectedPayment(event, autoCheckout: true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isExact ? const Color(0xFF059669) : const Color(0xFF2563EB),
+              backgroundColor: isExact
+                  ? const Color(0xFF059669)
+                  : const Color(0xFF2563EB),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               minimumSize: const Size(0, 32),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Gunakan', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Gunakan',
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+            ),
           ),
           const SizedBox(width: 4),
           IconButton(
@@ -724,7 +742,9 @@ class _CartPanelState extends ConsumerState<CartPanel> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Limit Transaksi Tercapai'),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             content: Text(
               'Batas transaksi bulanan untuk paket Anda adalah $maxTransactions. '
               'Upgrade ke paket Pro untuk kuota transaksi tak terbatas.',
@@ -783,7 +803,6 @@ class _CartPanelState extends ConsumerState<CartPanel> {
     if (order != null) {
       ref.read(cartProvider.notifier).clearCart();
       HapticFeedback.mediumImpact();
-      AdInterstitialService.showAd();
 
       // Cetak struk otomatis jika printer terhubung
       _autoPrintReceipt(order);
@@ -926,30 +945,6 @@ class _CartPanelState extends ConsumerState<CartPanel> {
         actions: [
           TextButton.icon(
             onPressed: () {
-              ref.read(receiptServiceProvider).printKitchenReceipt(order);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Mencetak tiket dapur...'),
-                  duration: Duration(seconds: 1),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            icon: const Icon(
-              Icons.soup_kitchen_outlined,
-              size: 18,
-              color: Color(0xFFEA580C),
-            ),
-            label: const Text(
-              'Tiket Dapur',
-              style: TextStyle(
-                color: Color(0xFFEA580C),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          TextButton.icon(
-            onPressed: () {
               Navigator.pop(ctx);
               ref.read(receiptServiceProvider).printReceipt(order);
             },
@@ -1051,37 +1046,6 @@ class _CartPanelState extends ConsumerState<CartPanel> {
     }
   }
 
-  Future<void> _sendToKitchen(BuildContext context, WidgetRef ref) async {
-    final order = await ref.read(cartProvider.notifier).sendOrderToKitchen();
-    if (order != null && context.mounted) {
-      final tableLabel = order.tableNumber != null ? ' Meja ${order.tableNumber}' : '';
-
-      // Auto-print kitchen receipt
-      ref.read(receiptServiceProvider).printKitchenReceipt(order);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.soup_kitchen_rounded, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text('Pesanan$tableLabel terkirim ke Dapur & Tiket dicetak!'),
-              ),
-            ],
-          ),
-          backgroundColor: const Color(0xFFEA580C),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-      ref.read(cartProvider.notifier).clearCart();
-      widget.onClose?.call();
-    }
-  }
-
   void _showPayment(BuildContext context, WidgetRef ref) {
     context.push(RoutesPath.transactionPayment);
   }
@@ -1169,7 +1133,9 @@ class _CartPanelState extends ConsumerState<CartPanel> {
     final requiresTable = ot.requiresTable;
     final primaryColor = requiresTable
         ? const Color(0xFF1D4ED8)
-        : (ot.code == 'take_away' ? const Color(0xFFC2410C) : const Color(0xFF0F766E));
+        : (ot.code == 'take_away'
+              ? const Color(0xFFC2410C)
+              : const Color(0xFF0F766E));
 
     return InkWell(
       onTap: () {
@@ -1202,10 +1168,7 @@ class _CartPanelState extends ConsumerState<CartPanel> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              ot.emoji,
-              style: TextStyle(fontSize: compact ? 12 : 14),
-            ),
+            Text(ot.emoji, style: TextStyle(fontSize: compact ? 12 : 14)),
             const SizedBox(width: 5),
             Text(
               isSelected && requiresTable && cart.tableNumber != null
@@ -1244,18 +1207,26 @@ class _CartPanelState extends ConsumerState<CartPanel> {
     WidgetRef ref,
     CartState cart,
   ) async {
-    final controller = TextEditingController(text: cart.tableNumber?.toString() ?? '');
+    final controller = TextEditingController(
+      text: cart.tableNumber?.toString() ?? '',
+    );
     final result = await showDialog<int?>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.table_restaurant_rounded, color: Color(0xFF1D4ED8)),
+            const Icon(
+              Icons.table_restaurant_rounded,
+              color: Color(0xFF1D4ED8),
+            ),
             const SizedBox(width: 10),
             Text(
               'Nomor Meja',
-              style: GoogleFonts.manrope(fontWeight: FontWeight.w800, fontSize: 18),
+              style: GoogleFonts.manrope(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+              ),
             ),
           ],
         ),
@@ -1265,7 +1236,10 @@ class _CartPanelState extends ConsumerState<CartPanel> {
           children: [
             Text(
               'Masukkan nomor meja untuk pesanan Dine In ini:',
-              style: GoogleFonts.manrope(fontSize: 13, color: const Color(0xFF64748B)),
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                color: const Color(0xFF64748B),
+              ),
             ),
             const SizedBox(height: 14),
             TextField(
@@ -1275,7 +1249,9 @@ class _CartPanelState extends ConsumerState<CartPanel> {
               decoration: InputDecoration(
                 hintText: 'Contoh: 1, 2, 12...',
                 prefixIcon: const Icon(Icons.tag_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -1311,7 +1287,8 @@ class _CartPanelState extends ConsumerState<CartPanel> {
     CartState cart,
     bool compact,
   ) {
-    final hasCustomer = cart.customerName != null && cart.customerName!.trim().isNotEmpty;
+    final hasCustomer =
+        cart.customerName != null && cart.customerName!.trim().isNotEmpty;
 
     if (hasCustomer) {
       return Container(
@@ -1326,14 +1303,20 @@ class _CartPanelState extends ConsumerState<CartPanel> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.person_rounded, size: 16, color: Color(0xFF16A34A)),
+            const Icon(
+              Icons.person_rounded,
+              size: 16,
+              color: Color(0xFF16A34A),
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: InkWell(
                 onTap: () async {
                   final selected = await CustomerPickerSheet.show(context);
                   if (selected != null) {
-                    ref.read(cartProvider.notifier).setCustomerInfo(
+                    ref
+                        .read(cartProvider.notifier)
+                        .setCustomerInfo(
                           id: selected.id,
                           name: selected.name,
                           phone: selected.phone,
@@ -1353,7 +1336,8 @@ class _CartPanelState extends ConsumerState<CartPanel> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (cart.customerPhone != null && cart.customerPhone!.isNotEmpty)
+                    if (cart.customerPhone != null &&
+                        cart.customerPhone!.isNotEmpty)
                       Text(
                         cart.customerPhone!,
                         style: GoogleFonts.manrope(
@@ -1367,7 +1351,11 @@ class _CartPanelState extends ConsumerState<CartPanel> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.close_rounded, size: 16, color: Color(0xFF64748B)),
+              icon: const Icon(
+                Icons.close_rounded,
+                size: 16,
+                color: Color(0xFF64748B),
+              ),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
               tooltip: 'Lepas Pelanggan',
@@ -1384,7 +1372,9 @@ class _CartPanelState extends ConsumerState<CartPanel> {
       onTap: () async {
         final selected = await CustomerPickerSheet.show(context);
         if (selected != null) {
-          ref.read(cartProvider.notifier).setCustomerInfo(
+          ref
+              .read(cartProvider.notifier)
+              .setCustomerInfo(
                 id: selected.id,
                 name: selected.name,
                 phone: selected.phone,
@@ -1400,14 +1390,16 @@ class _CartPanelState extends ConsumerState<CartPanel> {
         decoration: BoxDecoration(
           color: const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: const Color(0xFFE2E8F0),
-          ),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.person_add_outlined, size: 16, color: Color(0xFF64748B)),
+            const Icon(
+              Icons.person_add_outlined,
+              size: 16,
+              color: Color(0xFF64748B),
+            ),
             const SizedBox(width: 6),
             Text(
               '+ Hubungkan Pelanggan / Kasbon',
@@ -1521,7 +1513,10 @@ class _WaiterOrderInfoSheetState extends ConsumerState<_WaiterOrderInfoSheet> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: ChoiceChip(
-                          avatar: Text(ot.emoji, style: const TextStyle(fontSize: 14)),
+                          avatar: Text(
+                            ot.emoji,
+                            style: const TextStyle(fontSize: 14),
+                          ),
                           label: Text(ot.name),
                           selected: isSelected,
                           onSelected: (selected) {
@@ -1554,7 +1549,10 @@ class _WaiterOrderInfoSheetState extends ConsumerState<_WaiterOrderInfoSheet> {
                 labelText: 'Nama Pelanggan',
                 hintText: 'Opsional (ketik nama atau pilih kontak)',
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.contacts_rounded, color: Color(0xFF10B981)),
+                  icon: const Icon(
+                    Icons.contacts_rounded,
+                    color: Color(0xFF10B981),
+                  ),
                   tooltip: 'Pilih dari Kontak Pelanggan',
                   onPressed: () async {
                     final selected = await CustomerPickerSheet.show(context);
@@ -1582,11 +1580,14 @@ class _WaiterOrderInfoSheetState extends ConsumerState<_WaiterOrderInfoSheet> {
               child: FilledButton(
                 onPressed: () {
                   final tableValue = _tableController.text.trim();
-                  ref.read(cartProvider.notifier).setDiningOption(_diningOption);
+                  ref
+                      .read(cartProvider.notifier)
+                      .setDiningOption(_diningOption);
                   ref
                       .read(cartProvider.notifier)
                       .setTableNumber(
-                        _diningOption == DiningOption.takeAway || tableValue.isEmpty
+                        _diningOption == DiningOption.takeAway ||
+                                tableValue.isEmpty
                             ? null
                             : int.tryParse(tableValue),
                       );
@@ -1625,7 +1626,9 @@ class _WaiterOrderSummaryCard extends StatelessWidget {
     final scheme = theme.colorScheme;
     final tableLabel = cart.diningOption == DiningOption.takeAway
         ? 'Take Away (Bungkus)'
-        : (cart.tableNumber != null ? 'Meja ${cart.tableNumber}' : 'Meja belum diisi');
+        : (cart.tableNumber != null
+              ? 'Meja ${cart.tableNumber}'
+              : 'Meja belum diisi');
     final customerLabel = (cart.customerName ?? '').trim().isNotEmpty
         ? cart.customerName!.trim()
         : 'Pelanggan belum diisi';
@@ -1782,7 +1785,8 @@ class _CartItemTile extends ConsumerWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (item.isPackage && item.packageComponents.isNotEmpty) ...[
+                    if (item.isPackage &&
+                        item.packageComponents.isNotEmpty) ...[
                       SizedBox(height: compact ? 2 : 4),
                       for (final comp in item.packageComponents)
                         Text(
@@ -1836,7 +1840,9 @@ class _CartItemTile extends ConsumerWidget {
                       ),
                     ),
                   Text(
-                    _currency.format(item.hasDiscount ? item.subtotal : item.unitPrice),
+                    _currency.format(
+                      item.hasDiscount ? item.subtotal : item.unitPrice,
+                    ),
                     style: GoogleFonts.manrope(
                       fontSize: compact ? 13 : 15,
                       fontWeight: FontWeight.w800,
@@ -1957,7 +1963,8 @@ class _CartItemTile extends ConsumerWidget {
                 compact: compact,
                 onChanged: (q) async {
                   if (cart.useTieredPricing && q > item.quantity) {
-                    final menuItems = ref.read(menuItemsProvider).valueOrNull ?? [];
+                    final menuItems =
+                        ref.read(menuItemsProvider).valueOrNull ?? [];
                     final menuItem = menuItems.cast<MenuItem?>().firstWhere(
                       (m) => m?.id == item.menuItemId,
                       orElse: () => null,
@@ -2252,9 +2259,7 @@ class _ItemPriceDialogState extends State<_ItemPriceDialog> {
           hintText: 'Masukkan harga jual nego',
         ),
         keyboardType: TextInputType.number,
-        inputFormatters: const [
-          RupiahTextInputFormatter(),
-        ],
+        inputFormatters: const [RupiahTextInputFormatter()],
         autofocus: true,
       ),
       actions: [
@@ -2408,10 +2413,7 @@ class _QuantityControl extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(compact ? 10 : 14),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-          width: 1.0,
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2990,10 +2992,7 @@ Future<bool> _showTierConfirmation(
 // ── Beli X Gratis Y Offer Banner ───────────────────────────────────
 
 class _BxgyOfferBanner extends StatelessWidget {
-  const _BxgyOfferBanner({
-    required this.promos,
-    required this.compact,
-  });
+  const _BxgyOfferBanner({required this.promos, required this.compact});
 
   final List<BuyXGetYPromo> promos;
   final bool compact;
@@ -3109,10 +3108,7 @@ class _BxgyOfferBanner extends StatelessWidget {
 // ── Tebus Murah Offer Banner & Sheet ──────────────────────────────
 
 class _TebusMurahOfferBanner extends StatelessWidget {
-  const _TebusMurahOfferBanner({
-    required this.promos,
-    required this.compact,
-  });
+  const _TebusMurahOfferBanner({required this.promos, required this.compact});
 
   final List<TebusMurahPromo> promos;
   final bool compact;
@@ -3282,21 +3278,21 @@ class _TebusMurahOfferSheet extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final promo = promos[index];
                   final rewardItem = allMenuItems.cast<MenuItem?>().firstWhere(
-                        (m) => m?.id == promo.rewardMenuItemId,
-                        orElse: () => null,
-                      );
+                    (m) => m?.id == promo.rewardMenuItemId,
+                    orElse: () => null,
+                  );
 
-                  final normalPrice = promo.rewardItemPrice ?? rewardItem?.price ?? 0;
-                  final discountValue = (normalPrice - promo.specialPrice).clamp(0.0, double.infinity);
+                  final normalPrice =
+                      promo.rewardItemPrice ?? rewardItem?.price ?? 0;
+                  final discountValue = (normalPrice - promo.specialPrice)
+                      .clamp(0.0, double.infinity);
 
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: const Color(0xFFE2E8F0),
-                      ),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3304,7 +3300,10 @@ class _TebusMurahOfferSheet extends ConsumerWidget {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF0F766E),
                                 borderRadius: BorderRadius.circular(6),
@@ -3331,7 +3330,9 @@ class _TebusMurahOfferSheet extends ConsumerWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          promo.rewardItemName ?? rewardItem?.name ?? 'Produk Tebus',
+                          promo.rewardItemName ??
+                              rewardItem?.name ??
+                              'Produk Tebus',
                           style: GoogleFonts.manrope(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -3380,12 +3381,16 @@ class _TebusMurahOfferSheet extends ConsumerWidget {
                                           .read(cartProvider.notifier)
                                           .claimTebusMurah(promo, rewardItem);
                                       Navigator.pop(context);
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text(
                                             '${rewardItem.name} berhasil ditebus seharga ${_currency.format(promo.specialPrice)}!',
                                           ),
-                                          backgroundColor: const Color(0xFF0F766E),
+                                          backgroundColor: const Color(
+                                            0xFF0F766E,
+                                          ),
                                         ),
                                       );
                                     },
@@ -3412,4 +3417,3 @@ class _TebusMurahOfferSheet extends ConsumerWidget {
     );
   }
 }
-

@@ -67,7 +67,8 @@ final inventoryDashboardDataProvider =
               final totalIngredients = ingredients.length;
               final productQty = items
                   .where((i) => i.trackStockQuantity)
-                  .fold<int>(0, (sum, i) => sum + i.stockQuantity);
+                  .fold<double>(0.0, (sum, i) => sum + i.stockQuantity)
+                  .round();
               final ingredientQty = ingredients
                   .fold<double>(0.0, (sum, i) => sum + i.currentStock)
                   .round();

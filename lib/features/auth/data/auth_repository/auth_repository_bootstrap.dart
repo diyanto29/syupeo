@@ -72,9 +72,23 @@ extension AuthRepositoryBootstrapContext on AuthRepository {
           }
         }
 
-        final outlets = business == null
+        var outlets = business == null
             ? const <Outlet>[]
             : await fetchAccessibleOutlets(business.id);
+
+        // AUTO-HEAL: Jika toko sudah ada tapi belum memiliki outlet di database,
+        // buatkan outlet default 'main' secara otomatis agar kasir dan outlet langsung aktif
+        if (business != null && outlets.isEmpty) {
+          try {
+            final autoOutlet = await ensureDefaultOutlet(business);
+            if (autoOutlet != null) {
+              outlets = [autoOutlet];
+            }
+          } catch (e) {
+            debugPrint('[loadBootstrap] Auto-heal default outlet note: $e');
+          }
+        }
+
         final currentOutletId = await _resolveSelectedOutletId(
           userId: userId,
           outlets: outlets,
@@ -138,7 +152,6 @@ extension AuthRepositoryBootstrapContext on AuthRepository {
           'slug': pending.slug,
           'phone': pending.businessPhone,
           'email': pending.businessEmail,
-          'timezone': pending.timezone,
         })
         .eq('id', pending.businessId)
         .eq('owner_user_id', user.id)
@@ -187,16 +200,17 @@ extension AuthRepositoryBootstrapContext on AuthRepository {
       return stored;
     }
 
-    if (outlets.length == 1) {
-      final singleId = outlets.first.id;
-      await prefs.setString(
-        '${AuthRepository._selectedOutletPrefix}$userId',
-        singleId,
-      );
-      return singleId;
-    }
-
-    return null;
+    // Jika belum tersimpan atau tidak cocok, otomatis gunakan outlet aktif pertama (atau outlet pertama)
+    final target = outlets.firstWhere(
+      (item) => item.isActive,
+      orElse: () => outlets.first,
+    );
+    final selectedId = target.id;
+    await prefs.setString(
+      '${AuthRepository._selectedOutletPrefix}$userId',
+      selectedId,
+    );
+    return selectedId;
   }
 
   Future<OwnerBootstrap?> _readCachedBootstrap(String userId) async {

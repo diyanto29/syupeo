@@ -189,7 +189,7 @@ export default function PartnerDashboardView({
               <span className="font-extrabold text-white underline decoration-amber-300 decoration-2">
                 {partner.commission_rate}%
               </span>{' '}
-              dari setiap penetapan atau perpanjangan paket langganan Mangga POS untuk klien rujukan Anda.
+              dari setiap aktivasi paket usaha Starter Kit Syupeo untuk mitra toko retail rujukan Anda.
             </p>
           </div>
 
@@ -516,8 +516,8 @@ export default function PartnerDashboardView({
               </Link>
 
               <Link
-                href="/dashboard/hardware-packages"
-                className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all group"
+                href="/dashboard/starter-kits"
+                className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">

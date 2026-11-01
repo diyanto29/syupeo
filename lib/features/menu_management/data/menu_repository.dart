@@ -18,7 +18,7 @@ class MenuRepository {
   static const String _tableName = 'menu_items';
   static const String _imageBucketName = 'menu-item-images';
   static const String _selectFields =
-      '*, menu_category:menu_categories!menu_items_category_id_fkey(*), menu_item_variants(*), menu_item_tiered_prices(*), menu_package_items:menu_package_items!menu_package_items_package_menu_item_id_fkey(*, component:menu_items!menu_package_items_component_menu_item_id_fkey(name, price))';
+      '*, menu_category:menu_categories!menu_items_category_id_fkey(*), menu_item_variants(*), menu_item_tiered_prices(*)';
 
   Future<List<MenuItem>> getMenuItems(String businessId) async {
     // 1. Cek offline lebih dulu: jika sedang offline dan ada cache SQLite, return dalam 0ms!
@@ -39,7 +39,7 @@ class MenuRepository {
           .select(_selectFields)
           .eq('business_id', businessId)
           .order('name', ascending: true)
-          .timeout(const Duration(seconds: 2));
+          .timeout(const Duration(seconds: 15));
 
       final items = (response as List<dynamic>)
           .map((json) => MenuItem.fromJson(json as Map<String, dynamic>))
@@ -49,7 +49,26 @@ class MenuRepository {
       unawaited(LocalDatabaseService.instance.saveMenuItems(items));
       return items;
     } catch (e) {
-      debugPrint('[MenuRepo] Network fetch failed ($e), falling back to local SQLite cache.');
+      debugPrint('[MenuRepo] Network fetch with relations failed ($e), attempting fallback query...');
+      try {
+        final fallbackResponse = await _client
+            .from(_tableName)
+            .select('*')
+            .eq('business_id', businessId)
+            .order('name', ascending: true)
+            .timeout(const Duration(seconds: 10));
+
+        final items = (fallbackResponse as List<dynamic>)
+            .map((json) => MenuItem.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        unawaited(LocalDatabaseService.instance.saveMenuItems(items));
+        return items;
+      } catch (e2) {
+        debugPrint('[MenuRepo] Fallback query also failed: $e2');
+      }
+
+      debugPrint('[MenuRepo] Falling back to local SQLite cache.');
       final cached = await LocalDatabaseService.instance.getMenuItems(businessId);
       if (cached.isNotEmpty) {
         return cached;
@@ -67,36 +86,66 @@ class MenuRepository {
   }) async {
     final trimmedSearch = searchQuery.trim();
 
-    var query = _client
-        .from(_tableName)
-        .select(_selectFields)
-        .eq('business_id', businessId);
+    try {
+      var query = _client
+          .from(_tableName)
+          .select(_selectFields)
+          .eq('business_id', businessId);
 
-    if (categoryId != null && categoryId.isNotEmpty) {
-      query = query.eq('category_id', categoryId);
+      if (categoryId != null && categoryId.isNotEmpty) {
+        query = query.eq('category_id', categoryId);
+      }
+
+      if (trimmedSearch.isNotEmpty) {
+        query = query.or(_buildSearchFilter(trimmedSearch));
+      }
+
+      final response = await query
+          .order('updated_at', ascending: false)
+          .order('name', ascending: true)
+          .range(offset, offset + limit - 1)
+          .count(CountOption.exact);
+
+      final items = (response.data as List<dynamic>)
+          .map((json) => MenuItem.fromJson(json as Map<String, dynamic>))
+          .toList();
+      final nextOffset = offset + items.length;
+      final total = response.count;
+      final hasMore = nextOffset < total;
+
+      // Cache page items to SQLite in background
+      unawaited(LocalDatabaseService.instance.saveMenuItems(items));
+
+      return MenuItemsPage(
+        items: items,
+        totalCount: total,
+        nextOffset: nextOffset,
+        hasMore: hasMore,
+      );
+    } catch (e) {
+      debugPrint('[MenuRepo] getMenuItemsPage online failed ($e), falling back to SQLite');
+      final allCached = await LocalDatabaseService.instance.getMenuItems(businessId);
+      var filtered = allCached;
+      if (categoryId != null && categoryId.isNotEmpty) {
+        filtered = filtered.where((item) => item.categoryId == categoryId).toList();
+      }
+      if (trimmedSearch.isNotEmpty) {
+        final queryLower = trimmedSearch.toLowerCase();
+        filtered = filtered.where((item) {
+          return item.name.toLowerCase().contains(queryLower) ||
+              (item.barcode?.toLowerCase().contains(queryLower) ?? false) ||
+              (item.sku?.toLowerCase().contains(queryLower) ?? false);
+        }).toList();
+      }
+      final paged = filtered.skip(offset).take(limit).toList();
+      final nextOffset = offset + paged.length;
+      return MenuItemsPage(
+        items: paged,
+        totalCount: filtered.length,
+        nextOffset: nextOffset,
+        hasMore: nextOffset < filtered.length,
+      );
     }
-
-    if (trimmedSearch.isNotEmpty) {
-      query = query.or(_buildSearchFilter(trimmedSearch));
-    }
-
-    final response = await query
-        .order('updated_at', ascending: false)
-        .order('name', ascending: true)
-        .range(offset, offset + limit - 1)
-        .count(CountOption.exact);
-
-    final items = (response.data as List<dynamic>)
-        .map((json) => MenuItem.fromJson(json as Map<String, dynamic>))
-        .toList();
-    final nextOffset = offset + items.length;
-
-    return MenuItemsPage(
-      items: items,
-      totalCount: response.count,
-      nextOffset: nextOffset,
-      hasMore: nextOffset < response.count,
-    );
   }
 
   Future<MenuItem?> getMenuItemById(String id) async {
@@ -124,10 +173,10 @@ class MenuRepository {
       previousItem,
     );
 
-    // 1. Upsert the main item
+    // 1. Upsert the main item with valid table columns only (mencegah error PGRST204)
     await _client
         .from(_tableName)
-        .upsert(item.copyWith(stockQuantity: persistedStockQuantity).toJson());
+        .upsert(item.copyWith(stockQuantity: persistedStockQuantity).toDatabaseJson());
 
     // 2. Sync variants so removed rows do not linger after editing.
     await _client
@@ -136,7 +185,15 @@ class MenuRepository {
         .eq('menu_item_id', item.id);
 
     if (item.variants.isNotEmpty) {
-      final variantsJson = item.variants.map((v) => v.toJson()).toList();
+      final variantsJson = item.variants.map((v) {
+        final data = v.toDatabaseJson();
+        data['menu_item_id'] = item.id;
+        final bizId = (data['business_id'] as String?)?.trim();
+        if (bizId == null || bizId.isEmpty) {
+          data['business_id'] = item.businessId;
+        }
+        return data;
+      }).toList();
       await _client.from('menu_item_variants').upsert(variantsJson);
     }
 
@@ -155,19 +212,23 @@ class MenuRepository {
       await _client.from('menu_item_tiered_prices').upsert(tieredPricesJson);
     }
 
-    // 4. Sync package items
-    await _client
-        .from('menu_package_items')
-        .delete()
-        .eq('package_menu_item_id', item.id);
+    // 4. Sync package items (safe try-catch if table does not exist)
+    try {
+      await _client
+          .from('menu_package_items')
+          .delete()
+          .eq('package_menu_item_id', item.id);
 
-    if (item.isPackage && item.packageItems.isNotEmpty) {
-      final packageItemsJson = item.packageItems.map((p) => {
-        'package_menu_item_id': item.id,
-        'component_menu_item_id': p.componentMenuItemId,
-        'quantity': p.quantity,
-      }).toList();
-      await _client.from('menu_package_items').insert(packageItemsJson);
+      if (item.isPackage && item.packageItems.isNotEmpty) {
+        final packageItemsJson = item.packageItems.map((p) => {
+          'package_menu_item_id': item.id,
+          'component_menu_item_id': p.componentMenuItemId,
+          'quantity': p.quantity,
+        }).toList();
+        await _client.from('menu_package_items').insert(packageItemsJson);
+      }
+    } catch (_) {
+      // Table may not exist yet in database
     }
 
     if (outletId != null && _shouldSyncTrackedStock(item, previousItem)) {
@@ -202,7 +263,7 @@ class MenuRepository {
   Future<void> adjustMenuItemStock({
     required String menuItemId,
     required String outletId,
-    required int newQuantity,
+    required num newQuantity,
     String? note,
     String referenceType = 'manual_adjustment',
   }) async {
@@ -222,7 +283,16 @@ class MenuRepository {
         },
       ).timeout(const Duration(seconds: 3));
     } catch (e) {
-      debugPrint('[MenuRepo] Remote adjust_menu_item_stock failed ($e) - stock updated locally.');
+      debugPrint('[MenuRepo] Remote adjust_menu_item_stock failed ($e) - attempting direct table update.');
+      try {
+        await _client.from('menu_items').update({
+          'stock_quantity': newQuantity,
+          'stock_available': newQuantity > 0,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }).eq('id', menuItemId);
+      } catch (e2) {
+        debugPrint('[MenuRepo] Direct stock update also failed ($e2) - stock updated locally.');
+      }
     }
   }
 
@@ -371,7 +441,7 @@ class MenuRepository {
         .replaceAll(')', r'\)');
   }
 
-  int _resolvePersistedStockQuantity(MenuItem item, MenuItem? previousItem) {
+  num _resolvePersistedStockQuantity(MenuItem item, MenuItem? previousItem) {
     if (!item.trackStockQuantity) {
       return previousItem?.stockQuantity ?? 0;
     }

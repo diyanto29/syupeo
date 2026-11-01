@@ -146,7 +146,7 @@ class _AddEditIngredientSheetState extends ConsumerState<AddEditIngredientSheet>
                   ? 'Bahan baku berhasil diperbarui!'
                   : 'Bahan baku baru berhasil disimpan!',
             ),
-            backgroundColor: const Color(0xFFFF7A00),
+            backgroundColor: const Color(0xFF0070FC),
           ),
         );
       }
@@ -536,7 +536,7 @@ class _AddEditIngredientSheetState extends ConsumerState<AddEditIngredientSheet>
                     style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 15),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF7A00),
+                    backgroundColor: const Color(0xFF0070FC),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                 ),

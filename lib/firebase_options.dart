@@ -41,45 +41,47 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAKBFBxJTYz4Ff_5SvQe2dziEF905rwi-A',
-    appId: '1:692859079311:web:a9703e943d40884da33efa',
-    messagingSenderId: '692859079311',
-    projectId: 'mangga-pos',
-    authDomain: 'mangga-pos.firebaseapp.com',
-    storageBucket: 'mangga-pos.firebasestorage.app',
+    apiKey: 'AIzaSyCt0wXfMEp1_eerUsmPRwnP2fFqeEpH3xc',
+    appId: '1:563963021353:web:bd86dd6703737cce773438',
+    messagingSenderId: '563963021353',
+    projectId: 'syupeo-8a109',
+    authDomain: 'syupeo-8a109.firebaseapp.com',
+    storageBucket: 'syupeo-8a109.firebasestorage.app',
+    measurementId: 'G-JF723N54SW',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDrBdhQFm1YK56i9igfRn5WfwOKsWMC6Bg',
-    appId: '1:692859079311:android:70742d4c71fc79b1a33efa',
-    messagingSenderId: '692859079311',
-    projectId: 'mangga-pos',
-    storageBucket: 'mangga-pos.firebasestorage.app',
+    apiKey: 'AIzaSyBV6IA3tGp2_taYY0Vi07SzPdQjdUmvyEA',
+    appId: '1:563963021353:android:b18eeb0bcef2c36c773438',
+    messagingSenderId: '563963021353',
+    projectId: 'syupeo-8a109',
+    storageBucket: 'syupeo-8a109.firebasestorage.app',
   );
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyD1y1nObQmCxAWJkF2tBGi-apFMWCbT05w',
-    appId: '1:692859079311:ios:c91602fefa6db5d2a33efa',
-    messagingSenderId: '692859079311',
-    projectId: 'mangga-pos',
-    storageBucket: 'mangga-pos.firebasestorage.app',
+    apiKey: 'AIzaSyB9csbO2WSSZUfrRlCpa-edeGOYxSatNuI',
+    appId: '1:563963021353:ios:ab1d1b70c8c1ccb8773438',
+    messagingSenderId: '563963021353',
+    projectId: 'syupeo-8a109',
+    storageBucket: 'syupeo-8a109.firebasestorage.app',
     iosBundleId: 'online.mudahkan.dpos',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyD1y1nObQmCxAWJkF2tBGi-apFMWCbT05w',
-    appId: '1:692859079311:ios:c91602fefa6db5d2a33efa',
-    messagingSenderId: '692859079311',
-    projectId: 'mangga-pos',
-    storageBucket: 'mangga-pos.firebasestorage.app',
-    iosBundleId: 'online.mudahkan.dpos',
+    apiKey: 'AIzaSyB9csbO2WSSZUfrRlCpa-edeGOYxSatNuI',
+    appId: '1:563963021353:ios:d9b2021ed831519a773438',
+    messagingSenderId: '563963021353',
+    projectId: 'syupeo-8a109',
+    storageBucket: 'syupeo-8a109.firebasestorage.app',
+    iosBundleId: 'online.mudahkan.syupeo',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAKBFBxJTYz4Ff_5SvQe2dziEF905rwi-A',
-    appId: '1:692859079311:web:77b611bfb43e7ab2a33efa',
-    messagingSenderId: '692859079311',
-    projectId: 'mangga-pos',
-    authDomain: 'mangga-pos.firebaseapp.com',
-    storageBucket: 'mangga-pos.firebasestorage.app',
+    apiKey: 'AIzaSyCt0wXfMEp1_eerUsmPRwnP2fFqeEpH3xc',
+    appId: '1:563963021353:web:aadcb54f6024b28b773438',
+    messagingSenderId: '563963021353',
+    projectId: 'syupeo-8a109',
+    authDomain: 'syupeo-8a109.firebaseapp.com',
+    storageBucket: 'syupeo-8a109.firebasestorage.app',
+    measurementId: 'G-GWSZYJBS4Y',
   );
 }

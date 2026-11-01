@@ -424,7 +424,7 @@ class IncomingOrdersSheet extends ConsumerWidget {
                   ),
                   style: OutlinedButton.styleFrom(
                     visualDensity: VisualDensity.compact,
-                    foregroundColor: const Color(0xFFEA580C),
+                    foregroundColor: const Color(0xFF005ECC),
                     side: const BorderSide(color: Color(0xFFFDBA74)),
                     backgroundColor: const Color(0xFFFFF7ED),
                     shape: RoundedRectangleBorder(

@@ -331,7 +331,7 @@ export default function MerchantDebtsPage() {
     }
 
     const customerName = debt.customers?.name || 'Pelanggan';
-    const storeName = business?.name || 'Mangga POS';
+    const storeName = business?.name || 'Syupeo Toko';
     const remaining = formatRupiah(debt.remaining_amount);
     const invoice = debt.invoice_number || '-';
     const dueDate = debt.due_date ? new Date(debt.due_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
@@ -367,7 +367,7 @@ export default function MerchantDebtsPage() {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Buku Kasbon');
-    XLSX.writeFile(wb, `Buku_Kasbon_${business?.name || 'DPOS'}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `Buku_Kasbon_${business?.name || 'Syupeo'}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   // Filtered

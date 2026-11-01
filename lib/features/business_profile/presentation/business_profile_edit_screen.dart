@@ -388,7 +388,7 @@ class _BusinessProfileEditScreenState
       appBar: isTablet
           ? AppTabletHeader(
               title: const Text('Edit Profil Bisnis'),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
               actions: [
                 bootstrapAsync.maybeWhen(
                   data: (bootstrap) => Padding(
@@ -688,7 +688,7 @@ class _BusinessProfileEditScreenState
                 ),
                 prefixIcon: const Icon(
                   Icons.store_rounded,
-                  color: Color(0xFFFF7A00),
+                  color: Color(0xFF0070FC),
                   size: 20,
                 ),
                 filled: true,
@@ -708,7 +708,7 @@ class _BusinessProfileEditScreenState
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: const BorderSide(
-                    color: Color(0xFFFF7A00),
+                    color: Color(0xFF0070FC),
                     width: 1.8,
                   ),
                 ),
@@ -804,7 +804,7 @@ class _BusinessProfileEditScreenState
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: const BorderSide(
-                    color: Color(0xFFFF7A00),
+                    color: Color(0xFF0070FC),
                     width: 1.8,
                   ),
                 ),
@@ -867,7 +867,7 @@ class _BusinessProfileEditScreenState
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: const BorderSide(
-                    color: Color(0xFFFF7A00),
+                    color: Color(0xFF0070FC),
                     width: 1.8,
                   ),
                 ),
@@ -904,7 +904,7 @@ class _BusinessProfileEditScreenState
                 ? const Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: LinearProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF7A00)),
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0070FC)),
                     ),
                   )
                 : DropdownButtonFormField<String>(
@@ -919,7 +919,7 @@ class _BusinessProfileEditScreenState
                       hintText: 'Pilih jenis usaha...',
                       prefixIcon: const Icon(
                         Icons.category_rounded,
-                        color: Color(0xFFFF7A00),
+                        color: Color(0xFF0070FC),
                         size: 20,
                       ),
                       filled: true,
@@ -939,7 +939,7 @@ class _BusinessProfileEditScreenState
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: const BorderSide(
-                          color: Color(0xFFFF7A00),
+                          color: Color(0xFF0070FC),
                           width: 1.8,
                         ),
                       ),
@@ -1001,7 +1001,7 @@ class _BusinessProfileEditScreenState
                   padding: EdgeInsets.only(bottom: 24),
                   child: Icon(
                     Icons.location_on_rounded,
-                    color: Color(0xFFFF7A00),
+                    color: Color(0xFF0070FC),
                     size: 20,
                   ),
                 ),
@@ -1022,7 +1022,7 @@ class _BusinessProfileEditScreenState
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: const BorderSide(
-                    color: Color(0xFFFF7A00),
+                    color: Color(0xFF0070FC),
                     width: 1.8,
                   ),
                 ),
@@ -1101,7 +1101,7 @@ class _BusinessProfileEditScreenState
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: const BorderSide(
-                    color: Color(0xFFFF7A00),
+                    color: Color(0xFF0070FC),
                     width: 1.8,
                   ),
                 ),
@@ -1116,7 +1116,7 @@ class _BusinessProfileEditScreenState
               child: FilledButton(
                 onPressed: _isSubmitting ? null : () => _save(business),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF7A00),
+                  backgroundColor: const Color(0xFF0070FC),
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -1175,7 +1175,7 @@ class _BusinessProfileEditScreenState
         color: const Color(0xFFFFF7ED),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFFF7A00).withValues(alpha: 0.25),
+          color: const Color(0xFF0070FC).withValues(alpha: 0.25),
         ),
       ),
       child: Column(
@@ -1186,7 +1186,7 @@ class _BusinessProfileEditScreenState
               const Icon(
                 Icons.language_rounded,
                 size: 16,
-                color: Color(0xFFFF7A00),
+                color: Color(0xFF0070FC),
               ),
               const SizedBox(width: 6),
               Text(
@@ -1201,7 +1201,7 @@ class _BusinessProfileEditScreenState
               // Salin Link
               InkWell(
                 onTap: () {
-                  final fullUrl = 'https://pos.mudahkan.online/s/$slug';
+                  final fullUrl = 'https://syupeo-admin.mudahkan.online/s/$slug';
                   Clipboard.setData(ClipboardData(text: fullUrl));
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -1220,7 +1220,7 @@ class _BusinessProfileEditScreenState
                       const Icon(
                         Icons.copy_rounded,
                         size: 13,
-                        color: Color(0xFFFF7A00),
+                        color: Color(0xFF0070FC),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -1228,7 +1228,7 @@ class _BusinessProfileEditScreenState
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFFFF7A00),
+                          color: const Color(0xFF0070FC),
                         ),
                       ),
                     ],
@@ -1254,7 +1254,7 @@ class _BusinessProfileEditScreenState
                             ? Icons.check_circle_outline_rounded
                             : Icons.edit_rounded,
                         size: 13,
-                        color: const Color(0xFFFF7A00),
+                        color: const Color(0xFF0070FC),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -1262,7 +1262,7 @@ class _BusinessProfileEditScreenState
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFFFF7A00),
+                          color: const Color(0xFF0070FC),
                         ),
                       ),
                     ],
@@ -1279,12 +1279,12 @@ class _BusinessProfileEditScreenState
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFFED7AA)),
+              border: Border.all(color: const Color(0xFFBAE6FD)),
             ),
             child: Row(
               children: [
                 Text(
-                  'pos.mudahkan.online/s/',
+                  'syupeo-admin.mudahkan.online/s/',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: const Color(0xFF71717A),
@@ -1299,7 +1299,7 @@ class _BusinessProfileEditScreenState
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFFFF7A00),
+                      color: const Color(0xFF0070FC),
                     ),
                   ),
                 ),
@@ -1339,7 +1339,7 @@ class _BusinessProfileEditScreenState
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(
-                    color: Color(0xFFFF7A00),
+                    color: Color(0xFF0070FC),
                     width: 1.5,
                   ),
                 ),
@@ -1857,33 +1857,6 @@ class _IntroCard extends StatelessWidget {
     final scheme = theme.colorScheme;
     final tokens = theme.extension<ConciergeThemeTokens>();
 
-    final isPro = business?.isPro ?? false;
-    final isLifetime = business?.isLifetime ?? false;
-    final isExpired = business?.isExpired ?? false;
-    final remainingDays = business?.remainingDays;
-
-    String statusText;
-    IconData statusIcon = Icons.verified_rounded;
-    Color statusIconColor = scheme.primary;
-
-    if (isLifetime) {
-      statusText = '👑 Pro Lifetime (Aktif)';
-      statusIcon = Icons.workspace_premium_rounded;
-      statusIconColor = const Color(0xFFF59E0B);
-    } else if (isPro && !isExpired) {
-      statusText = '✨ Pro ($remainingDays Hari Tersisa)';
-      statusIcon = Icons.verified_rounded;
-      statusIconColor = const Color(0xFF10B981);
-    } else if (isExpired) {
-      statusText = '⚠️ Paket Pro Kedaluwarsa';
-      statusIcon = Icons.warning_amber_rounded;
-      statusIconColor = const Color(0xFFEF4444);
-    } else {
-      statusText = '🌱 Paket Free (Gratis)';
-      statusIcon = Icons.storefront_rounded;
-      statusIconColor = const Color(0xFF64748B);
-    }
-
     return Container(
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
@@ -1922,91 +1895,6 @@ class _IntroCard extends StatelessWidget {
             style: theme.textTheme.bodyMedium?.copyWith(
               color: scheme.onSurface.withValues(alpha: 0.60),
               height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 26),
-          Container(
-            height: 150,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF465F88),
-                  Color(0xFF2C1507),
-                  Color(0xFFFF8C00),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                stops: [0.0, 0.4, 1.0],
-              ),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -20,
-                  right: -20,
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.white.withValues(alpha: 0.05),
-                  ),
-                ),
-                Positioned(
-                  left: 20,
-                  right: 20,
-                  bottom: 20,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.10),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: statusIconColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            statusIcon,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'STATUS LANGGANAN',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                statusText,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
           if (ownerName != null || businessUpdatedAt != null) ...[

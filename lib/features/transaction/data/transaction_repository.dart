@@ -4,6 +4,7 @@ import 'package:dpos/core/domain/app_enums.dart';
 import 'package:dpos/core/providers/analytics_outlet_filter_provider.dart';
 import 'package:dpos/core/providers/bootstrap_provider.dart';
 import 'package:dpos/core/services/local_database_service.dart';
+import 'package:dpos/core/services/offline_sync_service.dart';
 import 'package:dpos/core/supabase/supabase_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -106,98 +107,90 @@ class TransactionRepository {
     // 2. ATTEMPT IMMEDIATE CLOUD SYNC
     bool cloudSynced = false;
     try {
-      // Upsert order dengan auto-fallback jika column seperti dining_option belum ada di schema cache Supabase
+      // Upsert order dengan auto-fallback jika column belum ada di schema cache Supabase
       Map<String, dynamic> currentOrderPayload = order.toOrderJson();
-      bool upserted = false;
-      int retries = 0;
-      while (!upserted && retries < 3) {
-        try {
-          await _client.from('orders').upsert(currentOrderPayload);
-          upserted = true;
-        } on PostgrestException catch (e) {
-          if (e.code == 'PGRST204' && retries < 2) {
-            final match = RegExp(r"Could not find the '([^']+)' column").firstMatch(e.message);
-            final missingCol = match?.group(1);
-            if (missingCol != null && currentOrderPayload.containsKey(missingCol)) {
-              currentOrderPayload.remove(missingCol);
-              retries++;
-              continue;
-            } else if (currentOrderPayload.containsKey('dining_option')) {
-              currentOrderPayload.remove('dining_option');
-              retries++;
-              continue;
-            } else if (currentOrderPayload.containsKey('kitchen_status')) {
-              currentOrderPayload.remove('kitchen_status');
-              retries++;
-              continue;
-            }
-          }
-          rethrow;
+      currentOrderPayload.removeWhere((k, v) => v == null && k != 'id');
+      currentOrderPayload = currentOrderPayload.map((k, v) {
+        if (v is num && (v.truncateToDouble() == v)) {
+          return MapEntry(k, v.round());
         }
+        return MapEntry(k, v);
+      });
+
+      const allowedOrderItemKeys = {
+        'id',
+        'order_id',
+        'menu_item_id',
+        'variant_id',
+        'name',
+        'variant_name',
+        'quantity',
+        'unit_price',
+        'subtotal',
+        'notes',
+        'created_at',
+      };
+
+      final itemsPayload = items.map((item) {
+        final map = item.toJson(order.id);
+        map.removeWhere((k, _) => !allowedOrderItemKeys.contains(k));
+        return map;
+      }).toList();
+      final discountsPayload = discounts.map((disc) => disc.toJson(order.id)).toList();
+      final paymentsPayload = (payments ?? []).map((pay) => pay.toJson(order.id)).toList();
+
+      // TAHAP A: Coba panggil RPC rpc_sync_offline_order (SECURITY DEFINER, bypass RLS secara aman)
+      try {
+        final rpcRes = await _client.rpc('rpc_sync_offline_order', params: {
+          'p_order': currentOrderPayload,
+          'p_items': itemsPayload,
+          'p_discounts': discountsPayload,
+          'p_payments': paymentsPayload,
+        }).timeout(const Duration(seconds: 10));
+
+        if (rpcRes is Map && rpcRes['success'] == true) {
+          cloudSynced = true;
+          debugPrint('[TransactionRepo] Order ${order.id} synced immediately via RPC');
+        }
+      } catch (e) {
+        debugPrint('[TransactionRepo] RPC unavailable or note: $e');
       }
 
-      // Delete existing items / discounts / payments and re-insert
-      await _client.from('order_items').delete().eq('order_id', order.id);
-      await _client.from('order_discounts').delete().eq('order_id', order.id);
-      await _client.from('order_payments').delete().eq('order_id', order.id);
+      // TAHAP B: Fallback langsung ke tabel jika RPC belum dipasang
+      if (!cloudSynced) {
+        await OfflineSyncService.safeUpsertOrder(
+          client: _client,
+          rawOrder: currentOrderPayload,
+        );
 
-      if (items.isNotEmpty) {
-        final itemsPayload = items.map((item) => item.toJson(order.id)).toList();
-        try {
-          await _client.from('order_items').insert(itemsPayload);
-        } on PostgrestException catch (e) {
-          // Fallback jika constraint foreign key discount_id dilanggar
-          if (e.code == '23503' &&
-              (e.message.contains('discount') ||
-                  (e.details != null && e.details.toString().contains('discounts')))) {
-            final fallbackPayload = itemsPayload.map((map) {
-              final copy = Map<String, dynamic>.from(map);
-              copy['discount_id'] = null;
-              return copy;
-            }).toList();
-            await _client.from('order_items').insert(fallbackPayload);
-          } else {
-            rethrow;
-          }
+        // Delete existing items / discounts / payments and re-insert
+        await _client.from('order_items').delete().eq('order_id', order.id);
+        if (itemsPayload.isNotEmpty) {
+          await OfflineSyncService.safeInsertList(
+            client: _client,
+            table: 'order_items',
+            rawRows: itemsPayload,
+          );
         }
-      }
 
-      if (discounts.isNotEmpty) {
-        final discountsPayload =
-            discounts.map((disc) => disc.toJson(order.id)).toList();
         try {
-          await _client.from('order_discounts').insert(discountsPayload);
-        } on PostgrestException catch (e) {
-          if (e.code == '23503' &&
-              (e.message.contains('discount') ||
-                  (e.details != null && e.details.toString().contains('discounts')))) {
-            final fallbackPayload = discountsPayload.map((map) {
-              final copy = Map<String, dynamic>.from(map);
-              copy['discount_id'] = null;
-              return copy;
-            }).toList();
-            await _client.from('order_discounts').insert(fallbackPayload);
-          } else {
-            rethrow;
+          await _client.from('order_discounts').delete().eq('order_id', order.id);
+          if (discountsPayload.isNotEmpty) {
+            await OfflineSyncService.safeInsertList(
+              client: _client,
+              table: 'order_discounts',
+              rawRows: discountsPayload,
+            );
           }
-        }
-      }
+        } catch (_) {}
 
-      if (payments != null && payments.isNotEmpty) {
-        final paymentsPayload = payments.map((pay) => pay.toJson(order.id)).toList();
-        try {
-          await _client.from('order_payments').insert(paymentsPayload);
-        } on PostgrestException catch (e) {
-          if (e.code == '23503' || e.code == '22P02') {
-            final fallbackPayments = paymentsPayload.map((map) {
-              final copy = Map<String, dynamic>.from(map);
-              copy['payment_method_id'] = null;
-              return copy;
-            }).toList();
-            await _client.from('order_payments').insert(fallbackPayments);
-          } else {
-            rethrow;
-          }
+        if (paymentsPayload.isNotEmpty) {
+          await _client.from('order_payments').delete().eq('order_id', order.id);
+          await OfflineSyncService.safeInsertList(
+            client: _client,
+            table: 'order_payments',
+            rawRows: paymentsPayload,
+          );
         }
       }
 
@@ -329,7 +322,7 @@ class TransactionRepository {
   Future<TransactionOrder> getOrder(String orderId) async {
     final response = await _client
         .from('orders')
-        .select('*, order_items(*), order_discounts(*), order_payments(*)')
+        .select('*, order_items(*), order_payments(*)')
         .eq('id', orderId)
         .single();
 
@@ -350,7 +343,7 @@ class TransactionRepository {
   }) async {
     var query = _client
         .from('orders')
-        .select('*, order_items(*), order_discounts(*), order_payments(*)');
+        .select('*, order_items(*), order_payments(*)');
 
     if (outletId != null) {
       query = query.eq('outlet_id', outletId);

@@ -321,12 +321,12 @@ class _SalesReturnSheetState extends ConsumerState<SalesReturnSheet> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEA580C).withValues(alpha: 0.12),
+                      color: const Color(0xFF005ECC).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
                       Icons.assignment_return_rounded,
-                      color: Color(0xFFEA580C),
+                      color: Color(0xFF005ECC),
                       size: 26,
                     ),
                   ),
@@ -376,7 +376,7 @@ class _SalesReturnSheetState extends ConsumerState<SalesReturnSheet> {
                   children: [
                     const Icon(
                       Icons.info_outline_rounded,
-                      color: Color(0xFFEA580C),
+                      color: Color(0xFF005ECC),
                       size: 20,
                     ),
                     const SizedBox(width: 10),
@@ -423,7 +423,7 @@ class _SalesReturnSheetState extends ConsumerState<SalesReturnSheet> {
                           : scheme.surfaceContainerHighest.withValues(alpha: 0.35),
                       border: Border.all(
                         color: draft.isSelected
-                            ? const Color(0xFFFF7A00).withValues(alpha: 0.6)
+                            ? const Color(0xFF0070FC).withValues(alpha: 0.6)
                             : scheme.outlineVariant.withValues(alpha: 0.4),
                       ),
                       borderRadius: BorderRadius.circular(16),
@@ -435,7 +435,7 @@ class _SalesReturnSheetState extends ConsumerState<SalesReturnSheet> {
                           children: [
                             Checkbox(
                               value: draft.isSelected,
-                              activeColor: const Color(0xFFFF7A00),
+                              activeColor: const Color(0xFF0070FC),
                               onChanged: (val) {
                                 setState(() => draft.isSelected = val ?? false);
                               },
@@ -468,7 +468,7 @@ class _SalesReturnSheetState extends ConsumerState<SalesReturnSheet> {
                                 fontSize: 13,
                                 fontWeight: FontWeight.w800,
                                 color: draft.isSelected
-                                    ? const Color(0xFFEA580C)
+                                    ? const Color(0xFF005ECC)
                                     : scheme.outline,
                               ),
                             ),
@@ -720,7 +720,7 @@ class _SalesReturnSheetState extends ConsumerState<SalesReturnSheet> {
                           style: GoogleFonts.firaCode(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
-                            color: const Color(0xFFEA580C),
+                            color: const Color(0xFF005ECC),
                           ),
                         ),
                       ],
@@ -730,7 +730,7 @@ class _SalesReturnSheetState extends ConsumerState<SalesReturnSheet> {
                       onPressed:
                           _isSubmitting ? null : _handleProcessReturn,
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFEA580C),
+                        backgroundColor: const Color(0xFF005ECC),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(

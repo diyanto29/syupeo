@@ -1,19 +1,17 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
-
 export const metadata: Metadata = {
-  title: 'Mangga POS - Super Admin Portal',
-  description: 'Control center for business templates, accounts, and system configuration for Mangga POS',
+  title: 'Syupeo - Super Admin Portal & Supply Chain Hub',
+  description: 'Control center for retail supply chain, business catalog, accounts, and system configuration for Syupeo',
   icons: {
     icon: [
+      { url: '/syupeo-icon.svg', type: 'image/svg+xml' },
       { url: '/logo.png', type: 'image/png' },
       { url: '/favicon.ico' },
     ],
-    shortcut: '/logo.png',
-    apple: '/logo.png',
+    shortcut: '/syupeo-icon.svg',
+    apple: '/syupeo-icon.svg',
   },
 };
 
@@ -24,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      <body className={`${inter.className} min-h-screen bg-[#F8FAFC] text-slate-800`}>
+      <body className="font-sans min-h-screen bg-[#F8FAFC] text-[#1a1a1a] antialiased">
         {children}
       </body>
     </html>

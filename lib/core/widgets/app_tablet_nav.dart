@@ -34,11 +34,11 @@ class AppOwnerDrawer extends ConsumerWidget {
   }
 }
 
-/// Badge standar 'Mangga POS' dengan dot hijau khas list kategori produk.
+/// Badge standar 'Syupeo' dengan dot hijau khas list kategori produk.
 class AppTabletBadge extends StatelessWidget {
   const AppTabletBadge({
     super.key,
-    this.label = 'Mangga POS',
+    this.label = 'Syupeo',
     this.dotColor = const Color(0xFF16A34A),
     this.bgColor = const Color(0xFFDCFCE7),
     this.textColor = const Color(0xFF16A34A),

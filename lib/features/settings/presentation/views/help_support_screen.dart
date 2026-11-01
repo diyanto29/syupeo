@@ -37,8 +37,8 @@ class HelpSupportView extends ConsumerWidget {
   static const String developerPhone = '+6285624277920';
   static const String developerWaPhone = '6285624277920';
   static const String developerEmail = 'diyanto2911@gmail.com';
-  static const String documentationUrl = 'https://pos.mudahkan.online/panduan';
-  static const String websiteUrl = 'https://pos.mudahkan.online/';
+  static const String documentationUrl = 'https://syupeo.mudahkan.online/#panduan';
+  static const String websiteUrl = 'https://syupeo.mudahkan.online/';
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
@@ -92,7 +92,7 @@ class HelpSupportView extends ConsumerWidget {
           child: Column(
             children: [
               Text(
-                'MANGGA POS v1.0.0',
+                'SYUPEO v1.0.0',
                 style: GoogleFonts.manrope(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
@@ -148,7 +148,7 @@ class HelpSupportView extends ConsumerWidget {
               height: 130,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFFF7A00).withValues(alpha: 0.12),
+                color: const Color(0xFF0070FC).withValues(alpha: 0.12),
               ),
             ),
           ),
@@ -175,14 +175,14 @@ class HelpSupportView extends ConsumerWidget {
                   height: 52,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFFF7A00), Color(0xFFEA580C)],
+                      colors: [Color(0xFF0070FC), Color(0xFF005ECC)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFF7A00).withValues(alpha: 0.3),
+                        color: const Color(0xFF0070FC).withValues(alpha: 0.3),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -207,10 +207,10 @@ class HelpSupportView extends ConsumerWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFF7A00).withValues(alpha: 0.2),
+                          color: const Color(0xFF0070FC).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: const Color(0xFFFF7A00).withValues(alpha: 0.4),
+                            color: const Color(0xFF0070FC).withValues(alpha: 0.4),
                           ),
                         ),
                         child: Text(
@@ -400,11 +400,9 @@ class HelpSupportView extends ConsumerWidget {
                   ),
                 );
               },
-              icon: const Icon(Icons.workspace_premium_rounded, size: 18),
+              icon: const Icon(Icons.all_inbox_rounded, size: 18),
               label: Text(
-                isPro && !isExpired
-                    ? 'Lihat Detail Paket & Langganan'
-                    : 'Upgrade ke Paket Pro ⚡',
+                'Lihat Katalog Paket Usaha 📦',
                 style: GoogleFonts.manrope(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -413,7 +411,7 @@ class HelpSupportView extends ConsumerWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: isPro && !isExpired
                     ? const Color(0xFF0F172A)
-                    : const Color(0xFFFF7A00),
+                    : const Color(0xFF0070FC),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -458,7 +456,7 @@ class HelpSupportView extends ConsumerWidget {
                 ),
                 child: const Icon(
                   Icons.menu_book_rounded,
-                  color: Color(0xFFFF7A00),
+                  color: Color(0xFF0070FC),
                   size: 22,
                 ),
               ),
@@ -472,7 +470,7 @@ class HelpSupportView extends ConsumerWidget {
                       style: GoogleFonts.manrope(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFFFF7A00),
+                        color: const Color(0xFF0070FC),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -493,7 +491,7 @@ class HelpSupportView extends ConsumerWidget {
           const SizedBox(height: 14),
 
           Text(
-            'Panduan langkah demi langkah penggunaan fitur Mangga POS lengkap beserta gambar dan tutorial:',
+            'Panduan langkah demi langkah penggunaan fitur Syupeo lengkap beserta gambar dan tutorial:',
             style: GoogleFonts.manrope(
               fontSize: 12.5,
               color: const Color(0xFF64748B),
@@ -536,7 +534,7 @@ class HelpSupportView extends ConsumerWidget {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF7A00),
+                backgroundColor: const Color(0xFF0070FC),
                 foregroundColor: Colors.white,
                 elevation: 1,
                 shape: RoundedRectangleBorder(
@@ -649,7 +647,7 @@ class HelpSupportView extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 26,
-                  backgroundColor: const Color(0xFFFF7A00),
+                  backgroundColor: const Color(0xFF0070FC),
                   child: Text(
                     'D',
                     style: GoogleFonts.manrope(
@@ -678,7 +676,7 @@ class HelpSupportView extends ConsumerWidget {
                         style: GoogleFonts.manrope(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFFFF7A00),
+                          color: const Color(0xFF0070FC),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -707,7 +705,7 @@ class HelpSupportView extends ConsumerWidget {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       final msg =
-                          'Halo Mas $developerName, saya ingin berkonsultasi seputar aplikasi Mangga POS untuk bisnis "$businessName" (ID: $businessId).';
+                          'Halo Mas $developerName, saya ingin berkonsultasi seputar aplikasi Syupeo untuk bisnis "$businessName" (ID: $businessId).';
                       _launchWhatsApp(msg);
                     },
                     icon: const Icon(Icons.chat_rounded, size: 18),

@@ -27,15 +27,15 @@ class OwnerBootstrap {
   bool get needsOwnerOnboarding => profile != null && profile?.defaultRole == AppRole.owner && business == null;
   Outlet? get currentOutlet {
     final id = currentOutletId;
-    if (id == null) {
-      return outlets.length == 1 ? outlets.first : null;
-    }
-    for (final outlet in outlets) {
-      if (outlet.id == id) {
-        return outlet;
+    if (id != null) {
+      for (final outlet in outlets) {
+        if (outlet.id == id) {
+          return outlet;
+        }
       }
     }
-    return outlets.length == 1 ? outlets.first : null;
+    // Jika belum dipilih atau ID tidak cocok, default otomatis ke outlet pertama
+    return outlets.isNotEmpty ? outlets.first : null;
   }
 
   bool get needsOutletSelection =>

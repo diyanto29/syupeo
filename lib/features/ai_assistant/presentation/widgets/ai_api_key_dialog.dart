@@ -60,7 +60,7 @@ class _AiApiKeyDialogState extends State<AiApiKeyDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'API Key digunakan untuk Asisten AI MAngga POS dan analisis foto produk otomatis.',
+            'API Key digunakan untuk Asisten AI Syupeo dan analisis foto produk otomatis.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: scheme.onSurface.withValues(alpha: 0.7),
             ),

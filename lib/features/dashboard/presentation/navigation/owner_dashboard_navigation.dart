@@ -6,8 +6,7 @@ import 'package:dpos/core/domain/business_models.dart';
 import 'package:dpos/core/providers/feature_gate_provider.dart';
 
 enum MenuSection {
-  operasional('OPERASIONAL'),
-  resto('RESTO & MEJA'),
+  operasional('OPERASIONAL KASIR'),
   catalogReports('KATALOG & LAPORAN'),
   settingsStore('PENGATURAN TOKO');
 
@@ -28,19 +27,26 @@ enum OwnerMenu {
     icon: Icons.point_of_sale_rounded,
     subtitle: 'Buat & kelola order',
     section: MenuSection.operasional,
-    featureKey: 'transaction',
+    isCore: true,
   ),
   orderManagement(
     title: 'Pesanan & Draft',
     icon: Icons.assignment_rounded,
     subtitle: 'Pesanan masuk & draft',
     section: MenuSection.operasional,
-    featureKey: 'order_mgmt',
+    isCore: true,
   ),
   checkoutVoid(
     title: 'Riwayat Transaksi',
     icon: Icons.history_rounded,
     subtitle: 'Lihat detail & cetak ulang',
+    section: MenuSection.operasional,
+    isCore: true,
+  ),
+  starterKitOrder(
+    title: 'Status Pengiriman Paket',
+    icon: Icons.local_shipping_rounded,
+    subtitle: 'Lacak pengiriman starter kit',
     section: MenuSection.operasional,
     isCore: true,
   ),
@@ -50,6 +56,7 @@ enum OwnerMenu {
     subtitle: 'Piutang & tagihan pelanggan',
     section: MenuSection.operasional,
     featureKey: 'customer_debt',
+    isCore: true,
   ),
   cashFlow(
     title: 'Arus Kas & Shift',
@@ -62,42 +69,42 @@ enum OwnerMenu {
     title: 'Sesi Meja',
     icon: Icons.table_restaurant_rounded,
     subtitle: 'Ringkasan alur waiter',
-    section: MenuSection.resto,
+    section: MenuSection.operasional,
     featureKey: 'table_mgmt',
   ),
   tableTracker(
     title: 'Table Tracker',
     icon: Icons.grid_view_rounded,
     subtitle: 'Pantau meja aktif waiter',
-    section: MenuSection.resto,
+    section: MenuSection.operasional,
     featureKey: 'table_mgmt',
   ),
   waiterOrders(
     title: 'Orderan',
     icon: Icons.receipt_long_rounded,
     subtitle: 'Order waiter aktif',
-    section: MenuSection.resto,
+    section: MenuSection.operasional,
     featureKey: 'table_mgmt',
   ),
   waiterHistory(
     title: 'Riwayat Transaksi',
     icon: Icons.history_toggle_off_rounded,
     subtitle: 'Histori order waiter',
-    section: MenuSection.resto,
+    section: MenuSection.operasional,
     featureKey: 'table_mgmt',
   ),
   kitchenQueue(
     title: 'Antrian Dapur',
     icon: Icons.grid_view_rounded,
     subtitle: 'Antrian dapur',
-    section: MenuSection.resto,
+    section: MenuSection.operasional,
     featureKey: 'kitchen_kds',
   ),
   qrSelfOrder(
     title: 'QR Self-Order',
     icon: Icons.qr_code_scanner_rounded,
     subtitle: 'Generate QR Meja',
-    section: MenuSection.resto,
+    section: MenuSection.operasional,
     featureKey: 'qr_order',
   ),
   menuManagement(
@@ -105,14 +112,21 @@ enum OwnerMenu {
     icon: Icons.inventory_2_rounded,
     subtitle: 'Kelola Produk & Diskon',
     section: MenuSection.catalogReports,
-    featureKey: 'menu_mgmt',
+    isCore: true,
+  ),
+  restockCatalog(
+    title: 'Restok & Kulakan',
+    icon: Icons.local_shipping_rounded,
+    subtitle: 'Pasokan barang Gudang Syupeo',
+    section: MenuSection.catalogReports,
+    isCore: true,
   ),
   inventory(
     title: 'Inventori / Stok',
-    icon: Icons.inventory_2_rounded,
+    icon: Icons.warehouse_rounded,
     subtitle: 'Stok & supplier',
     section: MenuSection.catalogReports,
-    featureKey: 'inventory',
+    isCore: true,
   ),
   reports(
     title: 'Laporan',
@@ -122,7 +136,7 @@ enum OwnerMenu {
     featureKey: 'reports',
   ),
   aiAssistant(
-    title: 'Asisten AI Mangga POS',
+    title: 'Asisten AI Syupeo',
     icon: Icons.auto_awesome_rounded,
     subtitle: 'Konsultasi bisnis & analitik',
     section: MenuSection.catalogReports,
@@ -164,11 +178,11 @@ enum OwnerMenu {
     isCore: true,
   ),
   subscription(
-    title: 'Paket Langganan',
-    icon: Icons.workspace_premium_rounded,
-    subtitle: 'Upgrade ke Pro',
+    title: 'Paket Usaha',
+    icon: Icons.all_inbox_rounded,
+    subtitle: 'Katalog paket stok & kemitraan',
     section: MenuSection.settingsStore,
-    featureKey: 'subscription',
+    isCore: true,
   ),
   support(
     title: 'Help & Support',
@@ -235,7 +249,9 @@ class OwnerDashboardNavigation {
 
         // Untuk fitur yang diset 'pro' (seperti cash_flow, reports):
         // Tetap tampilkan di menu agar user Free melihat badge PRO dan bisa mengklik untuk melihat info upgrade
-        if (config == 'pro' || menu == OwnerMenu.cashFlow) {
+        if (config == 'pro' ||
+            menu == OwnerMenu.cashFlow ||
+            menu == OwnerMenu.reports) {
           return true;
         }
 
@@ -296,106 +312,77 @@ class OwnerDashboardNavigation {
 List<OwnerMenu> availableMenusForRole(AppRole role) {
   return switch (role) {
     AppRole.owner => const [
-      // 1. Operasional Utama Kasir & Penjualan
+      // 1. Operasional Utama Kasir & Penjualan Retail
       OwnerMenu.home,
       OwnerMenu.transaction,
       OwnerMenu.orderManagement,
       OwnerMenu.checkoutVoid,
+      OwnerMenu.starterKitOrder,
       OwnerMenu.customerDebt,
       OwnerMenu.cashFlow,
 
-      // 2. Resto & Meja (FnB)
-      OwnerMenu.tableSession,
-      OwnerMenu.kitchenQueue,
-      OwnerMenu.qrSelfOrder,
-
-      // 3. Produk, Stok & Laporan
+      // 2. Produk, Stok & Laporan
       OwnerMenu.menuManagement,
-      OwnerMenu.inventory,
+      OwnerMenu.restockCatalog,
+      // OwnerMenu.inventory,
       OwnerMenu.reports,
       OwnerMenu.aiAssistant,
 
-      // 4. Pengaturan Toko & Akun
-      OwnerMenu.staff,
+      // 3. Pengaturan Toko & Outlet
+      // OwnerMenu.staff, // Di-hide sementara sesuai permintaan owner
       OwnerMenu.outletManagement,
       OwnerMenu.businessProfile,
+      OwnerMenu.subscription,
       OwnerMenu.settings,
       OwnerMenu.printerSettings,
-      OwnerMenu.subscription,
       OwnerMenu.support,
     ],
     AppRole.admin => const [
-      // 1. Operasional Utama Kasir & Penjualan
+      // 1. Operasional Utama Kasir Retail
       OwnerMenu.home,
       OwnerMenu.transaction,
       OwnerMenu.orderManagement,
       OwnerMenu.checkoutVoid,
+      OwnerMenu.starterKitOrder,
       OwnerMenu.customerDebt,
       OwnerMenu.cashFlow,
 
-      // 2. Resto & Meja (FnB)
-      OwnerMenu.tableSession,
-      OwnerMenu.kitchenQueue,
-      OwnerMenu.qrSelfOrder,
-
-      // 3. Produk, Stok & Laporan
-      OwnerMenu.inventory,
+      // 2. Produk, Stok & Laporan
+      OwnerMenu.menuManagement,
+      OwnerMenu.restockCatalog,
+      // OwnerMenu.inventory,
       OwnerMenu.reports,
       OwnerMenu.aiAssistant,
 
-      // 4. Pengaturan Toko & Akun
+      // 3. Pengaturan Toko & Outlet
       OwnerMenu.outletManagement,
       OwnerMenu.settings,
       OwnerMenu.printerSettings,
-      OwnerMenu.subscription,
       OwnerMenu.support,
     ],
     AppRole.cashier => const [
-      // 1. Operasional Utama Kasir
+      // 1. Operasional Kasir Retail
       OwnerMenu.home,
       OwnerMenu.transaction,
       OwnerMenu.orderManagement,
       OwnerMenu.checkoutVoid,
+      OwnerMenu.starterKitOrder,
       OwnerMenu.customerDebt,
       OwnerMenu.cashFlow,
 
-      // 2. Stok & Laporan Ringkas
-      OwnerMenu.inventory,
-      OwnerMenu.reports,
-      OwnerMenu.aiAssistant,
-
-      // 3. Pengaturan Toko & Akun
-      OwnerMenu.settings,
+      // 2. Cek Stok & Pengaturan Printer
+      OwnerMenu.restockCatalog,
+      // OwnerMenu.inventory,
       OwnerMenu.printerSettings,
-      OwnerMenu.subscription,
       OwnerMenu.support,
     ],
     AppRole.waiter => const [
-      // 1. Operasional & Meja
       OwnerMenu.transaction,
-      OwnerMenu.tableSession,
-      OwnerMenu.tableTracker,
-      OwnerMenu.waiterOrders,
-      OwnerMenu.waiterHistory,
-      OwnerMenu.qrSelfOrder,
-
-      // 2. Pengaturan & Bantuan
-      OwnerMenu.settings,
+      OwnerMenu.checkoutVoid,
       OwnerMenu.printerSettings,
-      OwnerMenu.subscription,
       OwnerMenu.support,
     ],
-    AppRole.kitchen => const [
-      // 1. Operasional Dapur
-      OwnerMenu.kitchenQueue,
-      OwnerMenu.home,
-
-      // 2. Pengaturan & Bantuan
-      OwnerMenu.settings,
-      OwnerMenu.printerSettings,
-      OwnerMenu.subscription,
-      OwnerMenu.support,
-    ],
+    AppRole.kitchen => const [OwnerMenu.home, OwnerMenu.support],
     AppRole.customer => const [OwnerMenu.home, OwnerMenu.support],
   };
 }

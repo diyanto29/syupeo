@@ -46,7 +46,7 @@ export default function MerchantOutletsPage() {
         .from('outlets')
         .select('*')
         .eq('business_id', business.id)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (!error && data) {
         setOutlets(data);

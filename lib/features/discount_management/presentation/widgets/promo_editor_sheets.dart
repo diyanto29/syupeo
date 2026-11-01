@@ -673,7 +673,7 @@ class BuyXGetYEditorPage extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
             )
           : AppBar(
               title: Text(pageTitle),
@@ -720,7 +720,7 @@ class TebusMurahEditorPage extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
             )
           : AppBar(
               title: Text(pageTitle),

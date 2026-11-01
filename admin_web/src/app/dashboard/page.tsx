@@ -11,6 +11,7 @@ import {
   Sparkles,
   CheckCircle2,
   Store,
+  ShoppingBag,
 } from 'lucide-react';
 import PartnerDashboardView from '@/components/PartnerDashboardView';
 
@@ -134,50 +135,49 @@ export default async function DashboardPage() {
   return (
     <div>
       <Navbar
-        title="Ringkasan Sistem"
-        description="Pantau pertumbuhan bisnis terdaftar, akun PRO, konfigurasi template aktif, dan kesehatan ekosistem Mangga POS"
+        title="Syupeo Control Hub"
+        description="Pantau pertumbuhan mitra toko retail, distribusi 4 paket awal (@ Rp 200.000), master katalog produk, dan ekosistem pasokan Syupeo"
       />
 
       <div className="space-y-8 mt-6">
-        {/* Welcome Banner in Mangga Orange */}
-        <div className="relative overflow-hidden rounded-3xl p-8 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 text-white shadow-lg shadow-orange-500/15">
+        {/* Welcome Banner in Syupeo Royal Blue */}
+        <div className="relative overflow-hidden rounded-[16px] p-8 bg-gradient-to-r from-[#005ecc] via-[#0070fc] to-[#004db3] text-white shadow-lg shadow-[#0070fc]/15">
           <div className="absolute -top-12 -right-12 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white border border-white/30 backdrop-blur-xs">
-                <Sparkles className="w-3.5 h-3.5" />
-                Super Admin Access
+                <Sparkles className="w-3.5 h-3.5 text-[#ffd000]" />
+                Super Admin HQ • Closed-Loop Retail Hub
               </div>
               <h2 className="text-2xl font-black tracking-tight">
-                Selamat Datang, Diyanto
+                Selamat Datang, Admin Syupeo
               </h2>
               <p className="text-sm text-white/90 max-w-2xl leading-relaxed">
-                Panel kontrol penuh untuk mengatur harga paket langganan (PRO / FREE), modul template bisnis,
-                dan batasan kuota fitur POS secara langsung.
+                Dari Stok Pertama, Sampai ke Tangan Pelanggan. Pantau jaringan rantai pasok pabrik, aktivasi Toko Retail mitra, dan pengadaan master produk nasional secara terpadu.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="/merchant"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition-all group"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-white text-[#0070fc] hover:bg-slate-50 font-bold text-sm shadow-md transition-all group"
               >
-                <Store className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" />
+                <Store className="w-4 h-4 text-[#0070fc] group-hover:scale-110 transition-transform" />
                 <span>Buka Portal Toko</span>
               </Link>
               <Link
-                href="/dashboard/pricing"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-orange-600 font-bold text-sm shadow-md transition-all"
+                href="/dashboard/starter-kits"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-[#ffd000] hover:bg-[#e6bc00] text-slate-900 font-extrabold text-sm shadow-md transition-all"
               >
-                <Crown className="w-4 h-4 text-orange-600" />
-                Atur Harga Paket
+                <ShoppingBag className="w-4 h-4 text-slate-900" />
+                4 Paket Usaha Retail
               </Link>
               <Link
                 href="/dashboard/businesses"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-700/60 hover:bg-orange-700/80 border border-white/20 text-white font-semibold text-sm transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-white/20 hover:bg-white/30 border border-white/30 text-white font-semibold text-sm transition-all"
               >
                 <Building2 className="w-4 h-4" />
-                Kelola Mitra
+                Mitra Toko Retail
               </Link>
             </div>
           </div>
@@ -185,49 +185,49 @@ export default async function DashboardPage() {
 
         {/* Stats Grid - 4 Columns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Card 1: Total Bisnis */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+          {/* Card 1: Total Toko Retail Terdaftar */}
+          <div className="bg-white rounded-[12px] p-6 border border-[rgba(26,26,26,0.12)] shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
-              <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-orange-600">
+              <div className="w-12 h-12 rounded-[10px] bg-[#eff6ff] border border-[#bfdbfe] flex items-center justify-center text-[#0070fc]">
                 <Building2 className="w-6 h-6" />
               </div>
               <Link
                 href="/dashboard/businesses"
-                className="text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1 font-bold"
+                className="text-xs text-[#0070fc] hover:text-[#005ecc] flex items-center gap-1 font-bold"
               >
                 Lihat <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              <div className="text-3xl font-extrabold text-[#1a1a1a] tracking-tight">
                 {businessesCount ?? 0}
               </div>
-              <p className="text-xs font-semibold text-slate-500 mt-1">Total Bisnis Terdaftar</p>
+              <p className="text-xs font-semibold text-slate-500 mt-1">Mitra Toko Retail Terdaftar</p>
             </div>
           </div>
 
-          {/* Card 2: Total Akun PRO */}
-          <div className="bg-white rounded-2xl p-6 border border-amber-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+          {/* Card 2: 4 Pilihan Paket Usaha */}
+          <div className="bg-white rounded-[12px] p-6 border border-[rgba(26,26,26,0.12)] shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
-                <Crown className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-[10px] bg-[#fefce8] border border-[#fef08a] flex items-center justify-center text-[#ba8c02]">
+                <ShoppingBag className="w-6 h-6" />
               </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                PREMIUM
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fefce8] text-[#ba8c02] border border-[#fef08a]">
+                @ RP 200.000
               </span>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-extrabold text-amber-700 tracking-tight">
-                {proBusinessesCount ?? 0}
+              <div className="text-3xl font-extrabold text-[#ba8c02] tracking-tight">
+                4 Paket
               </div>
-              <p className="text-xs font-semibold text-slate-500 mt-1">Akun PRO Aktif</p>
+              <p className="text-xs font-semibold text-slate-500 mt-1">Katalog Usaha Awal</p>
             </div>
           </div>
 
-          {/* Card 3: Template Bisnis */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+          {/* Card 3: Template & Kategori Bisnis */}
+          <div className="bg-white rounded-[12px] p-6 border border-[rgba(26,26,26,0.12)] shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
-              <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+              <div className="w-12 h-12 rounded-[10px] bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
                 <Layers className="w-6 h-6" />
               </div>
               <Link
@@ -238,28 +238,28 @@ export default async function DashboardPage() {
               </Link>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              <div className="text-3xl font-extrabold text-[#1a1a1a] tracking-tight">
                 {templatesCount ?? 0}
               </div>
-              <p className="text-xs font-semibold text-slate-500 mt-1">Template Bisnis</p>
+              <p className="text-xs font-semibold text-slate-500 mt-1">Kategori Usaha Retail</p>
             </div>
           </div>
 
-          {/* Card 4: Pengguna Owner */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+          {/* Card 4: Pengguna Owner Toko */}
+          <div className="bg-white rounded-[12px] p-6 border border-[rgba(26,26,26,0.12)] shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+              <div className="w-12 h-12 rounded-[10px] bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
                 <Users className="w-6 h-6" />
               </div>
               <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Cloud Sync
+                <CheckCircle2 className="w-3.5 h-3.5" /> Cloud POS Sync
               </span>
             </div>
             <div className="mt-4">
-              <div className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              <div className="text-3xl font-extrabold text-[#1a1a1a] tracking-tight">
                 {displayOwnersCount}
               </div>
-              <p className="text-xs font-semibold text-slate-500 mt-1">Pemilik Bisnis Terdaftar</p>
+              <p className="text-xs font-semibold text-slate-500 mt-1">Pemilik Toko Retail</p>
             </div>
           </div>
         </div>

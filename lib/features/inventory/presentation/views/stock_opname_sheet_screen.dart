@@ -365,7 +365,7 @@ class _StockOpnameSheetScreenState extends ConsumerState<StockOpnameSheetScreen>
                 _buildMetricCard(
                   title: 'Ada Selisih',
                   value: '$_itemsWithDiscrepancy bahan',
-                  color: _itemsWithDiscrepancy > 0 ? const Color(0xFFEA580C) : const Color(0xFF16A34A),
+                  color: _itemsWithDiscrepancy > 0 ? const Color(0xFF005ECC) : const Color(0xFF16A34A),
                   icon: Icons.difference_rounded,
                 ),
                 const SizedBox(width: 10),

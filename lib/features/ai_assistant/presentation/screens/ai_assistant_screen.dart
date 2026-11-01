@@ -123,7 +123,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Asisten AI Mangga POS',
+                  'Asisten AI Syupeo',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                 ),
                 Row(

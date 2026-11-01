@@ -455,7 +455,7 @@ class FullReport {
     }
 
     final grossProfit = totalRevenue - totalCogs;
-    final netProfit = grossProfit - totalExpenses;
+    final netProfit = grossProfit - totalExpenses + totalCashInExtra;
     final grossProfitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue * 100) : 0.0;
     final netProfitMargin = totalRevenue > 0 ? (netProfit / totalRevenue * 100) : 0.0;
 

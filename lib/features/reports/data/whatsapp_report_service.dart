@@ -31,9 +31,9 @@ class WhatsAppReportService {
 
     // ── Header ──────────────────────────────────────────────
     if (isShiftClosed) {
-      buffer.writeln('📊 *LAPORAN TUTUP TOKO (SHIFT) - MANGGA POS*');
+      buffer.writeln('📊 *LAPORAN TUTUP TOKO (SHIFT) - SYUPEO*');
     } else {
-      buffer.writeln('📊 *RINGKASAN PENJUALAN - MANGGA POS*');
+      buffer.writeln('📊 *RINGKASAN PENJUALAN - SYUPEO*');
     }
 
     buffer.writeln('🏪 *Toko:* $businessName${outletName != null ? ' ($outletName)' : ''}');
@@ -56,9 +56,14 @@ class WhatsAppReportService {
       buffer.writeln('• Diskon: -${_currencyFormat.format(report.totalDiscount)}');
     }
     buffer.writeln('• *PENJUALAN BERSIH: ${_currencyFormat.format(report.netRevenue)}*');
-    if (report.grossProfit > 0) {
-      buffer.writeln('• Estimasi Laba Kotor: ${_currencyFormat.format(report.grossProfit)}');
+    if (report.totalCogs > 0) {
+      buffer.writeln('• Modal Produk (HPP): ${_currencyFormat.format(report.totalCogs)}');
     }
+    buffer.writeln('• Estimasi Laba Kotor: ${_currencyFormat.format(report.grossProfit)} (${report.grossProfitMargin.toStringAsFixed(1)}%)');
+    if (report.totalExpenses > 0) {
+      buffer.writeln('• Beban Kas Keluar: -${_currencyFormat.format(report.totalExpenses)}');
+    }
+    buffer.writeln('• *ESTIMASI LABA BERSIH: ${_currencyFormat.format(report.netProfit)} (${report.netProfitMargin.toStringAsFixed(1)}%)*');
     buffer.writeln();
 
     // ── Rincian Metode Pembayaran ────────────────────────────

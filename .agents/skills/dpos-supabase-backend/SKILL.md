@@ -1,11 +1,11 @@
 ---
 name: dpos-supabase-backend
-description: Panduan dan spesifikasi arsitektur backend PostgreSQL Supabase untuk DPOS (Mangga POS). Digunakan saat membuat query, migrasi, menangani skema database, RLS (Row Level Security), fungsi RPC (is_admin, get_current_partner_id), transaksi, inventori, dan realtime sync.
+description: Panduan dan spesifikasi arsitektur backend PostgreSQL Supabase untuk Syupeo. Digunakan saat membuat query, migrasi, menangani skema database, RLS (Row Level Security), fungsi RPC (is_admin, get_current_partner_id), transaksi, inventori, dan realtime sync.
 ---
 
-# DPOS Supabase Backend & Database Architecture Guide
+# Syupeo Supabase Backend & Database Architecture Guide
 
-Dokumen skill ini adalah referensi otoritatif untuk backend Supabase PostgreSQL DPOS (Mangga POS), mencakup struktur tabel, relasi, Row Level Security (RLS), dan fungsi database tersimpan (Stored Procedures / RPC).
+Dokumen skill ini adalah referensi otoritatif untuk backend Supabase PostgreSQL Syupeo, mencakup struktur tabel, relasi, Row Level Security (RLS), dan fungsi database tersimpan (Stored Procedures / RPC).
 
 ---
 

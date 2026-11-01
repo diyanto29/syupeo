@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="100%" height="100%">
+  <!-- Left Icon: Blue Squircle with Sun Rays and Smile -->
+  <g transform="translate(10, 10)">
+    <!-- Sun Rays on Top-Left -->
+    <path d="M 12 18 L 2 12" stroke="#ffd000" stroke-width="4.5" stroke-linecap="round" />
+    <path d="M 22 8 L 18 -2" stroke="#ffd000" stroke-width="4.5" stroke-linecap="round" />
+    <path d="M 36 2 L 38 -8" stroke="#ffd000" stroke-width="4.5" stroke-linecap="round" />
+
+    <!-- Main Blue Squircle Badge -->
+    <rect x="18" y="5" width="90" height="90" rx="24" fill="#0070fc" />
+
+    <!-- Text Syupeo inside icon -->
+    <text x="63" y="58" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="20" text-anchor="middle" letter-spacing="-0.5">Syupeo</text>
+    
+    <!-- Golden Smile under icon text -->
+    <path d="M 44 68 Q 63 80 82 68" fill="none" stroke="#ffd000" stroke-width="3.5" stroke-linecap="round" />
+  </g>
+
+  <!-- Wordmark Text on Right -->
+  <g transform="translate(130, 20)">
+    <!-- Syupeo Brand Name -->
+    <text x="0" y="52" fill="#0070fc" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="44" letter-spacing="-1.5">Syupeo</text>
+    
+    <!-- Golden Smile under wordmark -->
+    <path d="M 18 64 Q 72 82 128 64" fill="none" stroke="#ffd000" stroke-width="5.5" stroke-linecap="round" />
+
+    <!-- Subtitle: Aplikasi Toko Retail Online -->
+    <line x1="165" y1="18" x2="165" y2="70" stroke="#ffd000" stroke-width="3" stroke-linecap="round" />
+    <text x="180" y="38" fill="#1a1a1a" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="16" letter-spacing="-0.3">Aplikasi Toko Retail</text>
+    <text x="180" y="60" fill="#0070fc" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="18" letter-spacing="-0.3">Online</text>
+  </g>
+</svg>
+

@@ -1,15 +1,16 @@
 import 'package:dpos/core/domain/app_enums.dart';
 import 'package:dpos/core/providers/analytics_outlet_filter_provider.dart';
 import 'package:dpos/core/providers/bootstrap_provider.dart';
+import 'package:dpos/core/services/local_database_service.dart';
 import 'package:dpos/core/supabase/supabase_service.dart';
 import 'package:dpos/features/transaction/domain/transaction_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:dpos/core/widgets/ad_banner_widget.dart';
 import 'package:dpos/core/widgets/announcement_banner_widget.dart';
 import 'package:dpos/core/utils/riverpod_cache_extension.dart';
+import 'package:dpos/features/dashboard/presentation/widgets/pending_store_activation_banner.dart';
 
 final _currency = NumberFormat.currency(
   locale: 'id_ID',
@@ -38,6 +39,7 @@ class SalesSummary {
   final double monthlyRevenue;
   final double totalCogs;
   final double totalExpenses;
+  final double totalCashIn;
   final double grossProfit;
   final double netProfit;
   final double profitMargin;
@@ -63,6 +65,7 @@ class SalesSummary {
     required this.monthlyRevenue,
     this.totalCogs = 0,
     this.totalExpenses = 0,
+    this.totalCashIn = 0,
     this.grossProfit = 0,
     this.netProfit = 0,
     this.profitMargin = 0,
@@ -89,6 +92,7 @@ class SalesSummary {
     monthlyRevenue: 0,
     totalCogs: 0,
     totalExpenses: 0,
+    totalCashIn: 0,
     grossProfit: 0,
     netProfit: 0,
     profitMargin: 0,
@@ -113,13 +117,17 @@ class SalesSummary {
     bool isService = false,
     DashboardPeriod period = DashboardPeriod.daily,
     double totalExpenses = 0,
+    double totalCashIn = 0,
     double monthlyExpenses = 0,
     Map<String, String>? outletNamesById,
   }) {
     if (orders.isEmpty) {
+      final netProfit = totalCashIn - totalExpenses;
       return SalesSummary.empty().copyWith(
         totalExpenses: totalExpenses,
-        netProfit: -totalExpenses,
+        totalCashIn: totalCashIn,
+        netProfit: netProfit,
+        monthlyNetProfit: netProfit,
       );
     }
 
@@ -157,9 +165,9 @@ class SalesSummary {
       }
 
       final isOrderToday =
-          orderDate.isAfter(todayStart) && orderDate.isBefore(todayEnd);
+          !orderDate.isBefore(todayStart) && orderDate.isBefore(todayEnd);
       final isOrderThisMonth =
-          orderDate.isAfter(monthStart) && orderDate.isBefore(monthEnd);
+          !orderDate.isBefore(monthStart) && orderDate.isBefore(monthEnd);
 
       if (period == DashboardPeriod.daily) {
         if (isService && !isOrderToday) {
@@ -283,17 +291,16 @@ class SalesSummary {
         return o.status == TransactionStatus.paid && isOrderThisMonth;
       } else {
         final isOrderToday =
-            orderDate.isAfter(todayStart) && orderDate.isBefore(todayEnd);
+            !orderDate.isBefore(todayStart) && orderDate.isBefore(todayEnd);
         return o.status == TransactionStatus.paid && (!isService || isOrderToday);
       }
     }).length;
 
     final grossProfit = totalRevenue - totalCogs;
-    final netProfit = grossProfit - totalExpenses;
+    final netProfit = grossProfit - totalExpenses + totalCashIn;
     final profitMargin =
         totalRevenue > 0 ? (netProfit / totalRevenue * 100) : 0.0;
-    final monthlyNetProfit =
-        isService ? (monthlyRevenue - monthlyExpenses) : netProfit;
+    final monthlyNetProfit = netProfit;
 
     // Build outlet contributions
     final outletContributions = <OutletSalesContribution>[];
@@ -331,6 +338,7 @@ class SalesSummary {
       monthlyRevenue: monthlyRevenue,
       totalCogs: totalCogs,
       totalExpenses: totalExpenses,
+      totalCashIn: totalCashIn,
       grossProfit: grossProfit,
       netProfit: netProfit,
       profitMargin: profitMargin,
@@ -359,6 +367,7 @@ class SalesSummary {
     double? monthlyRevenue,
     double? totalCogs,
     double? totalExpenses,
+    double? totalCashIn,
     double? grossProfit,
     double? netProfit,
     double? profitMargin,
@@ -384,6 +393,7 @@ class SalesSummary {
       monthlyRevenue: monthlyRevenue ?? this.monthlyRevenue,
       totalCogs: totalCogs ?? this.totalCogs,
       totalExpenses: totalExpenses ?? this.totalExpenses,
+      totalCashIn: totalCashIn ?? this.totalCashIn,
       grossProfit: grossProfit ?? this.grossProfit,
       netProfit: netProfit ?? this.netProfit,
       profitMargin: profitMargin ?? this.profitMargin,
@@ -497,7 +507,7 @@ final salesSummaryProvider = FutureProvider.autoDispose<SalesSummary>((
 
   var ordersQuery = SupabaseService.client
       .from('orders')
-      .select('*, order_items(*, menu_items(recipe_cost)), order_discounts(*), order_payments(*)');
+      .select('*, order_items(*, menu_items(recipe_cost)), order_payments(*)');
 
   if (targetOutletId != null) {
     ordersQuery = ordersQuery.eq('outlet_id', targetOutletId);
@@ -505,29 +515,66 @@ final salesSummaryProvider = FutureProvider.autoDispose<SalesSummary>((
     ordersQuery = ordersQuery.inFilter('outlet_id', outletIds);
   }
 
-  final response = await SupabaseService.withAutoRefresh(
-    () => ordersQuery
-        .gte('created_at', startQuery.toUtc().toIso8601String())
-        .lt('created_at', endQuery.toUtc().toIso8601String())
-        .order('created_at', ascending: false)
-        .withNetworkTimeout(operationName: 'memuat ringkasan penjualan'),
-  );
+  List<TransactionOrder> orders = [];
+  try {
+    final response = await SupabaseService.withAutoRefresh(
+      () => ordersQuery
+          .gte('created_at', startQuery.toUtc().toIso8601String())
+          .lt('created_at', endQuery.toUtc().toIso8601String())
+          .order('created_at', ascending: false)
+          .withNetworkTimeout(operationName: 'memuat ringkasan penjualan'),
+    );
 
-  final orders = (response as List<dynamic>)
-      .map((json) => TransactionOrder.fromJson(json as Map<String, dynamic>))
-      .toList();
+    orders = (response as List<dynamic>)
+        .map((json) => TransactionOrder.fromJson(json as Map<String, dynamic>))
+        .toList();
+  } catch (e) {
+    debugPrint('[SalesDashboard] Gagal memuat order online ($e), menggunakan data lokal SQLite.');
+  }
+
+  // Gabungkan transaksi offline / pending sync dari SQLite lokal agar angka dashboard tidak 0
+  try {
+    final pendingOrders = await LocalDatabaseService.instance.getPendingOrders();
+    for (final item in pendingOrders) {
+      final rawOrder = item['order'] as Map<String, dynamic>;
+      final orderId = rawOrder['id'] as String?;
+      if (orderId == null) continue;
+
+      if (!orders.any((o) => o.id == orderId)) {
+        final fullJson = Map<String, dynamic>.from(rawOrder);
+        fullJson['order_items'] = item['items'];
+        fullJson['order_discounts'] = item['discounts'];
+        fullJson['order_payments'] = item['payments'];
+        try {
+          final localOrder = TransactionOrder.fromJson(fullJson);
+          final orderDate = localOrder.createdAt ?? DateTime.now();
+          if (!orderDate.isBefore(startQuery) && orderDate.isBefore(endQuery)) {
+            if (targetOutletId == null || localOrder.outletId == targetOutletId) {
+              orders.add(localOrder);
+            }
+          }
+        } catch (_) {}
+      }
+    }
+  } catch (_) {}
+
+  final DateTime cashStart;
+  final DateTime cashEnd;
+
+  if (period == DashboardPeriod.monthly) {
+    cashStart = startOfMonth;
+    cashEnd = endOfMonth;
+  } else {
+    cashStart = startOfDay;
+    cashEnd = endOfDay;
+  }
 
   double totalExpenses = 0;
-  double monthlyExpenses = 0;
+  double totalCashIn = 0;
   try {
-    final cashStart = (period == DashboardPeriod.monthly || isService)
-        ? startOfMonth
-        : startOfDay;
-    final cashEnd = period == DashboardPeriod.monthly ? endOfMonth : endOfDay;
-    
     var cashQuery = SupabaseService.client
         .from('cash_flow_entries')
-        .select('type, amount, created_at');
+        .select('type, amount');
 
     if (targetOutletId != null) {
       cashQuery = cashQuery.eq('outlet_id', targetOutletId);
@@ -541,19 +588,12 @@ final salesSummaryProvider = FutureProvider.autoDispose<SalesSummary>((
         .withNetworkTimeout(duration: const Duration(seconds: 10));
 
     for (final row in (cashRes as List<dynamic>)) {
-      if (row['type'] == 'out') {
-        final amount = (row['amount'] as num?)?.toDouble() ?? 0;
-        final entryDate = DateTime.tryParse(row['created_at'] as String? ?? '');
-        monthlyExpenses += amount;
-        if (period == DashboardPeriod.monthly) {
-          totalExpenses += amount;
-        } else {
-          if (entryDate != null && entryDate.isAfter(startOfDay)) {
-            totalExpenses += amount;
-          } else if (!isService) {
-            totalExpenses += amount;
-          }
-        }
+      final type = row['type'] as String?;
+      final amount = (row['amount'] as num?)?.toDouble() ?? 0;
+      if (type == 'out') {
+        totalExpenses += amount;
+      } else if (type == 'in') {
+        totalCashIn += amount;
       }
     }
   } catch (_) {}
@@ -565,7 +605,7 @@ final salesSummaryProvider = FutureProvider.autoDispose<SalesSummary>((
     isService: isService,
     period: period,
     totalExpenses: totalExpenses,
-    monthlyExpenses: monthlyExpenses,
+    totalCashIn: totalCashIn,
     outletNamesById: targetOutletId == null ? outletNamesById : null,
   );
 });
@@ -691,7 +731,7 @@ class SalesDashboardView extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
 
-    final isMonthly = period == DashboardPeriod.monthly || isServiceBusiness;
+    final isMonthly = period == DashboardPeriod.monthly;
     final dateLabel = isMonthly
         ? DateFormat('MMMM yyyy', 'id_ID').format(DateTime.now())
         : DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(DateTime.now());
@@ -724,7 +764,10 @@ class SalesDashboardView extends ConsumerWidget {
             Expanded(
               child: Text(
                 dateLabel,
-                style: theme.textTheme.bodySmall?.copyWith(color: scheme.outline),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.outline,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const AnalyticsOutletFilterSelector(compact: true),
@@ -737,6 +780,7 @@ class SalesDashboardView extends ConsumerWidget {
           isDark: false,
         ),
         const SizedBox(height: 14),
+        const PendingStoreActivationBanner(),
         const AnnouncementBannerWidget(),
         _RevenueHeroCard(
           summary: summary,
@@ -748,17 +792,13 @@ class SalesDashboardView extends ConsumerWidget {
           _OutletContributionCard(contributions: summary.outletContributions),
         ],
         const SizedBox(height: 12),
-        const AdBannerWidget(),
-        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: _KpiCard(
                 icon: Icons.account_balance_wallet_rounded,
                 label: 'Laba Bersih',
-                value: _formatCompact((period == DashboardPeriod.monthly || !isServiceBusiness)
-                    ? summary.netProfit
-                    : summary.monthlyNetProfit),
+                value: _formatCompact(summary.netProfit),
                 color: const Color(0xFF00C853),
               ),
             ),
@@ -914,6 +954,7 @@ class SalesDashboardView extends ConsumerWidget {
                 ],
               ),
             ),
+            const PendingStoreActivationBanner(),
             _TabletRevenueHeroCard(
               summary: summary,
               onRefresh: onRefresh,
@@ -935,11 +976,7 @@ class SalesDashboardView extends ConsumerWidget {
                     iconColor: const Color(0xFF00C853),
                     iconBackground: const Color(0xFFE8F5E9),
                     label: 'LABA BERSIH',
-                    value: _formatCompactWithoutSymbol(
-                      (period == DashboardPeriod.monthly || !isServiceBusiness)
-                          ? summary.netProfit
-                          : summary.monthlyNetProfit,
-                    ),
+                    value: _formatCompactWithoutSymbol(summary.netProfit),
                   ),
                 ),
                 SizedBox(width: gap),
@@ -1268,13 +1305,9 @@ class _RevenueHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isMonthly = period == DashboardPeriod.monthly || isServiceBusiness;
-    final revenue = (period == DashboardPeriod.monthly || !isServiceBusiness)
-        ? summary.totalRevenue
-        : summary.monthlyRevenue;
-    final netProfit = (period == DashboardPeriod.monthly || !isServiceBusiness)
-        ? summary.netProfit
-        : summary.monthlyNetProfit;
+    final isMonthly = period == DashboardPeriod.monthly;
+    final revenue = summary.totalRevenue;
+    final netProfit = summary.netProfit;
 
     return Container(
       width: double.infinity,
@@ -1465,19 +1498,15 @@ class _TabletRevenueHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isMonthly = period == DashboardPeriod.monthly || isServiceBusiness;
+    final isMonthly = period == DashboardPeriod.monthly;
     final dateLabel = isMonthly
         ? DateFormat('MMMM yyyy', 'id_ID').format(DateTime.now())
         : DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now());
     final discountLabel = summary.totalDiscount > 0
         ? 'DISKON: ${_formatCompactWithSymbol(summary.totalDiscount)}'
         : 'TANPA DISKON';
-    final revenue = (period == DashboardPeriod.monthly || !isServiceBusiness)
-        ? summary.totalRevenue
-        : summary.monthlyRevenue;
-    final netProfit = (period == DashboardPeriod.monthly || !isServiceBusiness)
-        ? summary.netProfit
-        : summary.monthlyNetProfit;
+    final revenue = summary.totalRevenue;
+    final netProfit = summary.netProfit;
 
     return Container(
       width: double.infinity,

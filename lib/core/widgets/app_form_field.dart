@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dpos/core/utils/rupiah_input_helper.dart';
 
-/// Standardized Form Field Wrapper based on Mangga POS Modern Design System.
+/// Standardized Form Field Wrapper based on Syupeo Modern Design System.
 /// Provides a consistent label row (label + optional topTrailing badge/counter),
 /// the input field, and bottom helper text.
 class AppFormField extends StatelessWidget {

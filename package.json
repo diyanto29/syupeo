@@ -1,0 +1,12 @@
+{
+  "name": "syupeo-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix admin_web",
+    "build": "npm run build --prefix admin_web",
+    "start": "npm run start --prefix admin_web",
+    "lint": "npm run lint --prefix admin_web"
+  }
+}
+

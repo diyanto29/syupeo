@@ -55,7 +55,7 @@ class TerbilangRupiah {
   }
 }
 
-/// Service Text-to-Speech khusus Virtual Soundbox DPOS
+/// Service Text-to-Speech khusus Virtual Soundbox Syupeo
 class SoundboxTtsService {
   FlutterTts? _flutterTts;
   bool _isInitialized = false;

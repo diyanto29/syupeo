@@ -30,6 +30,11 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const searchParams = request.nextUrl.searchParams;
 
+  // Jika request mengarah ke API route (/api/*), jangan redirect OAuth
+  if (pathname.startsWith('/api/')) {
+    return supabaseResponse;
+  }
+
   // Jika ada query parameter ?code= (dari OAuth redirect yang mendarat di /),
   // forward langsung ke /auth/callback agar ditukar menjadi session
   if (searchParams.has('code') && pathname !== '/auth/callback') {

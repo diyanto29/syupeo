@@ -1350,7 +1350,7 @@ class _SharedQrCartSummary extends StatelessWidget {
                     'Lihat',
                     style: GoogleFonts.manrope(
                       fontWeight: FontWeight.w900,
-                      color: const Color(0xFFEA580C),
+                      color: const Color(0xFF005ECC),
                     ),
                   ),
                 ),

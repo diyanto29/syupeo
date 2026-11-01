@@ -74,7 +74,7 @@ class _PaymentNotificationSettingsScreenState
       appBar: isTablet
           ? const AppTabletHeader(
               title: Text('Deteksi Pembayaran & Virtual Soundbox'),
-              badge: AppTabletBadge(label: 'Mangga POS'),
+              badge: AppTabletBadge(label: 'Syupeo'),
             )
           : AppBar(
               title: Text(
@@ -290,7 +290,7 @@ class _PaymentNotificationSettingsScreenState
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: const Text(
-                      'Menampilkan ikon status bar agar sistem Android tidak membekukan atau mematikan layanan Mangga POS saat HP di-minimize atau layar mati.',
+                      'Menampilkan ikon status bar agar sistem Android tidak membekukan atau mematikan layanan Syupeo saat HP di-minimize atau layar mati.',
                       style: TextStyle(fontSize: 12),
                     ),
                     value: settings.isForegroundServiceEnabled,
@@ -323,7 +323,7 @@ class _PaymentNotificationSettingsScreenState
                                 fontSize: 11.5,
                                 color: _isIgnoringBattery
                                     ? const Color(0xFF047857)
-                                    : const Color(0xFFEA580C),
+                                    : const Color(0xFF005ECC),
                               ),
                             ),
                           ],

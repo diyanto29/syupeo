@@ -148,7 +148,7 @@ export default function MerchantTransactionsPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Riwayat Transaksi');
 
-    const fileName = `Transaksi_${business?.name || 'DPOS'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const fileName = `Transaksi_${business?.name || 'Syupeo'}_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 

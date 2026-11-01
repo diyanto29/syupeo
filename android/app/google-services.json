@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "692859079311",
-    "project_id": "mangga-pos",
-    "storage_bucket": "mangga-pos.firebasestorage.app"
+    "project_number": "563963021353",
+    "project_id": "syupeo-8a109",
+    "storage_bucket": "syupeo-8a109.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:692859079311:android:70742d4c71fc79b1a33efa",
+        "mobilesdk_app_id": "1:563963021353:android:b18eeb0bcef2c36c773438",
         "android_client_info": {
-          "package_name": "online.mudahkan.manggapos"
+          "package_name": "online.mudahkan.syupeo"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDrBdhQFm1YK56i9igfRn5WfwOKsWMC6Bg"
+          "current_key": "AIzaSyBV6IA3tGp2_taYY0Vi07SzPdQjdUmvyEA"
         }
       ],
       "services": {

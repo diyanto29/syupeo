@@ -1,15 +1,14 @@
+import 'package:dpos/core/providers/bootstrap_provider.dart';
+import 'package:dpos/core/routes/routes_path.dart';
+import 'package:dpos/core/widgets/bluetooth_prompt_sheet.dart';
+import 'package:dpos/features/dashboard/presentation/navigation/owner_dashboard_navigation.dart';
+import 'package:dpos/features/settings/data/printer_settings_repository.dart';
 import 'package:dpos/features/transaction/data/invoice_pdf_service.dart';
 import 'package:dpos/features/transaction/data/receipt_service.dart';
 import 'package:dpos/features/transaction/data/transaction_repository.dart';
 import 'package:dpos/features/transaction/domain/transaction_models.dart';
-import 'package:dpos/features/transaction/presentation/widgets/void_order_dialog.dart';
 import 'package:dpos/features/transaction/presentation/widgets/sales_return_sheet.dart';
-import 'package:dpos/features/settings/data/printer_settings_repository.dart';
-import 'package:dpos/core/providers/bootstrap_provider.dart';
-import 'package:dpos/core/providers/feature_gate_provider.dart';
-import 'package:dpos/features/dashboard/presentation/navigation/owner_dashboard_navigation.dart';
-import 'package:dpos/core/widgets/bluetooth_prompt_sheet.dart';
-import 'package:dpos/core/routes/routes_path.dart';
+import 'package:dpos/features/transaction/presentation/widgets/void_order_dialog.dart';
 import 'package:dpos/features/transaction/state/cart_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,7 +25,6 @@ final _currency = NumberFormat.currency(
 final _dateFormat = DateFormat('dd MMMM yyyy, HH:mm', 'id_ID');
 
 /// Full-page transaction detail with reprint capability.
-/// Full-page transaction detail with reprint capability.
 class TransactionDetailScreen extends StatelessWidget {
   const TransactionDetailScreen({super.key, required this.order});
   final TransactionOrder order;
@@ -34,7 +32,7 @@ class TransactionDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+      backgroundColor: const Color(0xFFF8FAFC), // Canvas background slate-50
       body: SafeArea(
         child: TransactionDetailView(
           order: order,
@@ -63,17 +61,11 @@ class TransactionDetailView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-    final featureGate = ref.watch(featureGateProvider);
-    final hasKitchenFeature = featureGate.isEnabled('kitchen_kds') ||
-        featureGate.isEnabled('kds');
-
     return Material(
-      color: scheme.surfaceContainerLowest,
+      color: const Color(0xFFF8FAFC),
       child: Column(
         children: [
-          // Top Header Bar
+          // ── Top Header Bar ──────────────────────────────────────────
           Container(
             padding: EdgeInsets.fromLTRB(
               isSidePanel ? 20 : 8,
@@ -81,11 +73,11 @@ class TransactionDetailView extends ConsumerWidget {
               12,
               isSidePanel ? 14 : 8,
             ),
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerLowest,
+            decoration: const BoxDecoration(
+              color: Colors.white,
               border: Border(
                 bottom: BorderSide(
-                  color: scheme.outlineVariant.withValues(alpha: 0.35),
+                  color: Color(0xFFE2E8F0),
                 ),
               ),
             ),
@@ -93,19 +85,22 @@ class TransactionDetailView extends ConsumerWidget {
               children: [
                 if (!isSidePanel)
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_rounded),
+                    icon: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Color(0xFF0F172A),
+                    ),
                     onPressed: onClose ?? () => context.pop(),
                   )
                 else
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: scheme.primary.withValues(alpha: 0.1),
+                      color: const Color(0xFF0070FC).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.receipt_long_rounded,
-                      color: scheme.primary,
+                      color: Color(0xFF0070FC),
                       size: 20,
                     ),
                   ),
@@ -117,32 +112,32 @@ class TransactionDetailView extends ConsumerWidget {
                     children: [
                       Text(
                         'Detail Transaksi',
-                        style: (isSidePanel
-                                ? theme.textTheme.titleMedium
-                                : theme.textTheme.titleLarge)
-                            ?.copyWith(
-                          fontWeight: FontWeight.w900,
+                        style: GoogleFonts.inter(
+                          fontSize: isSidePanel ? 16 : 18,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F172A),
                         ),
                       ),
-                      if (isSidePanel)
-                        Text(
-                          order.invoiceNumber,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: scheme.outline,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      Text(
+                        order.invoiceNumber,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF64748B),
                         ),
+                      ),
                     ],
                   ),
                 ),
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert_rounded),
+                  icon: const Icon(
+                    Icons.more_vert_rounded,
+                    color: Color(0xFF475569),
+                  ),
                   tooltip: 'Menu Opsi',
                   onSelected: (value) {
                     if (value == 'print') {
                       _printReceipt(context, ref);
-                    } else if (value == 'kitchen') {
-                      _printKitchenReceipt(context, ref);
                     } else if (value == 'invoice') {
                       _shareInvoice(context, ref);
                     } else if (value == 'return') {
@@ -162,27 +157,6 @@ class TransactionDetailView extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    if (hasKitchenFeature)
-                      const PopupMenuItem(
-                        value: 'kitchen',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.soup_kitchen_rounded,
-                              size: 18,
-                              color: Color(0xFFEA580C),
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Cetak Tiket Dapur',
-                              style: TextStyle(
-                                color: Color(0xFFEA580C),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     const PopupMenuItem(
                       value: 'invoice',
                       child: Row(
@@ -199,13 +173,16 @@ class TransactionDetailView extends ConsumerWidget {
                         value: 'return',
                         child: Row(
                           children: [
-                            Icon(Icons.assignment_return_rounded,
-                                color: Color(0xFFEA580C), size: 18),
+                            Icon(
+                              Icons.assignment_return_rounded,
+                              color: Color(0xFF0070FC),
+                              size: 18,
+                            ),
                             SizedBox(width: 8),
                             Text(
                               'Retur / Tukar Barang',
                               style: TextStyle(
-                                color: Color(0xFFEA580C),
+                                color: Color(0xFF0070FC),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -218,12 +195,15 @@ class TransactionDetailView extends ConsumerWidget {
                         value: 'cancel',
                         child: Row(
                           children: [
-                            Icon(Icons.cancel_outlined,
-                                color: Colors.red, size: 18),
+                            Icon(
+                              Icons.cancel_outlined,
+                              color: Color(0xFFEF4444),
+                              size: 18,
+                            ),
                             SizedBox(width: 8),
                             Text(
                               'Refund / Batalkan Semua',
-                              style: TextStyle(color: Colors.red),
+                              style: TextStyle(color: Color(0xFFEF4444)),
                             ),
                           ],
                         ),
@@ -233,7 +213,11 @@ class TransactionDetailView extends ConsumerWidget {
                 if (isSidePanel && onClose != null) ...[
                   const SizedBox(width: 4),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 20),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: Color(0xFF64748B),
+                    ),
                     tooltip: 'Tutup Detail',
                     onPressed: onClose,
                   ),
@@ -241,372 +225,191 @@ class TransactionDetailView extends ConsumerWidget {
               ],
             ),
           ),
+
+          // ── Scrollable Content ──────────────────────────────────────
           Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Status + Invoice Header ───────────────
-                    _StatusHeader(order: order),
-                    const SizedBox(height: 20),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. Status & Hero Total Header
+                  _StatusHeader(order: order),
+                  const SizedBox(height: 14),
 
-                    // ── Info Card ─────────────────────────────
-                    _InfoCard(order: order),
-                    const SizedBox(height: 16),
+                  // 2. Info Grid Card
+                  _InfoCard(order: order),
+                  const SizedBox(height: 14),
 
-                    // ── Items ─────────────────────────────────
-                    Text(
-                      'Detail Pesanan',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  // 3. Order Items Card
+                  _ItemsCard(order: order),
+                  const SizedBox(height: 14),
+
+                  // 4. Summary & Payments Card
+                  _SummaryCard(order: order),
+
+                  // 5. Debt Notice (if applicable)
+                  if (order.payments.any((p) => p.methodType == 'debt')) ...[
+                    const SizedBox(height: 14),
+                    _DebtNoticeCard(
+                      isSidePanel: isSidePanel,
+                      onClose: onClose,
                     ),
-                    const SizedBox(height: 10),
-                    ...order.items.map((item) => _ItemRow(item: item)),
-
-                    // ── Discounts ─────────────────────────────
-                    if (order.discounts.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Diskon Order',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ...order.discounts.map(
-                        (disc) => _DiscountRow(discount: disc),
-                      ),
-                    ],
-
-                    const SizedBox(height: 16),
-
-                    // ── Summary ───────────────────────────────
-                    _SummarySection(order: order),
-
-                    // ── Payments ──────────────────────────────
-                    if (order.payments.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'Pembayaran',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ...order.payments.map((pay) => _PaymentRow(payment: pay)),
-                      if (order.changeAmount > 0)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Kembalian',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: Colors.green.shade700,
-                                ),
-                              ),
-                              Text(
-                                _currency.format(order.changeAmount),
-                                style: GoogleFonts.manrope(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.green.shade700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (order.payments.any((p) => p.methodType == 'debt')) ...[
-                        const SizedBox(height: 14),
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFFBEB),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFFDE68A)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFD97706),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Icon(
-                                      Icons.menu_book_rounded,
-                                      size: 16,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Transaksi Kasbon / Tempo',
-                                    style: GoogleFonts.manrope(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF92400E),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Pesanan ini dicatat sebagai piutang pelanggan di Buku Kasbon. Jika pelanggan sudah melunasi, silakan catat pelunasan melalui menu Buku Kasbon.',
-                                style: GoogleFonts.manrope(
-                                  fontSize: 12,
-                                  color: const Color(0xFFB45309),
-                                  height: 1.3,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              InkWell(
-                                onTap: () {
-                                  if (isSidePanel) {
-                                    onClose?.call();
-                                    OwnerDashboardNavigation.selectMenu(
-                                      ref,
-                                      OwnerMenu.customerDebt,
-                                      bootstrap: ref.read(homeBootstrapProvider).value,
-                                    );
-                                  } else {
-                                    if (context.canPop()) {
-                                      context.pop();
-                                    }
-                                    OwnerDashboardNavigation.selectMenu(
-                                      ref,
-                                      OwnerMenu.customerDebt,
-                                      bootstrap: ref.read(homeBootstrapProvider).value,
-                                    );
-                                  }
-                                },
-                                borderRadius: BorderRadius.circular(10),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: const Color(0xFFFDE68A)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF92400E)),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Buka Buku Kasbon',
-                                        style: GoogleFonts.manrope(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: const Color(0xFF92400E),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-
-                    // ── Status History (Audit Trail) ──────────
-                    _StatusHistorySection(orderId: order.id),
-
-                    const SizedBox(height: 24),
                   ],
-                ),
-              ),
-            ),
 
-            // ── Bottom Action Buttons ────────────────────
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerLowest,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF002147).withValues(alpha: 0.06),
-                    blurRadius: 16,
-                    offset: const Offset(0, -4),
-                  ),
+                  // 6. Audit Trail History
+                  _StatusHistorySection(orderId: order.id),
+
+                  const SizedBox(height: 24),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (order.status == TransactionStatus.confirmed ||
-                      order.status == TransactionStatus.draft) ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _openInPos(context, ref),
-                            icon: const Icon(Icons.point_of_sale_rounded, size: 18),
-                            label: const Text('Buka di Kasir'),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(0, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
+            ),
+          ),
+
+          // ── Bottom Action Buttons ───────────────────────────────────
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF002147).withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+              border: const Border(
+                top: BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (order.status == TransactionStatus.confirmed ||
+                    order.status == TransactionStatus.draft) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _openInPos(context, ref),
+                          icon: const Icon(
+                            Icons.point_of_sale_rounded,
+                            size: 18,
+                          ),
+                          label: const Text('Buka di Kasir'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 50),
+                            foregroundColor: const Color(0xFF334155),
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          flex: 2,
-                          child: FilledButton.icon(
-                            onPressed: () => _payNow(context, ref),
-                            icon: const Icon(Icons.payments_rounded, size: 20),
-                            label: Text(
-                              'Bayar (${_currency.format(order.grandTotal)})',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: FilledButton.icon(
+                          onPressed: () => _payNow(context, ref),
+                          icon: const Icon(Icons.payments_rounded, size: 20),
+                          label: Text(
+                            'Bayar (${_currency.format(order.grandTotal)})',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w700,
                             ),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF059669),
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size(0, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 2,
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF10B981),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  // Paid / completed orders
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: () => _printReceipt(context, ref),
+                          icon: const Icon(Icons.print_rounded, size: 20),
+                          label: Text(
+                            'Cetak Struk',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF0070FC),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _shareInvoice(context, ref),
+                          icon: const Icon(Icons.share_rounded, size: 19),
+                          label: Text(
+                            'Kirim Invoice',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 50),
+                            foregroundColor: const Color(0xFF334155),
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                  ],
+                      ),
+                    ],
+                  ),
                   if (order.status == TransactionStatus.paid ||
                       order.status == TransactionStatus.partialPaid) ...[
-                    OutlinedButton.icon(
+                    const SizedBox(height: 6),
+                    TextButton.icon(
                       onPressed: () => _showSalesReturnDialog(context, ref),
-                      icon: const Icon(Icons.assignment_return_rounded,
-                          size: 18, color: Color(0xFFEA580C)),
-                      label: const Text(
+                      icon: const Icon(
+                        Icons.assignment_return_rounded,
+                        size: 16,
+                        color: Color(0xFF64748B),
+                      ),
+                      label: Text(
                         'Retur / Tukar Barang',
-                        style: TextStyle(
-                          color: Color(0xFFEA580C),
-                          fontWeight: FontWeight.bold,
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF64748B),
                         ),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 44),
-                        side: const BorderSide(
-                            color: Color(0xFFFFEDD5), width: 1.5),
-                        backgroundColor: const Color(0xFFFFF7ED),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 36),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  if (hasKitchenFeature) ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _printReceipt(context, ref),
-                            icon: const Icon(Icons.print_rounded, size: 18),
-                            label: const Text('Cetak Struk'),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(0, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _printKitchenReceipt(context, ref),
-                            icon: const Icon(
-                              Icons.soup_kitchen_rounded,
-                              size: 18,
-                              color: Color(0xFFEA580C),
-                            ),
-                            label: const Text(
-                              'Tiket Dapur',
-                              style: TextStyle(
-                                color: Color(0xFFEA580C),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(0, 48),
-                              side: const BorderSide(
-                                color: Color(0xFFFED7AA),
-                                width: 1.5,
-                              ),
-                              backgroundColor: const Color(0xFFFFF7ED),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      onPressed: () => _shareInvoice(context, ref),
-                      icon: const Icon(Icons.share_rounded, size: 20),
-                      label: const Text('Kirim / Bagikan Invoice'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-                  ] else ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _printReceipt(context, ref),
-                            icon: const Icon(Icons.print_rounded, size: 20),
-                            label: const Text('Cetak Struk'),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(0, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _shareInvoice(context, ref),
-                            icon: const Icon(Icons.share_rounded, size: 20),
-                            label: const Text('Kirim Invoice'),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(0, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ],
-              ),
+              ],
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
   }
 
   void _openInPos(BuildContext context, WidgetRef ref) {
@@ -633,7 +436,9 @@ class TransactionDetailView extends ConsumerWidget {
     await context.push(RoutesPath.transactionPayment);
     if (!context.mounted) return;
     onOrderUpdated?.call();
-    if (!isSidePanel && ref.read(cartProvider).orderId == null && context.canPop()) {
+    if (!isSidePanel &&
+        ref.read(cartProvider).orderId == null &&
+        context.canPop()) {
       context.pop();
     }
   }
@@ -647,7 +452,7 @@ class TransactionDetailView extends ConsumerWidget {
           if (onOrderUpdated != null) {
             onOrderUpdated!();
           } else {
-            context.pop(); // Close detail screen so history refreshes
+            context.pop();
           }
         }
       },
@@ -669,7 +474,7 @@ class TransactionDetailView extends ConsumerWidget {
           if (onOrderUpdated != null) {
             onOrderUpdated!();
           } else {
-            context.pop(); // Close detail screen
+            context.pop();
           }
         }
       },
@@ -722,57 +527,9 @@ class TransactionDetailView extends ConsumerWidget {
     );
   }
 
-  Future<void> _printKitchenReceipt(BuildContext context, WidgetRef ref) async {
-    final printerService = ref.read(thermalPrinterServiceProvider);
-    final isBtEnabled = await printerService.bluetoothEnabled;
-    if (!isBtEnabled && context.mounted) {
-      final action = await BluetoothPromptSheet.show(
-        context,
-        type: BluetoothPromptType.enableBluetooth,
-      );
-      if (action == BluetoothPromptAction.primaryAction) {
-        await printerService.requestEnableBluetooth();
-        await Future.delayed(const Duration(seconds: 1));
-      } else if (action == BluetoothPromptAction.openSettings) {
-        await printerService.openBluetoothSettings();
-        return;
-      } else {
-        return;
-      }
-    }
-
-    if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      SnackBar(
-        content: const Text('Mencetak tiket dapur...'),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-
-    final success =
-        await ref.read(receiptServiceProvider).printKitchenReceipt(order);
-    if (!context.mounted) return;
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? '✓ Tiket dapur berhasil dicetak'
-              : '✗ Gagal mencetak tiket dapur. Periksa printer.',
-        ),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
   Future<void> _shareInvoice(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
 
-    // Show loading snackbar
     messenger.showSnackBar(
       SnackBar(
         content: const Row(
@@ -808,7 +565,7 @@ class TransactionDetailView extends ConsumerWidget {
       messenger.showSnackBar(
         SnackBar(
           content: Text('✗ Gagal membagikan invoice: $e'),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: const Color(0xFFDC2626),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -816,7 +573,7 @@ class TransactionDetailView extends ConsumerWidget {
   }
 }
 
-// ── Sub-Widgets ──────────────────────────────────────────────────
+// ── Sub-Widgets (Styled After Admin Web & Syupeo Design System) ──────
 
 class _StatusHeader extends StatelessWidget {
   const _StatusHeader({required this.order});
@@ -824,74 +581,189 @@ class _StatusHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-    final statusColor = _statusColor(order.status);
+    final (badgeBg, badgeText, badgeBorder, badgeLabel, badgeIcon) =
+        _getStatusBadgeStyle(order.status);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            statusColor.withValues(alpha: 0.1),
-            statusColor.withValues(alpha: 0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: statusColor.withValues(alpha: 0.2)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              order.status == TransactionStatus.confirmed
-                  ? 'Menunggu Pembayaran (Belum Lunas)'
-                  : order.status.label,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: statusColor,
-                fontWeight: FontWeight.w800,
+          // Top Row: Badge Status + Invoice Tag
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: badgeBorder),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(badgeIcon, size: 13, color: badgeText),
+                    const SizedBox(width: 5),
+                    Text(
+                      badgeLabel,
+                      style: GoogleFonts.inter(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: badgeText,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Text(
+                  order.invoiceNumber,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+
+          // Total Tagihan
           Text(
-            order.invoiceNumber,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: scheme.outline,
-              fontWeight: FontWeight.w600,
+            'TOTAL TRANSAKSI',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF94A3B8),
+              letterSpacing: 0.6,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             _currency.format(order.grandTotal),
-            style: GoogleFonts.manrope(
-              fontSize: 32,
+            style: GoogleFonts.inter(
+              fontSize: 30,
               fontWeight: FontWeight.w900,
-              color: scheme.onSurface,
+              color: const Color(0xFF0F172A),
+              letterSpacing: -0.5,
             ),
+          ),
+          const SizedBox(height: 14),
+
+          // Divider
+          const Divider(color: Color(0xFFF1F5F9), height: 1),
+          const SizedBox(height: 12),
+
+          // Footer meta info
+          Row(
+            children: [
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 13,
+                color: Color(0xFF94A3B8),
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  order.createdAt != null
+                      ? _dateFormat.format(order.createdAt!)
+                      : '-',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.person_outline_rounded,
+                size: 14,
+                color: Color(0xFF94A3B8),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                order.cashierName?.isNotEmpty == true
+                    ? order.cashierName!
+                    : 'Kasir',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF475569),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Color _statusColor(TransactionStatus status) {
+  (Color, Color, Color, String, IconData) _getStatusBadgeStyle(
+      TransactionStatus status) {
     return switch (status) {
-      TransactionStatus.paid => Colors.green.shade700,
-      TransactionStatus.draft => Colors.amber.shade700,
-      TransactionStatus.confirmed => Colors.blue.shade700,
-      TransactionStatus.partialPaid => Colors.orange.shade700,
-      TransactionStatus.void_ => Colors.red.shade700,
-      TransactionStatus.refunded => Colors.purple.shade700,
+      TransactionStatus.paid => (
+          const Color(0xFFECFDF5),
+          const Color(0xFF047857),
+          const Color(0xFFA7F3D0),
+          'Lunas',
+          Icons.check_circle_rounded,
+        ),
+      TransactionStatus.confirmed => (
+          const Color(0xFFEFF6FF),
+          const Color(0xFF1D4ED8),
+          const Color(0xFFBFDBFE),
+          'Pesanan Masuk',
+          Icons.schedule_rounded,
+        ),
+      TransactionStatus.draft => (
+          const Color(0xFFFFFBEB),
+          const Color(0xFFB45309),
+          const Color(0xFFFDE68A),
+          'Draft Kasir',
+          Icons.edit_note_rounded,
+        ),
+      TransactionStatus.partialPaid => (
+          const Color(0xFFFFF7ED),
+          const Color(0xFFC2410C),
+          const Color(0xFFFED7AA),
+          'Sebagian',
+          Icons.hourglass_bottom_rounded,
+        ),
+      TransactionStatus.void_ => (
+          const Color(0xFFFFF1F2),
+          const Color(0xFFBE123C),
+          const Color(0xFFFECDD3),
+          'Dibatalkan',
+          Icons.cancel_outlined,
+        ),
+      TransactionStatus.refunded => (
+          const Color(0xFFFAF5FF),
+          const Color(0xFF6B21A8),
+          const Color(0xFFE9D5FF),
+          'Direfund',
+          Icons.replay_rounded,
+        ),
     };
   }
 }
@@ -900,86 +772,262 @@ class _InfoCard extends StatelessWidget {
   const _InfoCard({required this.order});
   final TransactionOrder order;
 
+  String _getPaymentMethodDisplay() {
+    if (order.payments.isNotEmpty) {
+      return order.payments
+          .map((p) => p.methodName.isNotEmpty ? p.methodName : p.methodType)
+          .join(', ');
+    }
+    return 'Tunai (Cash)';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _infoRow(
-            theme,
-            'Tanggal',
-            order.createdAt != null
-                ? _dateFormat.format(order.createdAt!)
-                : '-',
+          Row(
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                size: 15,
+                color: Color(0xFF0070FC),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'INFORMASI TRANSAKSI',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF64748B),
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
           ),
-          if (order.paidAt != null)
-            _infoRow(theme, 'Dibayar', _dateFormat.format(order.paidAt!)),
-          _infoRow(theme, 'Sumber', order.orderSource.label),
-          _infoRow(
-            theme,
-            'Status Dapur',
-            order.kitchenStatus == KitchenStatus.served
-                ? 'Disajikan 🛎️'
-                : (order.kitchenStatus == KitchenStatus.ready
-                    ? 'Siap Saji 🍽️'
-                    : (order.kitchenStatus == KitchenStatus.cooking
-                        ? 'Sedang Dimasak 🍳'
-                        : 'Menunggu Masak ⏳')),
+          const SizedBox(height: 14),
+
+          // 2-Column Grid Data
+          Row(
+            children: [
+              Expanded(
+                child: _metaBlock(
+                  'Waktu Transaksi',
+                  order.createdAt != null
+                      ? _dateFormat.format(order.createdAt!)
+                      : '-',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _metaBlock(
+                  'Pelanggan / Meja',
+                  order.customerName?.isNotEmpty == true
+                      ? order.customerName!
+                      : (order.tableNumber != null
+                          ? 'Meja ${order.tableNumber}'
+                          : 'Pelanggan Umum'),
+                ),
+              ),
+            ],
           ),
-          if (order.cashierName != null && order.cashierName!.isNotEmpty)
-            _infoRow(theme, 'Kasir', order.cashierName!),
-          if (order.waiterName != null && order.waiterName!.isNotEmpty)
-            _infoRow(theme, 'Waiter', order.waiterName!),
-          if (order.customerName != null && order.customerName!.isNotEmpty)
-            _infoRow(theme, 'Pelanggan', order.customerName!),
-          if (order.tableNumber != null)
-            _infoRow(theme, 'Meja', order.tableNumber.toString()),
-          if (order.voidReason != null && order.voidReason!.isNotEmpty)
-            _infoRow(theme, 'Alasan Batal', order.voidReason!, isError: true),
-          if (order.notes != null && order.notes!.isNotEmpty)
-            _infoRow(theme, 'Catatan', order.notes!),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: _metaBlock(
+                  'Metode Bayar',
+                  _getPaymentMethodDisplay(),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _metaBlock(
+                  'Kasir',
+                  order.cashierName?.isNotEmpty == true
+                      ? order.cashierName!
+                      : 'Kasir Utama',
+                ),
+              ),
+            ],
+          ),
+
+          if (order.paidAt != null && order.paidAt != order.createdAt) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _metaBlock(
+                    'Waktu Pembayaran',
+                    _dateFormat.format(order.paidAt!),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _metaBlock(
+                    'Sumber Order',
+                    order.orderSource.label,
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          if (order.voidReason != null && order.voidReason!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _metaBlock(
+              'Alasan Batal',
+              order.voidReason!,
+              isError: true,
+            ),
+          ],
+
+          if (order.notes != null && order.notes!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _metaBlock(
+              'Catatan Order',
+              order.notes!,
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _infoRow(
-    ThemeData theme,
-    String label,
-    String value, {
-    bool isError = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
+  Widget _metaBlock(String label, String value, {bool isError = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF94A3B8),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: isError ? const Color(0xFFEF4444) : const Color(0xFF1E293B),
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+}
+
+class _ItemsCard extends StatelessWidget {
+  const _ItemsCard({required this.order});
+  final TransactionOrder order;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 90,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: isError ? Colors.red : theme.colorScheme.outline,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 15,
+                    color: Color(0xFF0070FC),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'DETAIL PESANAN',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF64748B),
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${order.items.length} Item',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Items List with Divider
+          ...order.items.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final item = entry.value;
+            return Column(
+              children: [
+                if (idx > 0)
+                  const Divider(color: Color(0xFFF1F5F9), height: 16),
+                _ItemRow(item: item),
+              ],
+            );
+          }),
+
+          if (order.discounts.isNotEmpty) ...[
+            const Divider(color: Color(0xFFE2E8F0), height: 24),
+            Text(
+              'DISKON PESANAN',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF64748B),
+                letterSpacing: 0.6,
               ),
             ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: isError ? Colors.red : null,
-              ),
-            ),
-          ),
+            const SizedBox(height: 8),
+            ...order.discounts.map((disc) => _DiscountRow(discount: disc)),
+          ],
         ],
       ),
     );
@@ -992,84 +1040,70 @@ class _ItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  item.displayName,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+              Text(
+                item.displayName,
+                style: GoogleFonts.inter(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 3),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 6,
+                children: [
+                  Text(
+                    '${item.quantity} × ${_currency.format(item.unitPrice)}',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  if (item.hasDiscount)
+                    Text(
+                      '(-${_currency.format(item.discountApplied)})',
+                      style: GoogleFonts.inter(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF059669),
+                      ),
+                    ),
+                ],
+              ),
+              if (item.notes != null && item.notes!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 3),
+                  child: Text(
+                    'Catatan: ${item.notes}',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFF64748B),
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                _currency.format(item.rawSubtotal),
-                style: GoogleFonts.manrope(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            '${item.quantity} × ${_currency.format(item.unitPrice)}',
-            style: theme.textTheme.labelSmall?.copyWith(color: scheme.outline),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          _currency.format(item.subtotal),
+          style: GoogleFonts.inter(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF0F172A),
           ),
-          if (item.hasDiscount) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(
-                  Icons.local_offer_rounded,
-                  size: 14,
-                  color: Colors.green.shade700,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${item.discountName} (-${_currency.format(item.discountApplied)})',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: Colors.green.shade700,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  _currency.format(item.subtotal),
-                  style: GoogleFonts.manrope(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.green.shade700,
-                  ),
-                ),
-              ],
-            ),
-          ],
-          if (item.notes != null && item.notes!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                '📝 ${item.notes}',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: scheme.outline,
-                ),
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -1080,25 +1114,31 @@ class _DiscountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.local_offer_rounded,
-            size: 16,
-            color: Colors.green.shade700,
+            size: 14,
+            color: Color(0xFF059669),
           ),
           const SizedBox(width: 6),
           Expanded(
-            child: Text(discount.name, style: theme.textTheme.bodySmall),
+            child: Text(
+              discount.name,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: const Color(0xFF334155),
+              ),
+            ),
           ),
           Text(
             '-${_currency.format(discount.appliedAmount)}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.green.shade700,
+            style: GoogleFonts.inter(
+              fontSize: 12,
               fontWeight: FontWeight.w600,
+              color: const Color(0xFF059669),
             ),
           ),
         ],
@@ -1107,72 +1147,154 @@ class _DiscountRow extends StatelessWidget {
   }
 }
 
-class _SummarySection extends StatelessWidget {
-  const _SummarySection({required this.order});
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({required this.order});
   final TransactionOrder order;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _row(theme, 'Subtotal', order.subtotal),
-          if (order.discountTotal > 0)
-            _row(theme, 'Total Diskon', -order.discountTotal, isDiscount: true),
-          if (order.taxAmount > 0) _row(theme, 'Pajak', order.taxAmount),
-          const Divider(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'TOTAL',
-                style: GoogleFonts.manrope(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                ),
+              const Icon(
+                Icons.receipt_outlined,
+                size: 15,
+                color: Color(0xFF0070FC),
               ),
+              const SizedBox(width: 8),
               Text(
-                _currency.format(order.grandTotal),
-                style: GoogleFonts.manrope(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: scheme.primary,
+                'RINGKASAN PEMBAYARAN',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF64748B),
+                  letterSpacing: 0.6,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 12),
+
+          _summaryRow('Subtotal', _currency.format(order.subtotal)),
+          if (order.discountTotal > 0)
+            _summaryRow(
+              'Diskon',
+              '-${_currency.format(order.discountTotal)}',
+              isDiscount: true,
+            ),
+          if (order.taxAmount > 0)
+            _summaryRow('Pajak (PB1)', _currency.format(order.taxAmount)),
+
+          const Divider(color: Color(0xFFE2E8F0), height: 20),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Total Tagihan',
+                style: GoogleFonts.inter(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+              Text(
+                _currency.format(order.grandTotal),
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF0070FC),
+                ),
+              ),
+            ],
+          ),
+
+          if (order.paidAmount > 0 ||
+              order.changeAmount > 0 ||
+              order.payments.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                children: [
+                  if (order.payments.isNotEmpty) ...[
+                    ...order.payments.map((p) => _PaymentRow(payment: p)),
+                  ],
+                  if (order.changeAmount > 0) ...[
+                    const Divider(color: Color(0xFFE2E8F0), height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Kembalian',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF047857),
+                          ),
+                        ),
+                        Text(
+                          _currency.format(order.changeAmount),
+                          style: GoogleFonts.inter(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF047857),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _row(
-    ThemeData theme,
-    String label,
-    double value, {
-    bool isDiscount = false,
-  }) {
+  Widget _summaryRow(String label, String value, {bool isDiscount = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: theme.textTheme.bodySmall),
           Text(
-            isDiscount
-                ? '-${_currency.format(value.abs())}'
-                : _currency.format(value),
-            style: theme.textTheme.bodySmall?.copyWith(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12.5,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: isDiscount ? Colors.green.shade700 : null,
+              color: isDiscount
+                  ? const Color(0xFF059669)
+                  : const Color(0xFF0F172A),
             ),
           ),
         ],
@@ -1187,7 +1309,6 @@ class _PaymentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
@@ -1199,15 +1320,20 @@ class _PaymentRow extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      payment.methodName,
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      payment.methodName.isNotEmpty
+                          ? payment.methodName
+                          : payment.methodType,
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w600,
+                        color: const Color(0xFF334155),
                       ),
                     ),
                     if (payment.methodType == 'debt') ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEF3C7),
                           borderRadius: BorderRadius.circular(6),
@@ -1215,7 +1341,7 @@ class _PaymentRow extends StatelessWidget {
                         ),
                         child: Text(
                           'Piutang',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFFB45309),
@@ -1229,8 +1355,9 @@ class _PaymentRow extends StatelessWidget {
                     payment.referenceNumber!.isNotEmpty)
                   Text(
                     'Ref: ${payment.referenceNumber}',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.outline,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: const Color(0xFF94A3B8),
                     ),
                   ),
               ],
@@ -1238,9 +1365,121 @@ class _PaymentRow extends StatelessWidget {
           ),
           Text(
             _currency.format(payment.amount),
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w700,
+              color: const Color(0xFF0F172A),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DebtNoticeCard extends ConsumerWidget {
+  const _DebtNoticeCard({
+    required this.isSidePanel,
+    this.onClose,
+  });
+
+  final bool isSidePanel;
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD97706),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.menu_book_rounded,
+                  size: 16,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Transaksi Kasbon / Tempo',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF92400E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Pesanan ini dicatat sebagai piutang pelanggan di Buku Kasbon. Jika pelanggan sudah melunasi, silakan catat pelunasan melalui menu Buku Kasbon.',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: const Color(0xFFB45309),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          InkWell(
+            onTap: () {
+              if (isSidePanel) {
+                onClose?.call();
+                OwnerDashboardNavigation.selectMenu(
+                  ref,
+                  OwnerMenu.customerDebt,
+                  bootstrap: ref.read(homeBootstrapProvider).value,
+                );
+              } else {
+                if (context.canPop()) {
+                  context.pop();
+                }
+                OwnerDashboardNavigation.selectMenu(
+                  ref,
+                  OwnerMenu.customerDebt,
+                  bootstrap: ref.read(homeBootstrapProvider).value,
+                );
+              }
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 14,
+                    color: Color(0xFF92400E),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Buka Buku Kasbon',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF92400E),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -1255,26 +1494,53 @@ class _StatusHistorySection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final logsAsync = ref.watch(statusLogsProvider(orderId));
 
     return logsAsync.when(
       data: (logs) {
         if (logs.isEmpty) return const SizedBox.shrink();
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Divider(height: 32),
-            Text(
-              'Riwayat Status (Audit)',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+        return Container(
+          margin: const EdgeInsets.only(top: 14),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 10,
+                offset: Offset(0, 2),
               ),
-            ),
-            const SizedBox(height: 12),
-            ...logs.map((log) => _StatusLogTile(log: log)),
-          ],
+            ],
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.history_rounded,
+                    size: 16,
+                    color: Color(0xFF0070FC),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'RIWAYAT STATUS (AUDIT TRAIL)',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF64748B),
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              ...logs.map((log) => _StatusLogTile(log: log)),
+            ],
+          ),
         );
       },
       loading: () => const SizedBox.shrink(),
@@ -1289,38 +1555,28 @@ class _StatusLogTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final createdAt = DateTime.tryParse(log['created_at'] ?? '')?.toLocal();
     final toStatusStr = log['to_status'] as String? ?? '';
     final reason = log['reason'] as String?;
+    final color = _statusColor(toStatusStr);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: _statusColor(toStatusStr).withValues(alpha: 0.5),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: _statusColor(toStatusStr),
-                    width: 2,
-                  ),
-                ),
+          Padding(
+            padding: const EdgeInsets.only(top: 3),
+            child: Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
               ),
-              Container(
-                width: 2,
-                height: 20,
-                color: theme.colorScheme.outlineVariant,
-              ),
-            ],
+            ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1329,17 +1585,19 @@ class _StatusLogTile extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Status: ${toStatusStr.toUpperCase()}',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: _statusColor(toStatusStr),
+                      toStatusStr.toUpperCase(),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: color,
                       ),
                     ),
                     if (createdAt != null)
                       Text(
                         DateFormat('HH:mm, dd MMM').format(createdAt),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.outline,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: const Color(0xFF94A3B8),
                         ),
                       ),
                   ],
@@ -1349,8 +1607,10 @@ class _StatusLogTile extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       'Alasan: $reason',
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style: GoogleFonts.inter(
+                        fontSize: 11.5,
                         fontStyle: FontStyle.italic,
+                        color: const Color(0xFF64748B),
                       ),
                     ),
                   ),
@@ -1364,17 +1624,17 @@ class _StatusLogTile extends StatelessWidget {
 
   Color _statusColor(String status) {
     return switch (status) {
-      'paid' => Colors.green.shade700,
-      'draft' => Colors.amber.shade700,
-      'confirmed' => Colors.blue.shade700,
-      'void' => Colors.red.shade700,
-      'refunded' => Colors.purple.shade700,
-      _ => Colors.grey,
+      'paid' => const Color(0xFF047857),
+      'draft' => const Color(0xFFB45309),
+      'confirmed' => const Color(0xFF1D4ED8),
+      'void' => const Color(0xFFDC2626),
+      'refunded' => const Color(0xFF7C3AED),
+      _ => const Color(0xFF64748B),
     };
   }
 }
 
 final statusLogsProvider =
     FutureProvider.family<List<Map<String, dynamic>>, String>((ref, id) {
-      return ref.read(transactionRepositoryProvider).getOrderStatusLogs(id);
-    });
+  return ref.read(transactionRepositoryProvider).getOrderStatusLogs(id);
+});

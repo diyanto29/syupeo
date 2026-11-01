@@ -17,7 +17,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:dpos/features/settings/data/printer_settings_repository.dart';
 import 'package:dpos/features/settings/data/qris_settings_repository.dart';
-import 'package:dpos/core/services/ad_interstitial_service.dart';
 import 'package:dpos/core/services/payment_notification_models.dart';
 import 'package:dpos/core/services/payment_notification_service.dart';
 import 'package:dpos/core/widgets/bluetooth_prompt_sheet.dart';
@@ -53,8 +52,21 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   @override
   void initState() {
     super.initState();
+    final cart = ref.read(cartProvider);
+    final initialPaid = cart.effectivePaidAmount > 0
+        ? cart.effectivePaidAmount
+        : cart.grandTotal;
+    if (initialPaid > 0) {
+      _paidController.text = RupiahInputHelper.format(initialPaid);
+    }
+    if (cart.effectivePaidAmount <= 0 && cart.grandTotal > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(cartProvider.notifier).setPaidAmount(initialPaid);
+        }
+      });
+    }
     _debtDueDate = DateTime.now().add(const Duration(days: 7));
-    AdInterstitialService.loadAd();
     _loadInitialDetectedPayments();
     _initPaymentListener();
   }
@@ -279,124 +291,156 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                             ),
                         ];
 
+                        // Auto-pilih metode pembayaran utama (Tunai) secara instan jika belum ada pilihan
+                        if (cart.selectedPaymentMethod == null && allMethods.isNotEmpty) {
+                          final defaultMethod = allMethods.firstWhere(
+                            (m) => m.type == 'cash' || m.allowsChange,
+                            orElse: () => allMethods.first,
+                          );
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (!mounted) return;
+                            final currentCart = ref.read(cartProvider);
+                            if (currentCart.selectedPaymentMethod == null) {
+                              ref.read(cartProvider.notifier).selectPaymentMethod(defaultMethod);
+                              final targetAmount = currentCart.effectivePaidAmount > 0
+                                  ? currentCart.effectivePaidAmount
+                                  : currentCart.grandTotal;
+                              _setPaidAmount(targetAmount);
+                            }
+                          });
+                        }
+
                         return Column(
                           children: allMethods.map((method) {
                             final selected =
                                 cart.selectedPaymentMethod?.id == method.id ||
                                 (method.type == 'debt' && cart.selectedPaymentMethod?.type == 'debt');
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Material(
-                              color: selected
-                                  ? scheme.primary.withValues(alpha: 0.1)
-                                  : scheme.surfaceContainerLow,
-                              borderRadius: BorderRadius.circular(16),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(16),
-                                onTap: () async {
-                                  ref
-                                      .read(cartProvider.notifier)
-                                      .selectPaymentMethod(method);
-                                  if (method.allowsChange) {
-                                    _paidController.clear();
-                                  } else {
-                                    final formatted = RupiahInputHelper.format(cart.grandTotal);
-                                    _paidController.value = TextEditingValue(
-                                      text: formatted,
-                                      selection: TextSelection.collapsed(offset: formatted.length),
-                                    );
+                            final isDebt = method.type == 'debt';
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Material(
+                                color: selected
+                                    ? (isDebt ? const Color(0xFFFFFBEB) : const Color(0xFFEFF6FF))
+                                    : Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                    color: selected
+                                        ? (isDebt ? const Color(0xFFD97706) : const Color(0xFF0070FC))
+                                        : const Color(0xFFE2E8F0),
+                                    width: selected ? 1.8 : 1.0,
+                                  ),
+                                ),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(16),
+                                  onTap: () async {
+                                    HapticFeedback.lightImpact();
                                     ref
                                         .read(cartProvider.notifier)
-                                        .setPaidAmount(cart.grandTotal);
-                                  }
-                                  if (method.type == 'qris') {
-                                    _showQrisModal(context, cart.grandTotal);
-                                  } else if (method.type == 'debt') {
-                                    if (cart.customerName == null || cart.customerName!.isEmpty) {
-                                      final selectedCustomer = await CustomerPickerSheet.show(context);
-                                      if (selectedCustomer != null) {
-                                        ref.read(cartProvider.notifier).setCustomerInfo(
-                                              id: selectedCustomer.id,
-                                              name: selectedCustomer.name,
-                                              phone: selectedCustomer.phone,
-                                            );
+                                        .selectPaymentMethod(method);
+                                    if (method.allowsChange) {
+                                      final currentPaid = ref.read(cartProvider).effectivePaidAmount;
+                                      final targetAmount = currentPaid >= cart.grandTotal ? currentPaid : cart.grandTotal;
+                                      _setPaidAmount(targetAmount);
+                                    } else {
+                                      _setPaidAmount(cart.grandTotal);
+                                    }
+                                    if (method.type == 'qris') {
+                                      _showQrisModal(context, cart.grandTotal);
+                                    } else if (method.type == 'debt') {
+                                      if (cart.customerName == null || cart.customerName!.isEmpty) {
+                                        final selectedCustomer = await CustomerPickerSheet.show(context);
+                                        if (selectedCustomer != null) {
+                                          ref.read(cartProvider.notifier).setCustomerInfo(
+                                                id: selectedCustomer.id,
+                                                name: selectedCustomer.name,
+                                                phone: selectedCustomer.phone,
+                                              );
+                                        }
                                       }
                                     }
-                                  }
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: selected
-                                              ? scheme.primary.withValues(
-                                                  alpha: 0.15,
-                                                )
-                                              : scheme.surfaceContainerHighest,
-                                          borderRadius: BorderRadius.circular(
-                                            12,
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: selected
+                                                ? (isDebt
+                                                    ? const Color(0xFFFDE68A)
+                                                    : const Color(0xFF0070FC).withValues(alpha: 0.15))
+                                                : const Color(0xFFF1F5F9),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            _iconForType(method.type),
+                                            size: 22,
+                                            color: selected
+                                                ? (isDebt ? const Color(0xFFB45309) : const Color(0xFF0070FC))
+                                                : const Color(0xFF64748B),
                                           ),
                                         ),
-                                        child: Icon(
-                                          _iconForType(method.type),
-                                          size: 22,
-                                          color: selected
-                                              ? scheme.primary
-                                              : scheme.outline,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 14),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              method.name,
-                                              style: theme.textTheme.titleSmall
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                            ),
-                                            if (method.type == 'debt')
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
                                               Text(
-                                                'Catat piutang ke Buku Kasbon pelanggan',
-                                                style: theme.textTheme.bodySmall?.copyWith(
-                                                  color: const Color(0xFFB45309),
-                                                  fontSize: 11,
+                                                method.name,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 15,
+                                                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                                                  color: selected
+                                                      ? (isDebt ? const Color(0xFF92400E) : const Color(0xFF0F172A))
+                                                      : const Color(0xFF334155),
                                                 ),
-                                              )
-                                            else if (method.accountLabel != null)
-                                              Text(
-                                                method.accountLabel!,
-                                                style: theme
-                                                    .textTheme
-                                                    .labelSmall
-                                                    ?.copyWith(
-                                                      color: scheme.outline,
-                                                    ),
                                               ),
-                                          ],
+                                              if (method.type == 'debt')
+                                                Text(
+                                                  'Catat piutang ke Buku Kasbon pelanggan',
+                                                  style: theme.textTheme.bodySmall?.copyWith(
+                                                    color: const Color(0xFFB45309),
+                                                    fontSize: 11,
+                                                  ),
+                                                )
+                                              else if (method.accountLabel != null)
+                                                Text(
+                                                  method.accountLabel!,
+                                                  style: theme
+                                                      .textTheme
+                                                      .labelSmall
+                                                      ?.copyWith(
+                                                        color: scheme.outline,
+                                                      ),
+                                                ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      if (selected)
-                                        Icon(
-                                          Icons.check_circle_rounded,
-                                          color: method.type == 'debt' ? const Color(0xFFD97706) : scheme.primary,
-                                          size: 24,
-                                        ),
-                                    ],
+                                        if (selected)
+                                          Icon(
+                                            Icons.check_circle_rounded,
+                                            color: isDebt ? const Color(0xFFD97706) : const Color(0xFF0070FC),
+                                            size: 24,
+                                          )
+                                        else
+                                          const Icon(
+                                            Icons.radio_button_unchecked_rounded,
+                                            color: Color(0xFFCBD5E1),
+                                            size: 22,
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        }).toList(),
-                      );
-                    },
+                            );
+                          }).toList(),
+                        );
+                      },
                       loading: () => const Padding(
                         padding: EdgeInsets.all(24),
                         child: Center(
@@ -443,64 +487,103 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           prefixText: 'Rp ',
                           hintText: '0',
                           filled: true,
-                          fillColor: scheme.surfaceContainerLow,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Color(0xFF0070FC), width: 2),
                           ),
                           suffixIcon: Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: ActionChip(
-                              label: const Text(
+                              label: Text(
                                 'Uang Pas',
-                                style: TextStyle(fontSize: 12),
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF0070FC),
+                                ),
                               ),
+                              backgroundColor: const Color(0xFFEFF6FF),
+                              side: const BorderSide(color: Color(0xFFBFDBFE)),
                               onPressed: () {
-                                final formatted = RupiahInputHelper.format(cart.grandTotal);
-                                _paidController.value = TextEditingValue(
-                                  text: formatted,
-                                  selection: TextSelection.collapsed(offset: formatted.length),
-                                );
-                                ref
-                                    .read(cartProvider.notifier)
-                                    .setPaidAmount(cart.grandTotal);
+                                HapticFeedback.lightImpact();
+                                _setPaidAmount(cart.grandTotal);
                               },
                             ),
                           ),
                         ),
-                        style: GoogleFonts.manrope(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
+                        style: GoogleFonts.inter(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      _buildQuickCashPresets(context, cart),
+                      if (cart.effectivePaidAmount > 0 && cart.effectivePaidAmount < cart.grandTotal) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFDC2626)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Kurang ${_currency.format(cart.grandTotal - cart.effectivePaidAmount)}',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFDC2626),
+                                fontFeatures: const [FontFeature.tabularFigures()],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       if (cart.changeAmount > 0)
                         Container(
                           width: double.infinity,
                           margin: const EdgeInsets.only(top: 12),
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(16),
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFBBF7D0)),
                           ),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.currency_exchange_rounded,
-                                color: Colors.green.shade700,
-                                size: 22,
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDCFCE7),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.currency_exchange_rounded,
+                                  color: Color(0xFF16A34A),
+                                  size: 20,
+                                ),
                               ),
                               const SizedBox(width: 10),
                               Text(
                                 'Kembalian',
-                                style: theme.textTheme.bodyMedium,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF166534),
+                                ),
                               ),
                               const Spacer(),
                               Text(
                                 _currency.format(cart.changeAmount),
-                                style: GoogleFonts.manrope(
-                                  fontSize: 20,
+                                style: GoogleFonts.inter(
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w800,
-                                  color: Colors.green.shade700,
+                                  color: const Color(0xFF16A34A),
+                                  fontFeatures: const [FontFeature.tabularFigures()],
                                 ),
                               ),
                             ],
@@ -561,12 +644,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
             // ── Bottom Checkout Button ────────────────────
             Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               decoration: BoxDecoration(
                 color: scheme.surfaceContainerLowest,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF002147).withValues(alpha: 0.06),
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.06),
                     blurRadius: 16,
                     offset: const Offset(0, -4),
                   ),
@@ -576,7 +659,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   onPressed: _canCheckout(cart) && !cart.isSaving
-                      ? () => _doCheckout()
+                      ? () {
+                          HapticFeedback.lightImpact();
+                          _doCheckout();
+                        }
                       : null,
                   icon: cart.isSaving
                       ? const SizedBox(
@@ -595,19 +681,19 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   label: Text(
                     cart.isSaving
                         ? 'Memproses...'
-                        : (cart.selectedPaymentMethod?.type == 'debt'
-                            ? 'Catat Transaksi Kasbon'
-                            : 'Proses Pembayaran'),
+                        : _getCheckoutButtonLabel(cart),
                   ),
                   style: FilledButton.styleFrom(
                     backgroundColor: cart.selectedPaymentMethod?.type == 'debt'
                         ? const Color(0xFFD97706)
-                        : null,
-                    minimumSize: const Size(0, 56),
+                        : const Color(0xFF0070FC),
+                    disabledBackgroundColor: const Color(0xFFE2E8F0),
+                    disabledForegroundColor: const Color(0xFF94A3B8),
+                    minimumSize: const Size(0, 54),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    textStyle: const TextStyle(
+                    textStyle: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
@@ -791,14 +877,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.soup_kitchen_rounded,
-                        label: 'Tiket Dapur',
-                        onTap: () => _printKitchenReceipt(context, ref, order),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     if (isDebt && order.customerPhone != null && order.customerPhone!.isNotEmpty)
                       Expanded(
                         child: _ActionButton(
@@ -851,6 +929,121 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 }
 
   // ── Helpers ─────────────────────────────────────────────────
+
+  void _setPaidAmount(double amount) {
+    final formatted = RupiahInputHelper.format(amount);
+    _paidController.value = TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+    ref.read(cartProvider.notifier).setPaidAmount(amount);
+  }
+
+  List<double> _calculateCashPresets(double total) {
+    final presets = <double>[];
+    if (total <= 0) return [10000, 20000, 50000, 100000];
+
+    final standardNotes = [2000.0, 5000.0, 10000.0, 20000.0, 50000.0, 100000.0];
+    for (final note in standardNotes) {
+      if (note > total && !presets.contains(note)) {
+        presets.add(note);
+      }
+    }
+
+    final next5k = ((total / 5000).ceil() * 5000).toDouble();
+    if (next5k > total && !presets.contains(next5k)) presets.add(next5k);
+
+    final next10k = ((total / 10000).ceil() * 10000).toDouble();
+    if (next10k > total && !presets.contains(next10k)) presets.add(next10k);
+
+    if (total >= 50000) {
+      final next50k = ((total / 50000).ceil() * 50000).toDouble();
+      if (next50k > total && !presets.contains(next50k)) presets.add(next50k);
+      final next100k = ((total / 100000).ceil() * 100000).toDouble();
+      if (next100k > total && !presets.contains(next100k)) presets.add(next100k);
+    }
+
+    presets.sort();
+    return presets.take(4).toList();
+  }
+
+  Widget _buildQuickCashPresets(BuildContext context, CartState cart) {
+    final presets = _calculateCashPresets(cart.grandTotal);
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _buildCashPresetChip(
+          label: 'Uang Pas (${_currency.format(cart.grandTotal)})',
+          isSelected: (cart.effectivePaidAmount - cart.grandTotal).abs() < 1,
+          onTap: () {
+            HapticFeedback.lightImpact();
+            _setPaidAmount(cart.grandTotal);
+          },
+        ),
+        ...presets.map((preset) {
+          final isSelected = (cart.effectivePaidAmount - preset).abs() < 1;
+          return _buildCashPresetChip(
+            label: _currency.format(preset),
+            isSelected: isSelected,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              _setPaidAmount(preset);
+            },
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildCashPresetChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF0070FC) : const Color(0xFFCBD5E1),
+              width: isSelected ? 1.5 : 1.0,
+            ),
+          ),
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+              color: isSelected ? const Color(0xFF0070FC) : const Color(0xFF334155),
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getCheckoutButtonLabel(CartState cart) {
+    if (cart.selectedPaymentMethod == null) {
+      return 'Pilih Metode Bayar';
+    }
+    if (cart.selectedPaymentMethod!.type == 'debt') {
+      return 'Catat Transaksi Kasbon';
+    }
+    if (cart.selectedPaymentMethod!.allowsChange) {
+      final paid = cart.effectivePaidAmount > 0 ? cart.effectivePaidAmount : cart.grandTotal;
+      return 'Bayar Tunai ${_currency.format(paid)}';
+    }
+    return 'Bayar dengan ${cart.selectedPaymentMethod!.name}';
+  }
 
   bool _canCheckout(CartState cart) {
     if (cart.error != null) return false;
@@ -974,7 +1167,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
       ref.read(cartProvider.notifier).clearCart();
       setState(() => _completedOrder = order);
-      AdInterstitialService.showAd();
       _autoPrintReceipt(order);
     } else if (mounted) {
       setState(() => ref.read(cartProvider.notifier).setIsSaving(false));
@@ -1067,39 +1259,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           success
               ? '✓ Struk berhasil dicetak'
               : '✗ Gagal mencetak. Periksa printer.',
-        ),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
-  Future<void> _printKitchenReceipt(
-    BuildContext context,
-    WidgetRef ref,
-    TransactionOrder order,
-  ) async {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      SnackBar(
-        content: const Text('Mencetak tiket dapur...'),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-
-    final success =
-        await ref.read(receiptServiceProvider).printKitchenReceipt(order);
-
-    if (!context.mounted) return;
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? '✓ Tiket dapur berhasil dicetak'
-              : '✗ Gagal mencetak tiket dapur. Periksa printer.',
         ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

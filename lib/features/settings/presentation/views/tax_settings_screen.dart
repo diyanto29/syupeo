@@ -406,7 +406,7 @@ class _TaxSettingsScreenState extends ConsumerState<TaxSettingsScreen> {
                           child: Icon(
                             Icons.percent_rounded,
                             color: _taxEnabled
-                                ? const Color(0xFFEA580C)
+                                ? const Color(0xFF005ECC)
                                 : const Color(0xFF94A3B8),
                             size: 22,
                           ),
@@ -438,7 +438,7 @@ class _TaxSettingsScreenState extends ConsumerState<TaxSettingsScreen> {
                         ),
                         Switch.adaptive(
                           value: _taxEnabled,
-                          activeColor: const Color(0xFFEA580C),
+                          activeColor: const Color(0xFF005ECC),
                           onChanged: (val) => setState(() => _taxEnabled = val),
                         ),
                       ],
@@ -696,7 +696,7 @@ class _TaxSettingsScreenState extends ConsumerState<TaxSettingsScreen> {
                                   ? '${_currency.format(_simulatedTaxAmount)} (Termasuk)'
                                   : '+ ${_currency.format(_simulatedTaxAmount)}',
                               isHighlight: true,
-                              highlightColor: const Color(0xFFEA580C),
+                              highlightColor: const Color(0xFF005ECC),
                             ),
                             const Divider(height: 16, color: Color(0xFFE2E8F0)),
                             _simRow(

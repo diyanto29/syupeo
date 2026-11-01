@@ -182,24 +182,21 @@ export default function StarterKitsPage() {
   const supabase = createClient();
   const brochureRef = useRef<HTMLDivElement>(null);
 
+  // Helper untuk memvalidasi UUID v4
+  const isUuid = (val?: string | null): boolean => {
+    if (!val) return false;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+  };
+
   // Load packages from Supabase (with linked retail_starter_kit_items)
   const loadPackages = async () => {
     setLoading(true);
     setErrorMsg(null);
     try {
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from('retail_starter_kits')
         .select('*')
         .order('created_at', { ascending: false });
-
-      if (error) {
-        const fallback = await supabase
-          .from('hardware_packages')
-          .select('*')
-          .order('created_at', { ascending: false });
-        data = fallback.data;
-        error = fallback.error;
-      }
 
       if (error || !data || data.length === 0) {
         setIsDbLoaded(false);
@@ -251,16 +248,9 @@ export default function StarterKitsPage() {
         sort_order: pkg.sort_order,
       }));
 
-      let { error } = await supabase
+      const { error } = await supabase
         .from('retail_starter_kits')
         .upsert(payload, { onConflict: 'slug' });
-
-      if (error) {
-        const fallback = await supabase
-          .from('hardware_packages')
-          .upsert(payload, { onConflict: 'slug' });
-        error = fallback.error;
-      }
 
       if (error) throw error;
       setSuccessMsg('4 Paket Usaha Awal berhasil disimpan ke database Supabase!');
@@ -497,9 +487,14 @@ export default function StarterKitsPage() {
       return;
     }
 
-    const payload = {
+    const baseSlug = formName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    const payload: any = {
       name: formName.trim(),
-      slug: formName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       badge: formBadge.trim(),
       price: Math.round(Number(formPrice)),
       original_price: Math.round(Number(formOriginalPrice)) || 0,
@@ -512,77 +507,66 @@ export default function StarterKitsPage() {
     };
 
     try {
-      let savedKitId = editingPkg?.id;
-      let dbSaveSuccess = true;
+      let savedKitId: string | null = null;
 
       if (editingPkg) {
-        let { error } = await supabase
-          .from('retail_starter_kits')
-          .update(payload)
-          .eq('id', editingPkg.id);
+        // Mode Edit:
+        payload.slug = editingPkg.slug || baseSlug;
 
-        if (error) {
-          const fallback = await supabase
-            .from('hardware_packages')
+        let error: any = null;
+        let data: any = null;
+
+        // 1. Jika id adalah UUID valid, coba update by id
+        if (isUuid(editingPkg.id)) {
+          const res = await supabase
+            .from('retail_starter_kits')
             .update(payload)
-            .eq('id', editingPkg.id);
-          error = fallback.error;
+            .eq('id', editingPkg.id)
+            .select('id')
+            .maybeSingle();
+
+          error = res.error;
+          data = res.data;
+          if (data?.id) savedKitId = data.id;
+        }
+
+        // 2. Jika bukan UUID atau update by id tidak menemukan baris: upsert by slug
+        if (!savedKitId) {
+          const res = await supabase
+            .from('retail_starter_kits')
+            .upsert(payload, { onConflict: 'slug' })
+            .select('id')
+            .maybeSingle();
+
+          error = res.error;
+          data = res.data;
+          if (data?.id) savedKitId = data.id;
         }
 
         if (error) {
-          console.warn('[handleSave] Supabase update warning:', error.message);
-          dbSaveSuccess = false;
-          // Fallback update ke state lokal jika tabel Supabase belum dimigrasi
-          setPackages((prev) =>
-            prev.map((p) =>
-              p.id === editingPkg.id
-                ? {
-                    ...p,
-                    ...payload,
-                    items: formProducts.map((it) => ({ ...it })),
-                  }
-                : p
-            )
-          );
-        } else {
-          await loadPackages();
+          throw new Error(error.message || 'Gagal memperbarui paket usaha');
         }
-        savedKitId = editingPkg.id;
       } else {
-        const newId =
-          typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : 'pkg-' + Date.now();
-        let { error } = await supabase
+        // Mode Tambah Baru:
+        // Gunakan slug unik dan BIARKAN PostgreSQL men-generate UUID otomatis via DEFAULT gen_random_uuid()
+        const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
+        payload.slug = uniqueSlug;
+        payload.sort_order = packages.length + 1;
+
+        const { data, error } = await supabase
           .from('retail_starter_kits')
-          .insert({ ...payload, id: newId, sort_order: packages.length + 1 });
+          .insert(payload)
+          .select('id')
+          .single();
 
         if (error) {
-          const fallback = await supabase
-            .from('hardware_packages')
-            .insert({ ...payload, id: newId, sort_order: packages.length + 1 });
-          if (fallback.error) {
-            console.warn('[handleSave] Supabase insert warning:', fallback.error.message);
-            dbSaveSuccess = false;
-            // Fallback tambah ke state lokal jika tabel Supabase belum dimigrasi
-            const newPkg: RetailStarterKit = {
-              id: newId,
-              ...payload,
-              sort_order: packages.length + 1,
-              items: formProducts.map((it) => ({ ...it })),
-            };
-            setPackages((prev) => [...prev, newPkg]);
-          } else {
-            await loadPackages();
-          }
-        } else {
-          await loadPackages();
+          throw new Error(error.message || 'Gagal menambahkan paket usaha');
         }
-        savedKitId = newId;
+        savedKitId = data?.id;
       }
 
-      // Sinkronkan daftar barang fisik ke retail_starter_kit_items jika tabel cloud tersedia
-      if (savedKitId && dbSaveSuccess) {
+      // Sinkronkan daftar barang fisik ke retail_starter_kit_items jika id UUID valid
+      if (savedKitId && isUuid(savedKitId)) {
         try {
           await supabase
             .from('retail_starter_kit_items')
@@ -592,7 +576,7 @@ export default function StarterKitsPage() {
           if (formProducts.length > 0) {
             const itemsPayload = formProducts.map((p) => ({
               starter_kit_id: savedKitId,
-              master_catalog_id: p.master_catalog_id || null,
+              master_catalog_id: isUuid(p.master_catalog_id) ? p.master_catalog_id : null,
               product_name: p.product_name,
               barcode: p.barcode || null,
               quantity: Math.max(1, Math.round(Number(p.quantity) || 1)),
@@ -607,7 +591,7 @@ export default function StarterKitsPage() {
               .insert(itemsPayload);
 
             if (itemsErr) {
-              console.warn('[handleSave] items insert warning:', itemsErr);
+              console.warn('[handleSave] items insert warning:', itemsErr.message);
             }
           }
         } catch (itemSyncErr) {
@@ -615,6 +599,7 @@ export default function StarterKitsPage() {
         }
       }
 
+      await loadPackages();
       setSuccessMsg(
         editingPkg
           ? `Paket "${formName}" berhasil diperbarui dengan ${formProducts.length} produk master!`
@@ -622,7 +607,8 @@ export default function StarterKitsPage() {
       );
       setIsModalOpen(false);
     } catch (err: any) {
-      setErrorMsg(`Gagal menyimpan: ${err.message || 'Terjadi kesalahan'}`);
+      console.error('[handleSave] Error:', err);
+      setErrorMsg(`Gagal menyimpan: ${err.message || 'Terjadi kesalahan saat menyimpan ke database'}`);
     } finally {
       setIsSaving(false);
     }
@@ -632,31 +618,25 @@ export default function StarterKitsPage() {
     if (!confirm(`Hapus paket "${pkg.name}"?`)) return;
 
     try {
-      await supabase
-        .from('retail_starter_kit_items')
-        .delete()
-        .eq('starter_kit_id', pkg.id);
+      if (isUuid(pkg.id)) {
+        await supabase
+          .from('retail_starter_kit_items')
+          .delete()
+          .eq('starter_kit_id', pkg.id);
 
-      let { error } = await supabase
-        .from('retail_starter_kits')
-        .delete()
-        .eq('id', pkg.id);
-
-      if (error) {
-        const fallback = await supabase
-          .from('hardware_packages')
+        const { error } = await supabase
+          .from('retail_starter_kits')
           .delete()
           .eq('id', pkg.id);
-        error = fallback.error;
+
+        if (error) throw error;
       }
 
-      if (error) {
-        setPackages((prev) => prev.filter((p) => p.id !== pkg.id));
-      } else {
-        await loadPackages();
-      }
+      await loadPackages();
       setSuccessMsg(`Paket "${pkg.name}" telah dihapus.`);
-    } catch {
+    } catch (err: any) {
+      console.error('[handleDelete] Error:', err);
+      setErrorMsg(`Gagal menghapus: ${err.message || 'Terjadi kesalahan'}`);
       setPackages((prev) => prev.filter((p) => p.id !== pkg.id));
     }
   };

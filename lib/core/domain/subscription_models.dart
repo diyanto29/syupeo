@@ -80,12 +80,13 @@ class SubscriptionPlan {
 
   factory SubscriptionPlan.fromMap(Map<String, dynamic> json) {
     return SubscriptionPlan(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      code: json['code'] as String,
-      maxTransactionsMonth: json['max_transactions_month'] as int,
-      maxProducts: json['max_products'] as int,
-      maxOutlets: json['max_outlets'] as int,
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? 'Paket',
+      code: json['code'] as String? ?? 'free',
+      maxTransactionsMonth:
+          (json['max_transactions_month'] as num?)?.toInt() ?? 1000,
+      maxProducts: (json['max_products'] as num?)?.toInt() ?? 1000,
+      maxOutlets: (json['max_outlets'] as num?)?.toInt() ?? 10,
       features: json['features'] as Map<String, dynamic>? ?? {},
       priceMonthly: (json['price_monthly'] as num?)?.toDouble() ?? 0.0,
       pricingTiers: json['pricing_tiers'] as Map<String, dynamic>? ?? {},

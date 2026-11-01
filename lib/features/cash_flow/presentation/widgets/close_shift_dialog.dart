@@ -95,7 +95,7 @@ class _CloseShiftDialogState extends ConsumerState<CloseShiftDialog> {
           final ownerPhone = bootstrap?.business?.phone;
 
           final shiftMsg = StringBuffer();
-          shiftMsg.writeln('📊 *LAPORAN TUTUP SHIFT KASIR - MANGGA POS*');
+          shiftMsg.writeln('📊 *LAPORAN TUTUP SHIFT KASIR - SYUPEO*');
           shiftMsg.writeln('🏪 *Toko:* $businessName${outletName != null ? " ($outletName)" : ""}');
           shiftMsg.writeln('📅 *Tanggal:* ${DateFormat("EEEE, d MMMM yyyy", "id_ID").format(DateTime.now())}');
           shiftMsg.writeln('⏰ *Waktu Tutup:* ${DateFormat("HH:mm", "id_ID").format(DateTime.now())} WIB');

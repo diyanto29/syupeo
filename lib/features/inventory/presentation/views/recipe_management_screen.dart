@@ -224,7 +224,7 @@ class _RecipeManagementScreenState extends ConsumerState<RecipeManagementScreen>
                 }
               });
             },
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFF7A00)),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0070FC)),
             child: const Text('Terapkan'),
           ),
         ],
@@ -255,7 +255,7 @@ class _RecipeManagementScreenState extends ConsumerState<RecipeManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Resep untuk ${_selectedMenuItem!.name}$variantLabel berhasil disimpan!'),
-            backgroundColor: const Color(0xFFFF7A00),
+            backgroundColor: const Color(0xFF0070FC),
           ),
         );
       }
@@ -333,7 +333,7 @@ class _RecipeManagementScreenState extends ConsumerState<RecipeManagementScreen>
                           : const Icon(Icons.check_circle_rounded),
                       label: Text(_isSaving ? 'Menyimpan...' : 'Simpan Resep'),
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF7A00),
+                        backgroundColor: const Color(0xFF0070FC),
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
@@ -447,7 +447,7 @@ class _RecipeManagementScreenState extends ConsumerState<RecipeManagementScreen>
                               child: ChoiceChip(
                                 label: Text('Varian: ${v.name}'),
                                 selected: isSelected,
-                                selectedColor: const Color(0xFFFF7A00),
+                                selectedColor: const Color(0xFF0070FC),
                                 labelStyle: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,

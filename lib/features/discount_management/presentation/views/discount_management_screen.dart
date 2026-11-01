@@ -365,7 +365,7 @@ class _DiscountManagementScreenState
       appBar: isTablet
           ? AppTabletHeader(
               title: const Text('Program Promo & Diskon'),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
               actions: [
                 IconButton(
                   tooltip: 'Segarkan data',

@@ -33,7 +33,7 @@ class MenuCategoryRepository {
           .select()
           .eq('business_id', businessId)
           .order('visual_index', ascending: true)
-          .timeout(const Duration(seconds: 2));
+          .timeout(const Duration(seconds: 15));
 
       final categories = (response as List<dynamic>)
           .map((json) => MenuCatalogCategory.fromJson(json as Map<String, dynamic>))

@@ -30,7 +30,7 @@ class ReportOverviewTab extends StatelessWidget {
                 icon: Icons.account_balance_wallet_rounded,
                 label: 'Laba Bersih',
                 value: _formatCompact(report.netProfit),
-                color: const Color(0xFF00C853),
+                color: report.netProfit >= 0 ? const Color(0xFF00C853) : Colors.red,
               ),
             ),
             const SizedBox(width: 10),
@@ -186,10 +186,12 @@ class ReportOverviewTab extends StatelessWidget {
   }
 
   static String _formatCompact(double value) {
-    if (value >= 1000000) {
-      return 'Rp ${(value / 1000000).toStringAsFixed(1)}jt';
-    } else if (value >= 1000) {
-      return 'Rp ${(value / 1000).toStringAsFixed(0)}rb';
+    final absVal = value.abs();
+    final sign = value < 0 ? '-' : '';
+    if (absVal >= 1000000) {
+      return '${sign}Rp ${(absVal / 1000000).toStringAsFixed(1)}jt';
+    } else if (absVal >= 1000) {
+      return '${sign}Rp ${(absVal / 1000).toStringAsFixed(0)}rb';
     }
     return _currency.format(value);
   }

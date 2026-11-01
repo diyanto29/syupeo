@@ -35,7 +35,7 @@ class DiscountEditorPage extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
             )
           : AppBar(title: Text(pageTitle), centerTitle: false),
       body: SafeArea(

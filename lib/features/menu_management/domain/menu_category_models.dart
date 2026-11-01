@@ -36,10 +36,10 @@ class MenuCatalogCategory {
 
   factory MenuCatalogCategory.fromJson(Map<String, dynamic> json) {
     return MenuCatalogCategory(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      visualIndex: json['visual_index'] as int,
-      businessId: json['business_id'] as String,
+      id: (json['id'] as String?) ?? '',
+      name: (json['name'] as String?) ?? 'Kategori',
+      visualIndex: (json['visual_index'] as num?)?.toInt() ?? 0,
+      businessId: (json['business_id'] as String?) ?? '',
       isVisibleInAllOutlets: json['is_visible_in_all_outlets'] as bool? ?? true,
       visibleOutletIds: (json['visible_outlet_ids'] as List<dynamic>?)
               ?.map((e) => e as String)

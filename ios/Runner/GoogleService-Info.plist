@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyD1y1nObQmCxAWJkF2tBGi-apFMWCbT05w</string>
+	<string>AIzaSyB9csbO2WSSZUfrRlCpa-edeGOYxSatNuI</string>
 	<key>GCM_SENDER_ID</key>
-	<string>692859079311</string>
+	<string>563963021353</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>online.mudahkan.dpos</string>
+	<string>online.mudahkan.syupeo</string>
 	<key>PROJECT_ID</key>
-	<string>mangga-pos</string>
+	<string>syupeo-8a109</string>
 	<key>STORAGE_BUCKET</key>
-	<string>mangga-pos.firebasestorage.app</string>
+	<string>syupeo-8a109.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:692859079311:ios:c91602fefa6db5d2a33efa</string>
+	<string>1:563963021353:ios:d9b2021ed831519a773438</string>
 </dict>
 </plist>

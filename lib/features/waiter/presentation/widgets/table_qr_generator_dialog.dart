@@ -26,7 +26,7 @@ class _TableQrGeneratorDialogState extends State<TableQrGeneratorDialog> {
 
   // Base URL for ordering - should be configurable in production
   // For now we use a placeholder or detect it if possible
-  final String _baseUrl = 'https://pos.mudahkan.online';
+  final String _baseUrl = 'https://syupeo-admin.mudahkan.online';
 
   void _generate() {
     final table = _tableController.text.trim();

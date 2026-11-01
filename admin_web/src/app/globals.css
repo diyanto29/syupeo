@@ -4,33 +4,142 @@
 
 @layer base {
   :root {
+    /* Syupeo Design System v2 — matches image style guide */
+    --primary: #0070fc;
+    --primary-hover: #005ecc;
+    --secondary: #ba8c02;
+    --accent: #3b82f6;
+    --surface: #ffffff;
+    --surface-subtle: #f1f5f9;  /* canvas / page bg */
+    --surface-low: #f8fafc;
+    --text: #0f172a;             /* near-black heading */
+    --text-body: #334155;        /* body paragraphs */
+    --text-muted: #64748b;       /* subtitle / caption */
+    --border: rgba(0, 0, 0, 0.08);  /* shadow-only, no colored border */
+    --success: #10b981;          /* emerald — "Ready" badge */
+    --success-bg: #d1fae5;
+    --warning: #f59e0b;          /* amber — "Waiting" badge */
+    --warning-bg: #fef3c7;
+    --danger: #ef4444;           /* red — destructive actions */
+    --danger-bg: #fee2e2;
+    --info: #3b82f6;
+
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+
+    /* Card shadow — no border, shadow-only like image */
+    --shadow-card: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+    --shadow-panel: 0 1px 4px 0 rgba(0, 0, 0, 0.06);
+    --shadow-elevated: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
   }
 
   body {
-    @apply bg-[#F8FAFC] text-slate-800 antialiased selection:bg-orange-500 selection:text-white;
+    @apply bg-[#f1f5f9] text-[#0f172a] antialiased selection:bg-[#0070fc] selection:text-white;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Custom Light Card & Panel Styling */
+/* ============================================
+   Syupeo Card — white bg, 16px radius, shadow
+   ============================================ */
+.syupeo-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  border: none;
+  transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.syupeo-card:hover {
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Panel — right sidebar / modal panel */
+.syupeo-panel {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: var(--shadow-panel);
+  border: none;
+}
+
+/* Pill Button — fully rounded CTA (matches image blue "Confirm Payment" button) */
+.btn-pill {
+  @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all;
+  @apply bg-[#0070fc] text-white px-6 py-3 text-[15px] leading-none;
+  @apply hover:bg-[#005ecc] active:scale-[0.98];
+  min-height: 52px;
+}
+
+.btn-pill-outline {
+  @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full border transition-all;
+  @apply border-[rgba(0,0,0,0.12)] text-[#0f172a] px-6 py-3 text-[15px] leading-none bg-white;
+  @apply hover:border-[#0070fc] hover:text-[#0070fc];
+  min-height: 52px;
+}
+
+/* Segmented / Pill Tabs (matches image — white active pill with shadow) */
+.tab-pill-group {
+  @apply flex items-center gap-1 p-1 bg-[#f1f5f9] rounded-full;
+}
+
+.tab-pill {
+  @apply px-4 py-1.5 rounded-full text-sm font-semibold text-[#64748b] transition-all;
+}
+
+.tab-pill.active {
+  @apply bg-white text-[#0f172a] shadow-sm;
+}
+
+/* Status Badges */
+.badge-waiting {
+  @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-ready {
+  @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold;
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-danger {
+  @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Quantity Stepper (matches image — minus / count / plus with border) */
+.qty-stepper {
+  @apply inline-flex items-center gap-1 border border-[rgba(0,0,0,0.10)] rounded-full overflow-hidden;
+}
+
+.qty-stepper button {
+  @apply w-8 h-8 flex items-center justify-center text-[#0f172a] text-sm font-bold hover:bg-[#f1f5f9] transition-colors;
+}
+
+.qty-stepper span {
+  @apply w-8 text-center text-sm font-semibold text-[#0f172a];
+}
+
+/* Legacy glass utilities — backward compat */
 .glass-panel {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  border: none;
 }
 
 .glass-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 16px;
+  box-shadow: var(--shadow-panel);
+  border: none;
+  transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-elevated);
 }
 
 /* Light Scrollbar */

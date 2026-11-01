@@ -229,7 +229,7 @@ class AnnouncementBannerWidget extends ConsumerWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFEA580C).withValues(alpha: 0.08),
+            color: const Color(0xFF005ECC).withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -254,12 +254,12 @@ class AnnouncementBannerWidget extends ConsumerWidget {
                     ),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFFF7A00), Color(0xFFEA580C)],
+                        colors: [Color(0xFF0070FC), Color(0xFF005ECC)],
                       ),
                       borderRadius: BorderRadius.circular(6),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF7A00).withValues(alpha: 0.3),
+                          color: const Color(0xFF0070FC).withValues(alpha: 0.3),
                           blurRadius: 4,
                           offset: const Offset(0, 1.5),
                         ),
@@ -322,7 +322,7 @@ class AnnouncementBannerWidget extends ConsumerWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFEA580C).withValues(alpha: 0.12),
+                          color: const Color(0xFF005ECC).withValues(alpha: 0.12),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -332,7 +332,7 @@ class AnnouncementBannerWidget extends ConsumerWidget {
                       child: Icon(
                         Icons.add_location_alt_rounded,
                         size: 22,
-                        color: Color(0xFFEA580C),
+                        color: Color(0xFF005ECC),
                       ),
                     ),
                   ),
@@ -378,7 +378,7 @@ class AnnouncementBannerWidget extends ConsumerWidget {
                       _handleAction(context, ref, actionTarget, actionType);
                     },
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFEA580C),
+                      backgroundColor: const Color(0xFF005ECC),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(

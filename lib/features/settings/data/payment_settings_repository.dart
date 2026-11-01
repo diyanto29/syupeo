@@ -249,6 +249,24 @@ class PaymentMethodConfig {
     ];
   }
 
+  static List<PaymentMethodConfig> defaultConfigsForOutlet(String outletId) {
+    return defaultRowsForOutlet(outletId).map((row) {
+      final code = row['code'] as String;
+      return PaymentMethodConfig(
+        id: 'default-$outletId-$code',
+        outletId: outletId,
+        code: code,
+        name: row['name'] as String,
+        type: PaymentMethodType.fromValue(row['type'] as String?),
+        provider: row['provider'] as String?,
+        isActive: row['is_active'] as bool? ?? true,
+        sortOrder: row['sort_order'] as int? ?? 0,
+        requiresReference: row['requires_reference'] as bool? ?? false,
+        allowsChange: row['allows_change'] as bool? ?? false,
+      );
+    }).toList();
+  }
+
   static String normalizeCode(String input) {
     return input
         .trim()
@@ -288,40 +306,50 @@ class PaymentSettingsRepository {
   static const _tableName = 'outlet_payment_methods';
 
   Future<List<PaymentMethodConfig>> getPaymentMethods(String outletId) async {
-    final response = await _client
-        .from(_tableName)
-        .select()
-        .eq('outlet_id', outletId)
-        .order('sort_order', ascending: true)
-        .order('name', ascending: true);
+    try {
+      final response = await _client
+          .from(_tableName)
+          .select()
+          .eq('outlet_id', outletId)
+          .order('sort_order', ascending: true)
+          .order('name', ascending: true);
 
-    final methods = (response as List<dynamic>)
-        .map(
-          (json) => PaymentMethodConfig.fromJson(
-            Map<String, dynamic>.from(json as Map),
-          ),
-        )
-        .toList();
+      final methods = (response as List<dynamic>)
+          .map(
+            (json) => PaymentMethodConfig.fromJson(
+              Map<String, dynamic>.from(json as Map),
+            ),
+          )
+          .toList();
 
-    if (methods.isNotEmpty) {
-      return methods;
+      if (methods.isNotEmpty) {
+        return methods;
+      }
+
+      try {
+        await ensureDefaultMethods(outletId);
+        final seededResponse = await _client
+            .from(_tableName)
+            .select()
+            .eq('outlet_id', outletId)
+            .order('sort_order', ascending: true)
+            .order('name', ascending: true);
+
+        return (seededResponse as List<dynamic>)
+            .map(
+              (json) => PaymentMethodConfig.fromJson(
+                Map<String, dynamic>.from(json as Map),
+              ),
+            )
+            .toList();
+      } catch (e) {
+        debugPrint('[PaymentRepo] Seed failed: $e, using local defaults');
+        return PaymentMethodConfig.defaultConfigsForOutlet(outletId);
+      }
+    } catch (e) {
+      debugPrint('[PaymentRepo] Table fetch failed ($e), falling back to standard payment methods.');
+      return PaymentMethodConfig.defaultConfigsForOutlet(outletId);
     }
-
-    await ensureDefaultMethods(outletId);
-    final seededResponse = await _client
-        .from(_tableName)
-        .select()
-        .eq('outlet_id', outletId)
-        .order('sort_order', ascending: true)
-        .order('name', ascending: true);
-
-    return (seededResponse as List<dynamic>)
-        .map(
-          (json) => PaymentMethodConfig.fromJson(
-            Map<String, dynamic>.from(json as Map),
-          ),
-        )
-        .toList();
   }
 
   Future<void> ensureDefaultMethods(String outletId) async {

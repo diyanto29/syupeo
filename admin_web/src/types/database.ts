@@ -47,11 +47,20 @@ export interface Business {
   name: string;
   slug?: string | null;
   business_type?: string | null;
-  owner_user_id: string;
+  owner_user_id?: string | null;
+  owner_name?: string | null;
   status?: string | null;
   phone?: string | null;
   email?: string | null;
   address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  district?: string | null;
+  village?: string | null;
+  postal_code?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  starter_kit_id?: string | null;
   plan_id?: string | null;
   subscription_status?: string | null;
   subscription_end_at?: string | null;
@@ -74,6 +83,7 @@ export interface Business {
   } | null;
   subscription_plans?: SubscriptionPlan | null;
   partners?: Partner | null;
+  retail_starter_kits?: RetailStarterKit | null;
 }
 
 export interface Partner {
@@ -128,6 +138,7 @@ export interface SubscriptionHistory {
   } | null;
   subscription_plans?: SubscriptionPlan | null;
   partners?: Partner | null;
+  retail_starter_kits?: RetailStarterKit | null;
 }
 
 export interface PartnerCommission {
@@ -195,6 +206,11 @@ export interface MasterCatalogItem {
   base_price: number;
   selling_price: number;
   unit?: string | null;
+  wholesale_unit?: string | null;
+  conversion_ratio?: number;
+  wholesale_barcode?: string | null;
+  wholesale_base_price?: number;
+  wholesale_selling_price?: number;
   created_at?: string;
 }
 
@@ -359,7 +375,21 @@ export interface CashFlowEntry {
   } | null;
 }
 
-export interface HardwarePackage {
+export interface RetailStarterKitItem {
+  id: string;
+  starter_kit_id: string;
+  master_catalog_id?: string | null;
+  barcode?: string | null;
+  product_name: string;
+  quantity: number;
+  unit: string;
+  unit_base_price: number;
+  unit_selling_price: number;
+  category?: string;
+  created_at?: string;
+}
+
+export interface RetailStarterKit {
   id: string;
   name: string;
   slug?: string;
@@ -369,12 +399,16 @@ export interface HardwarePackage {
   description?: string;
   suitable_for?: string;
   items_included: string[];
+  items?: RetailStarterKitItem[];
   is_popular?: boolean;
   is_active: boolean;
   sort_order: number;
   created_at?: string;
   updated_at?: string;
 }
+
+export type StarterKit = RetailStarterKit;
+export type HardwarePackage = RetailStarterKit; // Deprecated backward compatibility alias
 
 export interface Outlet {
   id: string;
@@ -436,6 +470,11 @@ export interface MenuItem {
   stock_quantity?: number;
   stock?: number;
   unit?: string | null;
+  wholesale_unit?: string | null;
+  conversion_ratio?: number;
+  wholesale_barcode?: string | null;
+  wholesale_price?: number;
+  wholesale_cost_price?: number;
   description?: string | null;
   created_at?: string;
   menu_categories?: {
@@ -604,6 +643,61 @@ export interface StockOpnameItem {
   discrepancy_reason?: string | null;
   notes?: string | null;
   counted_at?: string;
+}
+
+// -------------------------------------------------------------
+// Multi-Node Supply Chain & Fulfillment (Syupeo Hybrid Model)
+// -------------------------------------------------------------
+export interface Warehouse {
+  id: string;
+  code: string;
+  name: string;
+  warehouse_type: 'syupeo_hub' | 'principal_agent' | 'third_party_3pl';
+  brand_partner?: string | null;
+  address: string;
+  city: string;
+  province?: string | null;
+  district?: string | null;
+  village?: string | null;
+  postal_code?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  coverage_radius_km: number;
+  pic_name: string;
+  pic_phone: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface PackageFulfillmentOrder {
+  id: string;
+  order_code: string;
+  starter_kit_id?: string | null;
+  kit_name: string;
+  recipient_name: string;
+  recipient_phone: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_province?: string | null;
+  shipping_district?: string | null;
+  shipping_village?: string | null;
+  shipping_postal_code?: string | null;
+  recipient_lat?: number | null;
+  recipient_lng?: number | null;
+  fulfillment_mode: 'agent_direct' | 'syupeo_central';
+  assigned_warehouse_id?: string | null;
+  sender_alias: string;
+  distance_km?: number | null;
+  status: 'pending_dispatch' | 'packing' | 'in_transit' | 'delivered' | 'cancelled';
+  driver_name?: string | null;
+  driver_phone?: string | null;
+  tracking_number?: string | null;
+  dispatched_at?: string | null;
+  delivered_at?: string | null;
+  proof_image_url?: string | null;
+  notes?: string | null;
+  created_at?: string;
+  warehouse?: Warehouse | null;
 }
 
 

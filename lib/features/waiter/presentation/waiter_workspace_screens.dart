@@ -825,7 +825,7 @@ Color _statusColor(TransactionStatus status) {
   return switch (status) {
     TransactionStatus.draft => const Color(0xFFD97706),
     TransactionStatus.confirmed => const Color(0xFF2563EB),
-    TransactionStatus.partialPaid => const Color(0xFFEA580C),
+    TransactionStatus.partialPaid => const Color(0xFF005ECC),
     TransactionStatus.paid => const Color(0xFF0F766E),
     TransactionStatus.void_ => const Color(0xFFB91C1C),
     TransactionStatus.refunded => const Color(0xFF7C3AED),

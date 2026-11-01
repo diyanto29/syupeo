@@ -228,7 +228,7 @@ class _VoidOrderDialogState extends ConsumerState<VoidOrderDialog> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.point_of_sale_rounded, color: Color(0xFFEA580C), size: 18),
+                          const Icon(Icons.point_of_sale_rounded, color: Color(0xFF005ECC), size: 18),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -259,7 +259,7 @@ class _VoidOrderDialogState extends ConsumerState<VoidOrderDialog> {
                             Checkbox(
                               value: _recordCashDrawerRefund,
                               onChanged: (val) => setState(() => _recordCashDrawerRefund = val ?? true),
-                              activeColor: const Color(0xFFEA580C),
+                              activeColor: const Color(0xFF005ECC),
                               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             const SizedBox(width: 4),

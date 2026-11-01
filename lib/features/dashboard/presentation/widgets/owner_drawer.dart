@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dpos/core/routes/routes_name.dart';
+import 'package:dpos/features/subscription/presentation/views/starter_kit_orders_sheet.dart';
 
 class OwnerDrawer extends ConsumerWidget {
   const OwnerDrawer({
@@ -181,53 +182,24 @@ class SidebarContent extends ConsumerWidget {
               InkWell(
                 borderRadius: BorderRadius.circular(14),
                 onTap: () {
-                  ref.read(ownerSelectedMenuProvider.notifier).state =
-                      OwnerMenu.subscription;
-                  if (!isPinned && Scaffold.maybeOf(context)?.isDrawerOpen == true) {
-                    Navigator.of(context).pop();
-                  }
-                  context.goNamed(RouteNames.dashboard);
+                  StarterKitOrdersSheet.show(context);
                 },
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: business.isPro
-                        ? (business.isLifetime
-                            ? const Color(0xFFFFFBEB)
-                            : const Color(0xFFECFDF5))
-                        : (business.isExpired
-                            ? const Color(0xFFFEF2F2)
-                            : const Color(0xFFF8FAFC)),
+                    color: const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: business.isPro
-                          ? (business.isLifetime
-                              ? const Color(0xFFFDE68A)
-                              : const Color(0xFFA7F3D0))
-                          : (business.isExpired
-                              ? const Color(0xFFFECACA)
-                              : const Color(0xFFE2E8F0)),
+                      color: const Color(0xFFBFDBFE),
                     ),
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        business.isPro
-                            ? (business.isLifetime
-                                ? Icons.workspace_premium_rounded
-                                : Icons.verified_rounded)
-                            : (business.isExpired
-                                ? Icons.warning_amber_rounded
-                                : Icons.storefront_rounded),
+                      const Icon(
+                        Icons.verified_rounded,
                         size: 18,
-                        color: business.isPro
-                            ? (business.isLifetime
-                                ? const Color(0xFFB45309)
-                                : const Color(0xFF047857))
-                            : (business.isExpired
-                                ? const Color(0xFFB91C1C)
-                                : const Color(0xFF64748B)),
+                        color: Color(0xFF0070FC),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -235,35 +207,17 @@ class SidebarContent extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              business.isLifetime
-                                  ? 'Pro Lifetime 👑'
-                                  : (business.isPro && !business.isExpired
-                                      ? 'Paket Pro (${business.remainingDays ?? 0} Hari)'
-                                      : (business.isExpired
-                                          ? 'Pro Kedaluwarsa'
-                                          : 'Paket Free')),
+                              'Starter Kit Syupeo',
                               style: theme.textTheme.labelMedium?.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: business.isPro
-                                    ? (business.isLifetime
-                                        ? const Color(0xFFB45309)
-                                        : const Color(0xFF047857))
-                                    : (business.isExpired
-                                        ? const Color(0xFFB91C1C)
-                                        : const Color(0xFF334155)),
+                                color: const Color(0xFF1E3A8A),
                               ),
                             ),
                             Text(
-                              business.isLifetime
-                                  ? 'Aktif Selamanya'
-                                  : (business.isPro && !business.isExpired
-                                      ? 'Sisa ${business.remainingDays ?? 0} hari aktif'
-                                      : (business.isExpired
-                                          ? 'Perpanjang sekarang ⚡'
-                                          : 'Upgrade ke Pro ⚡')),
+                              'Semua Fitur Kasir & POS Aktif Penuh',
                               style: theme.textTheme.labelSmall?.copyWith(
                                 fontSize: 10,
-                                color: scheme.onSurface.withValues(alpha: 0.6),
+                                color: const Color(0xFF3B82F6),
                               ),
                             ),
                           ],
@@ -273,6 +227,69 @@ class SidebarContent extends ConsumerWidget {
                         Icons.chevron_right_rounded,
                         size: 16,
                         color: scheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () {
+                  OwnerDashboardNavigation.selectMenu(
+                    ref,
+                    OwnerMenu.starterKitOrder,
+                    bootstrap: bootstrap,
+                  );
+                  if (!isPinned && Scaffold.maybeOf(context)?.isDrawerOpen == true) {
+                    Navigator.of(context).pop();
+                  }
+                  context.goNamed(RouteNames.dashboard);
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: business.isPendingActivation
+                        ? const Color(0xFFFEF3C7)
+                        : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: business.isPendingActivation
+                          ? const Color(0xFFFCD34D)
+                          : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.local_shipping_rounded,
+                        size: 16,
+                        color: business.isPendingActivation
+                            ? const Color(0xFFB45309)
+                            : const Color(0xFF475569),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          business.isPendingActivation
+                              ? 'Riwayat Paket (Menunggu Aktivasi)'
+                              : 'Riwayat Paket Usaha',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: business.isPendingActivation
+                                ? const Color(0xFF92400E)
+                                : const Color(0xFF334155),
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16,
+                        color: business.isPendingActivation
+                            ? const Color(0xFFB45309)
+                            : scheme.onSurface.withValues(alpha: 0.4),
                       ),
                     ],
                   ),

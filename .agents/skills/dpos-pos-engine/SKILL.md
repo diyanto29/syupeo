@@ -3,9 +3,9 @@ name: dpos-pos-engine
 description: Spesifikasi alur logika Point of Sale (POS), kalkulasi keranjang belanja, diskon (persen/nominal, PWP, BXGY), pajak (PB1 & PPN), struk dapur (KOT), manajemen shift kasir, dan antrian offline sync.
 ---
 
-# DPOS Core POS Engine Specification
+# Syupeo Core POS Engine Specification
 
-Dokumen skill ini menjabarkan aturan bisnis dan kalkulasi matematis inti mesin kasir DPOS (Mangga POS).
+Dokumen skill ini menjabarkan aturan bisnis dan kalkulasi matematis inti mesin kasir Syupeo.
 
 ---
 
@@ -75,3 +75,20 @@ Kembalian       = Jumlah Uang Diterima - Total Akhir
   - `ConnectivityListener` mendeteksi kembalinya jaringan internet.
   - Antrian pending dikirimkan batch ke Supabase melalui RPC atau bulk insert.
   - Item yang berhasil disinkronkan diperbarui statusnya menjadi `sync_status = 'synced'`.
+
+---
+
+## 6. Multi-Satuan (Multi-UOM) & Konversi Karton ke Eceran
+
+Sesuai dokumen spesifikasi di `docs/SPESIFIKASI_TRANSAKSI_POS_DAN_MULTI_SATUAN.md`:
+
+1. **Konsep Satu Stok Induk (*Base Unit*):**
+   - Database hanya mencatat stok dalam satuan dasar terkecil (`Pcs`, `Bungkus`, `Botol`).
+   - Setiap produk memiliki pengali kemasan besar (`conversion_ratio`), misal 1 Karton Indomie = 40 Pcs, 1 Karton Teh Pucuk = 24 Botol.
+2. **Kalkulasi Pemotongan Stok Transaksi:**
+   $$\text{Stok Berkurang} = \sum (\text{Qty Terjual} \times \text{Multiplier Satuan})$$
+   Contoh: Pembelian `1 Dus (40 Pcs) + 3 Eceran` memotong $40 + 3 = 43\text{ Pcs}$ stok dasar secara atomik.
+3. **Fleksibilitas Barcode:**
+   - Barcode kemasan luar (Dus/Karton) bersifat **opsional**.
+   - Jika barcode dus di-scan, item otomatis masuk dengan satuan kemasan besar.
+   - Jika hanya barcode eceran yang di-scan, kasir dapat memilih toggle satuan *[ Pcs | Dus ]* pada layar dialog kasir.

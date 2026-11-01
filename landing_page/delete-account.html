@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hapus Akun Syupeo — Permintaan Penghapusan Data</title>
+  <meta name="description" content="Ajukan permintaan penghapusan akun dan data pribadi Anda dari aplikasi Syupeo. Data dihapus dalam 30 hari kerja." />
+  <meta name="theme-color" content="#0070FC" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+
+  <style>
+    :root {
+      --blue:        #0070FC;
+      --blue-dark:   #0057C8;
+      --blue-light:  #EFF6FF;
+      --yellow:      #F7C900;
+      --navy:        #0D1B40;
+      --navy-mid:    #132254;
+      --white:       #FFFFFF;
+      --slate-50:    #F8FAFC;
+      --slate-100:   #F1F5F9;
+      --slate-200:   #E2E8F0;
+      --slate-300:   #CBD5E1;
+      --slate-400:   #94A3B8;
+      --slate-500:   #64748B;
+      --slate-700:   #334155;
+      --slate-900:   #0F172A;
+      --green:       #10B981;
+      --red:         #EF4444;
+      --red-light:   #FEF2F2;
+      --orange:      #F97316;
+
+      --font-display: 'Plus Jakarta Sans', sans-serif;
+      --font-body:    'Plus Jakarta Sans', sans-serif;
+      --radius-sm:   8px;
+      --radius-md:   16px;
+      --radius-lg:   24px;
+      --radius-pill: 9999px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--white);
+      color: var(--slate-900);
+      overflow-x: hidden;
+      line-height: 1.7;
+    }
+
+    /* ── NAVBAR ─────────────────────────────────────── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0,112,252,.10);
+      box-shadow: 0 2px 16px rgba(0,0,0,.06);
+    }
+    .navbar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .navbar-logo img { height: 36px; border-radius: 8px; }
+    .navbar-logo span {
+      font-family: var(--font-display);
+      font-weight: 900; font-size: 20px;
+      color: var(--blue);
+    }
+    .navbar-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      text-decoration: none; color: var(--slate-700);
+      font-weight: 600; font-size: 14px;
+      padding: 8px 16px; border-radius: var(--radius-pill);
+      border: 1.5px solid var(--slate-200);
+      transition: all .2s;
+    }
+    .navbar-back:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+
+    /* ── HERO HEADER ─────────────────────────────────── */
+    .page-header {
+      margin-top: 72px;
+      background: linear-gradient(135deg, #2D1215 0%, #4A1A20 60%, #3D0D13 100%);
+      padding: 64px 24px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .page-header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.04) 1px, transparent 0);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+    .page-header-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(239,68,68,.2); color: #FCA5A5;
+      border: 1px solid rgba(239,68,68,.35);
+      border-radius: var(--radius-pill);
+      padding: 6px 16px; font-size: 13px; font-weight: 600;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .page-header h1 {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--white);
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .page-header p {
+      color: rgba(255,255,255,.7);
+      font-size: 16px;
+      max-width: 540px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .effective-date {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 20px;
+      background: rgba(247,201,0,.15);
+      color: var(--yellow);
+      border: 1px solid rgba(247,201,0,.3);
+      border-radius: var(--radius-pill);
+      padding: 6px 16px; font-size: 13px; font-weight: 600;
+      position: relative;
+    }
+
+    /* ── LAYOUT ──────────────────────────────────────── */
+    .content-wrap {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 64px 24px 80px;
+    }
+
+    /* ── STEPS ───────────────────────────────────────── */
+    .steps-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .steps-header h2 {
+      font-family: var(--font-display);
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 900; color: var(--navy);
+      margin-bottom: 12px;
+    }
+    .steps-header p { color: var(--slate-500); font-size: 15px; }
+
+    .steps-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 52px;
+      position: relative;
+    }
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      left: 23px; top: 36px; bottom: 36px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--blue), rgba(0,112,252,.1));
+    }
+    .step-card {
+      display: flex; gap: 20px;
+      align-items: flex-start;
+      padding: 20px 0;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--blue); color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-weight: 900; font-size: 18px;
+      box-shadow: 0 0 0 4px var(--white), 0 0 0 6px rgba(0,112,252,.15);
+      position: relative; z-index: 1;
+    }
+    .step-content { flex: 1; padding-top: 8px; }
+    .step-content h3 {
+      font-family: var(--font-display);
+      font-size: 17px; font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .step-content p { color: var(--slate-700); font-size: 15px; }
+
+    /* ── EMAIL CARD ─────────────────────────────────── */
+    .email-card {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .email-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.03) 1px, transparent 0);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+    .email-card-icon {
+      width: 72px; height: 72px;
+      background: rgba(0,112,252,.2);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      border: 1px solid rgba(0,112,252,.3);
+    }
+    .email-card-icon i { font-size: 36px; color: #7DD3FC; }
+    .email-card h2 {
+      font-family: var(--font-display);
+      font-size: 24px; font-weight: 900;
+      color: var(--white); margin-bottom: 10px;
+      position: relative;
+    }
+    .email-card p { color: rgba(255,255,255,.7); font-size: 15px; margin-bottom: 24px; position: relative; }
+    .email-template {
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      text-align: left;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .email-template-label {
+      font-size: 11px; font-weight: 700;
+      color: rgba(255,255,255,.5);
+      text-transform: uppercase; letter-spacing: .08em;
+      margin-bottom: 12px;
+    }
+    .email-template-row {
+      display: flex; align-items: flex-start;
+      gap: 12px; margin-bottom: 10px;
+    }
+    .email-template-row:last-child { margin-bottom: 0; }
+    .email-template-key {
+      min-width: 80px; font-size: 12px; font-weight: 700;
+      color: rgba(255,255,255,.5);
+    }
+    .email-template-val {
+      font-size: 14px; color: rgba(255,255,255,.9);
+      font-weight: 500; word-break: break-all;
+    }
+    .email-template-val.highlight {
+      color: #7DD3FC; font-weight: 700;
+    }
+    .email-actions {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+      position: relative;
+    }
+    .email-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 24px; border-radius: var(--radius-pill);
+      font-weight: 700; font-size: 15px;
+      text-decoration: none; transition: all .2s;
+      cursor: pointer;
+    }
+    .email-btn.primary {
+      background: var(--blue); color: var(--white);
+      border: none;
+    }
+    .email-btn.primary:hover { background: var(--blue-dark); transform: translateY(-2px); }
+    .email-btn.outline {
+      background: rgba(255,255,255,.1); color: var(--white);
+      border: 1px solid rgba(255,255,255,.25);
+    }
+    .email-btn.outline:hover { background: rgba(255,255,255,.2); transform: translateY(-2px); }
+
+    /* Copy button */
+    .copy-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: none; border: none;
+      color: rgba(255,255,255,.5); font-size: 12px; font-weight: 600;
+      cursor: pointer; padding: 4px 8px; border-radius: 6px;
+      transition: all .2s; vertical-align: middle;
+      font-family: var(--font-body);
+    }
+    .copy-btn:hover { background: rgba(255,255,255,.1); color: rgba(255,255,255,.8); }
+    .copy-btn.copied { color: #6EE7B7; }
+
+    /* ── INFO BOXES ──────────────────────────────────── */
+    .info-box {
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex; gap: 16px;
+      align-items: flex-start;
+    }
+    .info-box.blue { background: var(--blue-light); border: 1px solid rgba(0,112,252,.2); }
+    .info-box.green { background: #F0FDF4; border: 1px solid rgba(16,185,129,.2); }
+    .info-box.yellow { background: #FFFBEB; border: 1px solid rgba(247,201,0,.3); }
+    .info-box.red { background: var(--red-light); border: 1px solid rgba(239,68,68,.2); }
+    .info-box i { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+    .info-box.blue i { color: var(--blue); }
+    .info-box.green i { color: var(--green); }
+    .info-box.yellow i { color: #D97706; }
+    .info-box.red i { color: var(--red); }
+    .info-box-content h3 { font-weight: 700; font-size: 14px; margin-bottom: 6px; color: var(--slate-900); }
+    .info-box-content p { font-size: 14px; margin-bottom: 0; color: var(--slate-700); }
+
+    /* ── DATA TABLE ──────────────────────────────────── */
+    .section { margin-bottom: 48px; }
+    .section h2 {
+      font-family: var(--font-display);
+      font-size: clamp(18px, 3vw, 22px); font-weight: 800;
+      color: var(--navy); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section h2 i { font-size: 20px; color: var(--blue); }
+    .section p { color: var(--slate-700); font-size: 15px; margin-bottom: 14px; }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--slate-200);
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .data-table thead tr { background: var(--navy); color: var(--white); }
+    .data-table thead th {
+      padding: 12px 16px; text-align: left;
+      font-weight: 700; font-size: 13px;
+    }
+    .data-table tbody tr { background: var(--white); }
+    .data-table tbody tr:nth-child(even) { background: var(--slate-50); }
+    .data-table tbody td {
+      padding: 12px 16px; color: var(--slate-700);
+      border-top: 1px solid var(--slate-200);
+      vertical-align: top;
+    }
+    .data-table tbody td:first-child { font-weight: 600; color: var(--slate-900); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: var(--radius-pill);
+      font-size: 12px; font-weight: 700;
+    }
+    .badge.green { background: #D1FAE5; color: #065F46; }
+    .badge.red { background: #FEE2E2; color: #991B1B; }
+    .badge.yellow { background: #FEF3C7; color: #92400E; }
+
+    /* Divider */
+    .divider { height: 1px; background: var(--slate-200); margin: 40px 0; }
+
+    /* ── FOOTER ──────────────────────────────────────── */
+    footer {
+      background: var(--slate-900);
+      padding: 40px 24px;
+      text-align: center;
+    }
+    footer p { color: var(--slate-400); font-size: 13px; margin-bottom: 12px; }
+    .footer-links {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;
+      margin-bottom: 16px;
+    }
+    .footer-links a {
+      color: var(--slate-400); text-decoration: none;
+      font-size: 13px; font-weight: 500; transition: color .2s;
+    }
+    .footer-links a:hover { color: var(--white); }
+    .footer-links a.active { color: var(--blue); }
+
+    /* ── RESPONSIVE ──────────────────────────────────── */
+    @media (max-width: 600px) {
+      .content-wrap { padding: 40px 16px 60px; }
+      .email-card { padding: 28px 20px; }
+      .email-actions { flex-direction: column; }
+      .email-btn { justify-content: center; }
+      .steps-grid::before { left: 19px; }
+      .step-num { width: 40px; height: 40px; font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">
+    <img src="logo.png" alt="Syupeo" />
+    <span>Syupeo</span>
+  </a>
+  <a href="index.html" class="navbar-back">
+    <i class="ph ph-arrow-left"></i>
+    Kembali ke Beranda
+  </a>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-badge">
+    <i class="ph ph-user-minus"></i>
+    Manajemen Akun
+  </div>
+  <h1>Hapus Akun Syupeo</h1>
+  <p>Anda berhak menghapus akun dan data pribadi Anda. Proses selesai dalam 30 hari setelah permintaan diterima.</p>
+  <div class="effective-date">
+    <i class="ph ph-clock"></i>
+    Data dihapus dalam 30 hari kerja
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content-wrap">
+
+  <div class="info-box yellow">
+    <i class="ph ph-warning-circle"></i>
+    <div class="info-box-content">
+      <h3>Penting Sebelum Melanjutkan</h3>
+      <p>Penghapusan akun bersifat <strong>permanen dan tidak dapat dibatalkan</strong>. Pastikan Anda sudah mengekspor semua data transaksi yang dibutuhkan sebelum mengajukan penghapusan. Tunggakan pembayaran kulakan yang belum diselesaikan tetap menjadi kewajiban Anda.</p>
+    </div>
+  </div>
+
+  <!-- STEPS -->
+  <div class="steps-header">
+    <h2>Cara Mengajukan Hapus Akun</h2>
+    <p>Ikuti 3 langkah sederhana berikut untuk menghapus akun Anda</p>
+  </div>
+
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>Siapkan informasi akun Anda</h3>
+        <p>Catat nama lengkap, alamat email, dan nomor telepon yang terdaftar di akun Syupeo Anda. Informasi ini diperlukan untuk verifikasi identitas.</p>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>Kirim email permintaan penghapusan</h3>
+        <p>Kirim email ke <strong>diyanto2911@gmail.com</strong> dengan subject <strong>"Hapus Akun Syupeo"</strong>. Gunakan template yang tersedia di bawah — cukup klik tombol "Buka di Email" dan isi datanya.</p>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>Tunggu konfirmasi dari tim Syupeo</h3>
+        <p>Tim kami akan memverifikasi identitas Anda dalam <strong>2 hari kerja</strong> dan mengirimkan konfirmasi penghapusan. Seluruh data akan dihapus dalam <strong>30 hari kerja</strong> setelah konfirmasi.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMAIL CARD -->
+  <div class="email-card">
+    <div class="email-card-icon">
+      <i class="ph ph-envelope-open"></i>
+    </div>
+    <h2>Template Email Penghapusan Akun</h2>
+    <p>Gunakan template berikut. Isi bagian yang ditandai <span style="color:#7DD3FC;font-weight:700;">[dalam kurung]</span> dengan data Anda.</p>
+
+    <div class="email-template">
+      <div class="email-template-label">📧 Format Email</div>
+      <div class="email-template-row">
+        <span class="email-template-key">Kepada:</span>
+        <span class="email-template-val highlight">diyanto2911@gmail.com
+          <button class="copy-btn" onclick="copyText('diyanto2911@gmail.com', this)">
+            <i class="ph ph-copy"></i> Salin
+          </button>
+        </span>
+      </div>
+      <div class="email-template-row">
+        <span class="email-template-key">Subject:</span>
+        <span class="email-template-val highlight">Hapus Akun Syupeo
+          <button class="copy-btn" onclick="copyText('Hapus Akun Syupeo', this)">
+            <i class="ph ph-copy"></i> Salin
+          </button>
+        </span>
+      </div>
+      <div class="email-template-row">
+        <span class="email-template-key">Isi:</span>
+        <span class="email-template-val" id="email-body" style="white-space:pre-line;">Halo Tim Syupeo,
+
+Saya mengajukan permintaan penghapusan akun Syupeo saya.
+
+Nama Lengkap: [Nama Anda]
+Email Terdaftar: [email@anda.com]
+No. HP Terdaftar: [08xx-xxxx-xxxx]
+Nama Toko: [Nama Toko Anda]
+
+Alasan (opsional): [Alasan penghapusan]
+
+Saya memahami bahwa penghapusan akun bersifat permanen dan tidak dapat dibatalkan.
+
+Terima kasih.</span>
+      </div>
+    </div>
+
+    <div class="email-actions">
+      <a href="mailto:diyanto2911@gmail.com?subject=Hapus%20Akun%20Syupeo&body=Halo%20Tim%20Syupeo%2C%0A%0ASaya%20mengajukan%20permintaan%20penghapusan%20akun%20Syupeo%20saya.%0A%0ANama%20Lengkap%3A%20%5BNama%20Anda%5D%0AEmail%20Terdaftar%3A%20%5Bemail%40anda.com%5D%0ANo.%20HP%20Terdaftar%3A%20%5B08xx-xxxx-xxxx%5D%0ANama%20Toko%3A%20%5BNama%20Toko%20Anda%5D%0A%0AAlasan%20(opsional)%3A%20%5BAlasan%20penghapusan%5D%0A%0ASaya%20memahami%20bahwa%20penghapusan%20akun%20bersifat%20permanen%20dan%20tidak%20dapat%20dibatalkan.%0A%0ATerima%20kasih." class="email-btn primary">
+        <i class="ph ph-envelope-simple"></i>
+        Buka di Email
+      </a>
+      <button class="email-btn outline" onclick="copyEmailBody()">
+        <i class="ph ph-copy"></i>
+        Salin Template
+      </button>
+    </div>
+  </div>
+
+  <!-- DATA RETENTION TABLE -->
+  <section class="section">
+    <h2><i class="ph ph-database"></i> Data yang Akan Dihapus vs Dipertahankan</h2>
+    <p>Sesuai Kebijakan Privasi dan kewajiban hukum yang berlaku di Indonesia:</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Jenis Data</th>
+          <th>Status</th>
+          <th>Keterangan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Profil akun (nama, email, HP)</td>
+          <td><span class="badge red"><i class="ph ph-trash"></i> Dihapus</span></td>
+          <td>Dihapus dalam 30 hari kerja</td>
+        </tr>
+        <tr>
+          <td>Data lokasi toko (GPS)</td>
+          <td><span class="badge red"><i class="ph ph-trash"></i> Dihapus</span></td>
+          <td>Dihapus bersamaan dengan profil</td>
+        </tr>
+        <tr>
+          <td>Data inventori & produk toko</td>
+          <td><span class="badge red"><i class="ph ph-trash"></i> Dihapus</span></td>
+          <td>Dihapus dalam 30 hari kerja</td>
+        </tr>
+        <tr>
+          <td>Token notifikasi & log perangkat</td>
+          <td><span class="badge red"><i class="ph ph-trash"></i> Dihapus</span></td>
+          <td>Dihapus segera saat akun dihapus</td>
+        </tr>
+        <tr>
+          <td>Riwayat transaksi kasir</td>
+          <td><span class="badge yellow"><i class="ph ph-archive"></i> Dipertahankan 5 Tahun</span></td>
+          <td>Wajib disimpan sesuai UU Pembukuan No. 8/1997 tentang Dokumen Perusahaan. Data dianonimkan dan tidak dapat diakses oleh siapapun.</td>
+        </tr>
+        <tr>
+          <td>Riwayat kulakan B2B</td>
+          <td><span class="badge yellow"><i class="ph ph-archive"></i> Dipertahankan 5 Tahun</span></td>
+          <td>Diperlukan untuk audit keuangan dan perpajakan. Data dianonimkan.</td>
+        </tr>
+        <tr>
+          <td>Data shift kasir</td>
+          <td><span class="badge yellow"><i class="ph ph-archive"></i> Dipertahankan 5 Tahun</span></td>
+          <td>Merupakan bagian dari catatan keuangan usaha yang wajib disimpan.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="info-box blue">
+      <i class="ph ph-info"></i>
+      <div class="info-box-content">
+        <h3>Anonimisasi Data yang Dipertahankan</h3>
+        <p>Untuk data yang wajib disimpan sesuai hukum, semua informasi identitas pribadi (nama, email, nomor telepon) akan dihapus dan digantikan dengan kode anonim. Data tersebut tidak dapat ditelusuri kembali ke identitas Anda.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section">
+    <h2><i class="ph ph-question"></i> Pertanyaan yang Sering Diajukan</h2>
+
+    <div class="info-box green" style="margin-bottom:16px;">
+      <i class="ph ph-check-circle"></i>
+      <div class="info-box-content">
+        <h3>Berapa lama prosesnya?</h3>
+        <p>Tim kami merespons dalam <strong>2 hari kerja</strong>. Penghapusan data selesai dalam <strong>30 hari kerja</strong> sejak konfirmasi dikirimkan.</p>
+      </div>
+    </div>
+
+    <div class="info-box blue" style="margin-bottom:16px;">
+      <i class="ph ph-question"></i>
+      <div class="info-box-content">
+        <h3>Apakah kasir di toko saya juga kehilangan akses?</h3>
+        <p>Ya. Saat akun Owner Toko dihapus, seluruh akun kasir yang terhubung dengan toko tersebut juga akan dinonaktifkan secara otomatis.</p>
+      </div>
+    </div>
+
+    <div class="info-box yellow" style="margin-bottom:16px;">
+      <i class="ph ph-warning"></i>
+      <div class="info-box-content">
+        <h3>Saya masih punya tagihan kulakan yang belum dibayar</h3>
+        <p>Penghapusan akun tidak menghapus kewajiban pembayaran. Harap lunasi semua tagihan kulakan sebelum mengajukan penghapusan akun, atau hubungi tim kami untuk menjadwalkan pembayaran.</p>
+      </div>
+    </div>
+
+    <div class="info-box red">
+      <i class="ph ph-x-circle"></i>
+      <div class="info-box-content">
+        <h3>Bisakah saya membatalkan penghapusan?</h3>
+        <p>Penghapusan dapat dibatalkan hanya dalam <strong>3 hari kerja</strong> pertama setelah konfirmasi dikirimkan. Setelah itu, proses tidak dapat dikembalikan. Hubungi diyanto2911@gmail.com segera jika ingin membatalkan.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <p style="text-align:center;color:var(--slate-500);font-size:14px;margin-bottom:8px;">
+    Butuh bantuan lain? Tim Syupeo siap membantu Anda.
+  </p>
+  <p style="text-align:center;">
+    <a href="mailto:diyanto2911@gmail.com" style="color:var(--blue);font-weight:700;text-decoration:none;font-size:15px;">
+      <i class="ph ph-envelope-simple" style="vertical-align:middle;"></i>
+      diyanto2911@gmail.com
+    </a>
+  </p>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-links">
+    <a href="index.html">Beranda</a>
+    <a href="privacy-policy.html">Kebijakan Privasi</a>
+    <a href="terms-of-service.html">Syarat Penggunaan</a>
+    <a href="delete-account.html" class="active">Hapus Akun</a>
+  </div>
+  <p>© 2026 PT Mudahkan Digital Indonesia. Hak cipta dilindungi undang-undang.</p>
+  <p>Syupeo — Platform Kulakan & Kasir POS untuk UMKM Indonesia</p>
+</footer>
+
+<script>
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="ph ph-check"></i> Tersalin!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = original;
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  function copyEmailBody() {
+    const body = document.getElementById('email-body').innerText;
+    navigator.clipboard.writeText(body).then(() => {
+      const btn = document.querySelectorAll('.email-btn.outline')[0];
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="ph ph-check"></i> Tersalin!';
+      btn.style.background = 'rgba(16,185,129,.2)';
+      setTimeout(() => {
+        btn.innerHTML = original;
+        btn.style.background = '';
+      }, 2500);
+    });
+  }
+</script>
+
+</body>
+</html>
+

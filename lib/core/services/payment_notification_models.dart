@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-/// Peran perangkat dalam ekosistem pembayaran DPOS
+/// Peran perangkat dalam ekosistem pembayaran Syupeo
 enum DevicePaymentRole {
   /// Mode Kasir: Menerima relay pembayaran dari cloud dan membunyikan TTS Soundbox
   cashierOnly,

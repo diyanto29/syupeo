@@ -60,48 +60,52 @@ function QuotationsContent() {
   const price1Year = Number(tiers['12_months'] ?? 399000);
   const priceLifetime = Number(tiers['lifetime'] ?? 799000);
 
-  // 1. Software Licenses Presets (Live sync with subscription_plans)
+  // 1. Syupeo Retail Starter Kits Presets (@ Rp 200.000)
   const softwarePresets = useMemo(
     () => [
-      { description: 'Langganan Mangga POS PRO (1 Tahun)', unit_price: price1Year, tag: '1 Tahun' },
-      { description: 'Langganan Mangga POS PRO (6 Bulan)', unit_price: price6Months, tag: '6 Bulan' },
-      { description: 'Langganan Mangga POS PRO (3 Bulan)', unit_price: price3Months, tag: '3 Bulan' },
-      { description: 'Langganan Mangga POS PRO (1 Bulan)', unit_price: price1Month, tag: '1 Bulan' },
-      { description: 'Langganan Mangga POS PRO Lifetime (Permanen)', unit_price: priceLifetime, tag: 'Lifetime' },
+      { description: 'Paket 01 — Toko Pemula (Kebutuhan Harian / Sembako)', unit_price: 200000, tag: 'Sembako' },
+      { description: 'Paket 02 — Gen Z Box (Aksesori Anak Muda Viral)', unit_price: 200000, tag: 'Aksesori' },
+      { description: 'Paket 03 — Beauty Box Makarizo (Stok Reseller)', unit_price: 200000, tag: 'Beauty' },
+      { description: 'Paket 04 — Air Mineral (VICA 24 Btl + Pure Life Galon)', unit_price: 200000, tag: 'Air Mineral' },
     ],
-    [price1Year, price6Months, price3Months, price1Month, priceLifetime]
+    []
   );
 
-  // 2. Hardware Bundles Presets (Perangkat Kasir Lengkap + Bonus Free Lisensi PRO)
+  // 2. Pasokan Stok Kulakan / Restock Rutin
   const hardwareBundles = [
     {
-      name: 'Paket Starter Mobile (Printer 58mm + Free PRO 6 Bulan)',
-      description: 'Paket Starter Mobile: Printer Thermal Bluetooth 58mm + 5 Roll Kertas + Free Lisensi PRO 6 Bulan Penuh',
-      unit_price: 499000,
-      badge: 'Hemat',
+      name: 'Restock Sembako: Beras Premium 5kg (5 Sak)',
+      description: 'Restock Sembako: Beras Premium 5kg (5 Sak) langsung gudang regional',
+      unit_price: 340000,
+      badge: 'Sembako',
     },
     {
-      name: 'Paket Meja Kafe & Resto (Tablet + Stand + Printer + Laci + Free PRO 1 Tahun)',
-      description: 'Paket Meja Kafe & Resto: Tablet Kasir Android + Stand Meja + Printer 58mm + Cash Drawer Logam RJ11 + BONUS FREE Lisensi PRO 1 Tahun Penuh',
-      unit_price: 2499000,
-      badge: 'Best Seller 👑',
+      name: 'Restock Air: 5 Karton VICA 600mL (120 Botol Tutup Kuning)',
+      description: 'Restock Air Minum: 5 Karton VICA 600mL isi 24 botol tutup kuning resmi',
+      unit_price: 420000,
+      badge: 'Best Seller 💧',
     },
     {
-      name: 'Paket Super Ritel & Minimarket (Tablet 10" + Scanner + Printer + Laci + Free PRO 1 Tahun)',
-      description: 'Paket Super Ritel & Minimarket: Tablet 10" + Barcode Scanner Wireless 1D/2D + Printer Thermal + Cash Drawer + Master 10.000 Barcode + BONUS FREE Lisensi PRO 1 Tahun',
-      unit_price: 3499000,
-      badge: 'Super Lengkap',
+      name: 'Restock Air: 5 Galon Nestlé Pure Life 19 Liter',
+      description: 'Restock Galon: 5 Galon Nestlé Pure Life 19L untuk pelanggan rutin',
+      unit_price: 350000,
+      badge: 'Air Minum',
+    },
+    {
+      name: 'Restock Gen Z Box: 50 Pcs Aksesori Viral Terlaris',
+      description: 'Restock Gen Z Box: 50 pcs gantungan kunci, pop socket, pelindung kabel & scrunchie',
+      unit_price: 380000,
+      badge: 'Viral 🔥',
     },
   ];
 
-  // 3. Eceran Hardware & Layanan
+  // 3. Perlengkapan Kasir & Toko Tambahan (Opsional)
   const extraHardwareItems = [
-    { description: 'Printer Thermal Bluetooth 58mm Portable', unit_price: 250000 },
-    { description: 'Printer Thermal Auto-Cutter 80mm (USB + Bluetooth)', unit_price: 650000 },
-    { description: 'Laci Uang Kasir Logam (Cash Drawer RJ11)', unit_price: 350000 },
-    { description: 'Barcode Scanner Wireless 1D/2D QR', unit_price: 290000 },
-    { description: 'Kertas Struk Thermal 58x30mm (Isi 10 Roll)', unit_price: 50000 },
-    { description: 'Jasa Setup Database Menu Awal & Training Kasir', unit_price: 100000 },
+    { description: 'Printer Thermal Bluetooth 58mm Portable Kasir', unit_price: 250000 },
+    { description: 'Barcode Scanner Wireless 1D/2D QR Cepat', unit_price: 290000 },
+    { description: 'Stand Holder Meja untuk HP / Tablet Kasir Logam', unit_price: 85000 },
+    { description: 'Kertas Struk Thermal 58x30mm (Isi 10 Roll)', unit_price: 45000 },
+    { description: 'Spanduk Banner Resmi Toko Retail Syupeo (160x60cm)', unit_price: 65000 },
   ];
 
   // Create Form State
@@ -111,11 +115,11 @@ function QuotationsContent() {
   const [formPartnerId, setFormPartnerId] = useState('');
   const [formLeadId, setFormLeadId] = useState('');
   const [formItems, setFormItems] = useState<QuotationItem[]>([
-    { description: 'Langganan Mangga POS PRO (1 Tahun)', qty: 1, unit_price: 399000, total_price: 399000 },
+    { description: 'Paket 01 — Toko Pemula (Kebutuhan Harian / Sembako)', qty: 1, unit_price: 200000, total_price: 200000 },
   ]);
   const [formDiscount, setFormDiscount] = useState<number>(0);
   const [formValidDays, setFormValidDays] = useState<number>(14);
-  const [formNotes, setFormNotes] = useState('Garansi support teknis 7 hari seminggu. Hardware garansi 1 tahun.');
+  const [formNotes, setFormNotes] = useState('Aplikasi Kasir POS & Toko Online 100% GRATIS tanpa biaya sewa. Pasokan stok resmi dari gudang regional Syupeo.');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -282,30 +286,30 @@ function QuotationsContent() {
     setFormItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // 1-Click Comparison Preset: Option A (Software Only) vs Option B (Hardware Bundle + Free License)
+  // 1-Click Comparison Preset: Option A (Toko Pemula) vs Option B (Gen Z Box)
   const handleApplyComparisonPreset = () => {
     setFormItems([
       {
         description:
-          '[PILIHAN A - HEMAT (SOFTWARE SAJA)] Langganan Mangga POS PRO 1 Tahun Penuh (Bisa pakai HP / Tablet sendiri)',
+          '[PILIHAN A - KEBUTUHAN POKOK] Paket 01 — Toko Pemula (Beras 2kg, Minyak 1L, Gula 1kg, Mi, Kopi, Sabun) • Stok Siap Jual + Aplikasi POS Gratis',
         qty: 1,
-        unit_price: price1Year,
-        total_price: price1Year,
+        unit_price: 200000,
+        total_price: 200000,
       },
       {
         description:
-          '[PILIHAN B - TERIMA BERES (PAKET MESIN KASIR)] Paket Meja Kafe & Resto (Tablet + Stand Meja + Printer 58mm + Cash Drawer RJ11) • BONUS: GRATIS Lisensi PRO 1 Tahun Penuh',
+          '[PILIHAN B - TREN VIRAL] Paket 02 — Gen Z Box (Phone Charm, Pop Socket, Scrunchie, Kaos Kaki Korea, Mini Pouch) • Stok Siap Jual + Aplikasi POS Gratis',
         qty: 1,
-        unit_price: 2499000,
-        total_price: 2499000,
+        unit_price: 200000,
+        total_price: 200000,
       },
     ]);
     setFormDiscount(0);
     setFormNotes(
-      'Klien dipersilakan memilih salah satu opsi di atas yang paling sesuai dengan kebutuhan usaha:\n' +
-      '• Pilihan A: Investasi paling hemat, siap langsung dipakai di smartphone/tablet yang sudah dimiliki.\n' +
-      '• Pilihan B: Perangkat kasir lengkap siap pakai di meja kasir toko/kafe Anda, garansi hardware resmi 1 tahun.\n' +
-      '• Keduanya sudah termasuk gratis pendampingan input menu awal & panduan kasir sampai mahir.'
+      'Calon mitra dipersilakan memilih salah satu paket awal di atas (@ Rp 200.000):\n' +
+      '• Pilihan A: Sembako kebutuhan harian dengan perputaran repeat order sangat cepat di lingkungan tetangga.\n' +
+      '• Pilihan B: Aksesori Gen Z margin tinggi yang sangat diminati pelajar, mahasiswa, dan media sosial.\n' +
+      '• Seluruh paket sudah termasuk Backoffice, Aplikasi Kasir POS & Toko Online 100% GRATIS tanpa biaya sewa.'
     );
   };
 
@@ -447,13 +451,13 @@ function QuotationsContent() {
       /\[(PILIHAN|OPSI)\s*[A-Z]/i.test(it.description)
     );
 
-    let msg = `*SURAT PENAWARAN RESMI MANGGA POS*\n`;
+    let msg = `*SURAT PENAWARAN RESMI PAKET RETAIL SYUPEO*\n`;
     msg += `No. Ref: *${q.quote_number}*\n`;
     msg += `Kepada: *${q.client_name}* (${q.client_business_name})\n\n`;
-    msg += `Halo Kak, terima kasih atas ketertarikan Anda menggunakan sistem kasir modern *Mangga POS*. `;
+    msg += `Halo Kak, terima kasih atas ketertarikan Anda bermitra sebagai *Toko Retail Syupeo*. Dari Stok Pertama, Sampai ke Tangan Pelanggan! `;
 
     if (isComparison) {
-      msg += `Berikut kami siapkan *2 Opsi Solusi* yang dapat dipilih sesuai kebutuhan & alokasi budget usaha Kakak:\n\n`;
+      msg += `Berikut kami siapkan *2 Opsi Paket Usaha Retail (@ Rp 200.000)* yang dapat dipilih sesuai sasaran pelanggan Kakak:\n\n`;
 
       q.items.forEach((item, idx) => {
         const optionMatch = item.description.match(/\[(PILIHAN\s*[A-Z][^\]]*)\]/i);
@@ -462,10 +466,10 @@ function QuotationsContent() {
 
         msg += `👉 *${optionLabel.toUpperCase()}*\n`;
         msg += `   📦 *${cleanDesc}*\n`;
-        msg += `   💵 *Investasi: Rp ${Number(item.unit_price).toLocaleString('id-ID')}*\n\n`;
+        msg += `   💵 *Modal Awal: Rp ${Number(item.unit_price).toLocaleString('id-ID')}*\n\n`;
       });
 
-      msg += `💡 *Keterangan:* Kakak cukup *memilih salah satu opsi* di atas. Jika memilih Paket Mesin Kasir, perangkat kasir langsung lengkap dan lisensi PRO sudah gratis selama 1 tahun.\n`;
+      msg += `💡 *Keterangan:* Kakak cukup *memilih salah satu paket* di atas untuk memulai. Aplikasi Kasir POS & Toko Online 100% GRATIS tanpa biaya sewa bulanan.\n`;
     } else {
       msg += `Berikut kami lampirkan rincian penawaran paket:\n\n`;
 
@@ -589,10 +593,10 @@ function QuotationsContent() {
               setFormPartnerId(currentUserRole === 'partner' ? (currentPartnerId || '') : '');
               setFormItems([
                 {
-                  description: 'Langganan Mangga POS PRO (1 Tahun)',
+                  description: 'Paket 01 — Toko Pemula (Kebutuhan Harian / Sembako)',
                   qty: 1,
-                  unit_price: price1Year,
-                  total_price: price1Year,
+                  unit_price: 200000,
+                  total_price: 200000,
                 },
               ]);
               setFormDiscount(0);
@@ -1241,9 +1245,12 @@ function QuotationsContent() {
               {/* Brand Header */}
               <div className="flex items-start justify-between border-b pb-6 border-slate-200">
                 <div>
-                  <div className="text-2xl font-black tracking-tight text-orange-600">MANGGA POS</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">Sistem Kasir & Operasional Toko Modern</div>
-                  <div className="text-[11px] text-slate-500">mudahkan.online • WhatsApp: 0812-3456-7890</div>
+                  <div className="flex items-center gap-2">
+                    <img src="/syupeo-icon.svg" alt="Syupeo" className="w-6 h-6 object-contain" />
+                    <span className="text-2xl font-black tracking-tight text-[#0070fc]">SYUPEO</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">Aplikasi Toko Retail Online • Closed-Loop Supply Chain</div>
+                  <div className="text-[11px] text-slate-500">syupeo.com • Hotline: 0856-2427-7920</div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-black text-slate-900">SURAT PENAWARAN</div>

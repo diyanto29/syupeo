@@ -26,7 +26,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
       return;
     }
 
-    final methods = ref.read(paymentMethodsProvider).value ?? const [];
+    final methods = ref.read(paymentMethodsProvider).valueOrNull ?? const [];
     final activeCount = methods.where((item) => item.isActive).length;
     if (!isActive && method.isActive && activeCount <= 1) {
       _showSnack('Sisakan minimal satu metode pembayaran aktif.');
@@ -63,14 +63,14 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
       return;
     }
 
-    final bootstrap = ref.read(homeBootstrapProvider).value;
+    final bootstrap = ref.read(homeBootstrapProvider).valueOrNull;
     final outletId = bootstrap?.currentOutlet?.id;
     if (outletId == null) {
       _showSnack('Pilih outlet aktif terlebih dahulu.');
       return;
     }
 
-    final methods = ref.read(paymentMethodsProvider).value ?? const [];
+    final methods = ref.read(paymentMethodsProvider).valueOrNull ?? const [];
     final nextSortOrder = methods.isEmpty
         ? 0
         : methods
@@ -189,7 +189,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 760;
 
-    final bootstrap = bootstrapAsync.value;
+    final bootstrap = bootstrapAsync.valueOrNull;
     final outlet = bootstrap?.currentOutlet;
 
     return Scaffold(
@@ -198,7 +198,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
       appBar: isWide
           ? AppTabletHeader(
               title: const Text('Konfigurasi Pembayaran'),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
               actions: [
                 IconButton(
                   tooltip: 'Refresh',

@@ -16,6 +16,10 @@ import 'package:dpos/core/routes/routes_name.dart';
 import 'package:dpos/features/auth/data/auth_repository.dart';
 import 'package:dpos/core/widgets/app_tablet_nav.dart';
 
+/// Feature toggle: Saat ini 1 akun difokuskan untuk 1 outlet utama.
+/// Ubah ke true jika ingin membuka kembali pembuatan multi-cabang/outlet.
+const bool kEnableMultiOutlet = false;
+
 final outletManagementOutletsProvider = FutureProvider.autoDispose
     .family<List<Outlet>, String>((ref, businessId) async {
       return ref
@@ -38,7 +42,7 @@ class OutletManagementScreen extends ConsumerWidget {
       appBar: isTablet
           ? const AppTabletHeader(
               title: Text('Manajemen Outlet'),
-              badge: AppTabletBadge(label: 'Mangga POS'),
+              badge: AppTabletBadge(label: 'Syupeo'),
             )
           : AppBar(
               title: const Text(
@@ -80,6 +84,25 @@ class OutletManagementView extends ConsumerStatefulWidget {
 
 class _OutletManagementViewState extends ConsumerState<OutletManagementView> {
   bool _isSubmitting = false;
+  bool _hasAutoSynced = false;
+
+  void _autoSyncCurrentOutletIfNeeded(List<Outlet> outlets, String? currentOutletId) {
+    if (_hasAutoSynced || _isSubmitting || outlets.isEmpty) return;
+    final activeOutlets = outlets.where((o) => o.isActive).toList();
+    final target = activeOutlets.isNotEmpty ? activeOutlets.first : outlets.first;
+    if (currentOutletId != target.id) {
+      _hasAutoSynced = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        try {
+          await ref.read(authRepositoryProvider).setCurrentOutletId(target.id);
+          ref.invalidate(homeBootstrapProvider);
+        } catch (e) {
+          debugPrint('[OutletManagement] autoSync error: $e');
+        }
+      });
+    }
+  }
 
   bool get _canManageOutlets {
     final role =
@@ -155,7 +178,7 @@ class _OutletManagementViewState extends ConsumerState<OutletManagementView> {
                 const Icon(
                   Icons.store_rounded,
                   size: 56,
-                  color: Color(0xFFFF7A00),
+                  color: Color(0xFF0070FC),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -350,10 +373,16 @@ class _OutletManagementViewState extends ConsumerState<OutletManagementView> {
     return outletsAsync.when(
       data: (outlets) {
         final activeCount = outlets.where((o) => o.isActive).length;
+        final effectiveCurrentOutlet = currentOutlet ?? (outlets.isNotEmpty ? outlets.first : null);
+
+        // Auto-sinkronisasi outlet jika outlet ada tapi belum terpilih di bootstrap
+        if (effectiveCurrentOutlet != null && widget.bootstrap.currentOutletId != effectiveCurrentOutlet.id) {
+          _autoSyncCurrentOutletIfNeeded(outlets, widget.bootstrap.currentOutletId);
+        }
 
         return Scaffold(
           backgroundColor: Colors.transparent,
-          floatingActionButton: _canManageOutlets
+          floatingActionButton: (kEnableMultiOutlet && _canManageOutlets)
               ? FloatingActionButton.extended(
                   onPressed: _isSubmitting ? null : () => _showOutletFormSheet(),
                   backgroundColor: scheme.primary,
@@ -372,7 +401,7 @@ class _OutletManagementViewState extends ConsumerState<OutletManagementView> {
               // ── Header Summary Card (Clean & Elegant) ──
               _ModernHeaderCard(
                 businessName: business?.name ?? 'Bisnis Anda',
-                currentOutletName: currentOutlet?.name ?? 'Belum dipilih',
+                currentOutletName: effectiveCurrentOutlet?.name ?? (outlets.isNotEmpty ? outlets.first.name : 'Belum dipilih'),
                 activeCount: activeCount,
                 totalCount: outlets.length,
               ),
@@ -383,7 +412,7 @@ class _OutletManagementViewState extends ConsumerState<OutletManagementView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Daftar Cabang Toko',
+                    kEnableMultiOutlet ? 'Daftar Cabang Toko' : 'Outlet Operasional Toko',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: scheme.onSurface,
@@ -402,12 +431,12 @@ class _OutletManagementViewState extends ConsumerState<OutletManagementView> {
 
               if (outlets.isEmpty)
                 _EmptyOutletState(
-                  canManageOutlets: _canManageOutlets,
-                  onAddPressed: _canManageOutlets ? _showOutletFormSheet : null,
+                  canManageOutlets: _canManageOutlets && kEnableMultiOutlet,
+                  onAddPressed: (_canManageOutlets && kEnableMultiOutlet) ? _showOutletFormSheet : null,
                 )
               else
                 ...outlets.map((outlet) {
-                  final isCurrent = currentOutlet?.id == outlet.id;
+                  final isCurrent = effectiveCurrentOutlet?.id == outlet.id || (outlets.length == 1 && outlet.isActive);
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _ElegantOutletCard(
@@ -1066,7 +1095,7 @@ class _ElegantOutletCard extends StatelessWidget {
             child: const Icon(
               Icons.add_location_alt_rounded,
               size: 16,
-              color: Color(0xFFEA580C),
+              color: Color(0xFF005ECC),
             ),
           ),
           const SizedBox(width: 10),
@@ -1100,11 +1129,11 @@ class _ElegantOutletCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF7A00),
+                  color: const Color(0xFF0070FC),
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF7A00).withValues(alpha: 0.25),
+                      color: const Color(0xFF0070FC).withValues(alpha: 0.25),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -1506,7 +1535,7 @@ class _OutletFormSheetState extends State<_OutletFormSheet> {
                         const Icon(
                           Icons.radar_rounded,
                           size: 18,
-                          color: Color(0xFFFF7A00),
+                          color: Color(0xFF0070FC),
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -1587,7 +1616,7 @@ class _OutletFormSheetState extends State<_OutletFormSheet> {
                             const Icon(
                               Icons.info_outline_rounded,
                               size: 16,
-                              color: Color(0xFFEA580C),
+                              color: Color(0xFF005ECC),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -1611,8 +1640,8 @@ class _OutletFormSheetState extends State<_OutletFormSheet> {
                       child: OutlinedButton.icon(
                         onPressed: _isDetectingGps ? null : _detectGps,
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFFFF7A00),
-                          side: const BorderSide(color: Color(0xFFFF7A00)),
+                          foregroundColor: const Color(0xFF0070FC),
+                          side: const BorderSide(color: Color(0xFF0070FC)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -1624,7 +1653,7 @@ class _OutletFormSheetState extends State<_OutletFormSheet> {
                                 height: 14,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF7A00)),
+                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0070FC)),
                                 ),
                               )
                             : const Icon(Icons.my_location_rounded, size: 16),
@@ -1657,7 +1686,7 @@ class _OutletFormSheetState extends State<_OutletFormSheet> {
                           return ChoiceChip(
                             label: Text(label),
                             selected: isSelected,
-                            selectedColor: const Color(0xFFFF7A00),
+                            selectedColor: const Color(0xFF0070FC),
                             labelStyle: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,

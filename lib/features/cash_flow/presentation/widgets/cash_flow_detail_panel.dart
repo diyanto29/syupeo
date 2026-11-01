@@ -1765,7 +1765,7 @@ class _CashShiftDetailPanelState extends ConsumerState<CashShiftDetailPanel>
                           color: isVoid
                               ? const Color(0xFFDC2626)
                               : (isRefunded
-                                  ? const Color(0xFFEA580C)
+                                  ? const Color(0xFF005ECC)
                                   : (isPaid
                                       ? const Color(0xFF16A34A)
                                       : const Color(0xFF2563EB))),

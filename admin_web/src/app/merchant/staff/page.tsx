@@ -94,6 +94,18 @@ export default function MerchantStaffPage() {
           status: 'active',
           created_at: business.created_at || new Date().toISOString(),
         });
+      } else {
+        // Fallback jika owner_user_id belum terisi di data bisnis
+        combinedList.push({
+          id: `owner-${business.id}`,
+          source: 'owner',
+          name: ownerName,
+          email: ownerEmail,
+          staff_code: ownerCode,
+          role: 'owner',
+          status: 'active',
+          created_at: business.created_at || new Date().toISOString(),
+        });
       }
 
       // 2. Ambil dari tabel business_members (Staf dengan akun terdaftar)

@@ -100,7 +100,7 @@ class _StockAdjustmentScreenState extends ConsumerState<StockAdjustmentScreen> {
                       if (selected != null) {
                         setState(() {
                           selectedItem = selected;
-                          qtyController.text = selected.stockQuantity.toString();
+                          qtyController.text = selected.formattedStock;
                         });
                       }
                     },
@@ -191,7 +191,7 @@ class _StockAdjustmentScreenState extends ConsumerState<StockAdjustmentScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Stok Saat Ini: ${selectedItem!.stockQuantity} ${selectedItem!.displayUnit}',
+                          'Stok Saat Ini: ${selectedItem!.formattedStock} ${selectedItem!.displayUnit}',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFFC2410C),
@@ -446,7 +446,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
                             children: [
                               const SizedBox(height: 4),
                               Text(
-                                'Stok saat ini: ${item.stockQuantity} ${item.displayUnit}',
+                                'Stok saat ini: ${item.formattedStock} ${item.displayUnit}',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: const Color(0xFF64748B),
                                 ),

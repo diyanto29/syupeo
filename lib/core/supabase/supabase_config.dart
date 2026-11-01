@@ -1,11 +1,11 @@
 class SupabaseConfig {
   SupabaseConfig._();
 
-  static const String url = 'https://kjekiseloobdxomicolo.supabase.co';
+  static const String url = 'https://fgzmwmtssrviptflsjqy.supabase.co';
   static const String anonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZWtpc2Vsb29iZHhvbWljb2xvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1OTM3OTMsImV4cCI6MjEwNjE2OTc5M30.csMbrT-zokTlb1SBplh_xRr9_Cpksk46OSJ0BQZTQB0';
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnem13bXRzc3J2aXB0ZmxzanF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5MzE4ODIsImV4cCI6MjEwNjUwNzg4Mn0.hVmSWNVSmnBuQPt7KvlKk6g9qJbtFUD0F1WeeaAI34s';
   static const String googleWebClientId =
-      '617929816223-g6fo9dk64r0nc20gnfaqiqjutlcjotuq.apps.googleusercontent.com';
+      '384714806025-kiscrufjnkd5i603irmcjff2lmfa72ik.apps.googleusercontent.com';
   static const String googleIosClientId = '';
 
   static bool get isConfigured => url.isNotEmpty && anonKey.isNotEmpty;

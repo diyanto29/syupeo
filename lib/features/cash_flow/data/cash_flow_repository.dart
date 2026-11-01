@@ -54,6 +54,25 @@ class CashFlowRepository {
     required String cashierName,
     String? notes,
   }) async {
+    // 1. Coba via RPC Security Definer (100% Kebal RLS & Mencegah Duplikasi Shift)
+    try {
+      final rpcRes = await _client.rpc('rpc_open_cash_shift', params: {
+        'p_business_id': businessId,
+        'p_outlet_id': outletId,
+        'p_starting_cash': startingCash.round(),
+        'p_cashier_name': cashierName,
+        'p_notes': notes,
+      });
+      if (rpcRes != null) {
+        final shift = CashShift.fromJson(Map<String, dynamic>.from(rpcRes));
+        await LocalDatabaseService.instance.setKeyValue('active_shift_$outletId', jsonEncode(shift.toJson()));
+        return shift;
+      }
+    } catch (e) {
+      debugPrint('[CashFlow] rpc_open_cash_shift fallback to direct insert: $e');
+    }
+
+    // 2. Fallback direct table insert
     final user = _client.auth.currentUser;
     final payload = {
       'business_id': businessId,
@@ -61,7 +80,7 @@ class CashFlowRepository {
       'cashier_id': user?.id,
       'cashier_name': cashierName,
       'opened_at': DateTime.now().toUtc().toIso8601String(),
-      'starting_cash': startingCash,
+      'starting_cash': startingCash.round(),
       'status': 'open',
       'notes': notes,
     };
@@ -184,15 +203,37 @@ class CashFlowRepository {
     final diff = actualCash - expectedCash;
     final now = DateTime.now().toUtc();
 
+    // 1. Coba via RPC Security Definer (100% Kebal RLS)
+    try {
+      final rpcRes = await _client.rpc('rpc_close_cash_shift', params: {
+        'p_shift_id': shift.id,
+        'p_actual_cash': actualCash.round(),
+        'p_expected_cash': expectedCash.round(),
+        'p_difference_amount': diff.round(),
+        'p_total_sales_cash': totalSalesCash.round(),
+        'p_total_cash_in': totalCashIn.round(),
+        'p_total_cash_out': totalCashOut.round(),
+        'p_notes': notes ?? shift.notes,
+      });
+      if (rpcRes != null) {
+        final closedShift = CashShift.fromJson(Map<String, dynamic>.from(rpcRes));
+        await LocalDatabaseService.instance.setKeyValue('active_shift_${shift.outletId}', '');
+        return closedShift;
+      }
+    } catch (e) {
+      debugPrint('[CashFlow] rpc_close_cash_shift fallback to direct update: $e');
+    }
+
+    // 2. Fallback direct table update
     final payload = {
       'closed_at': now.toIso8601String(),
       'status': 'closed',
-      'expected_cash': expectedCash,
-      'actual_cash': actualCash,
-      'difference_amount': diff,
-      'total_sales_cash': totalSalesCash,
-      'total_cash_in': totalCashIn,
-      'total_cash_out': totalCashOut,
+      'expected_cash': expectedCash.round(),
+      'actual_cash': actualCash.round(),
+      'difference_amount': diff.round(),
+      'total_sales_cash': totalSalesCash.round(),
+      'total_cash_in': totalCashIn.round(),
+      'total_cash_out': totalCashOut.round(),
       'notes': notes ?? shift.notes,
       'updated_at': now.toIso8601String(),
     };
@@ -221,29 +262,87 @@ class CashFlowRepository {
     String? receiptUrl,
     required String cashierName,
   }) async {
+    // 1. Coba via RPC Security Definer (100% Kebal RLS)
+    try {
+      final rpcParams = <String, dynamic>{
+        'p_business_id': businessId,
+        'p_outlet_id': outletId,
+        'p_type': type.value,
+        'p_category': category,
+        'p_amount': amount.round(),
+        'p_cashier_name': cashierName,
+        'p_payment_source': paymentSource,
+      };
+      if (shiftId != null && shiftId.isNotEmpty) {
+        rpcParams['p_shift_id'] = shiftId;
+      }
+      if (notes != null && notes.isNotEmpty) {
+        rpcParams['p_notes'] = notes;
+      }
+      if (receiptUrl != null && receiptUrl.isNotEmpty) {
+        rpcParams['p_receipt_url'] = receiptUrl;
+      }
+
+      final rpcRes = await _client.rpc('rpc_add_cash_entry', params: rpcParams);
+      if (rpcRes != null) {
+        return CashFlowEntry.fromJson(Map<String, dynamic>.from(rpcRes));
+      }
+    } catch (e) {
+      debugPrint('[CashFlow] rpc_add_cash_entry fallback to direct insert: $e');
+    }
+
+    // 2. Fallback direct table insert
     final user = _client.auth.currentUser;
-    final payload = {
+    final payload = <String, dynamic>{
       'business_id': businessId,
       'outlet_id': outletId,
-      'shift_id': shiftId,
-      'cashier_id': user?.id,
-      'cashier_name': cashierName,
       'type': type.value,
       'category': category,
-      'amount': amount,
+      'amount': amount.round(),
       'payment_source': paymentSource,
-      'notes': notes,
-      'receipt_url': receiptUrl,
       'created_at': DateTime.now().toUtc().toIso8601String(),
     };
 
-    final res = await _client
-        .from('cash_flow_entries')
-        .insert(payload)
-        .select()
-        .single();
+    if (shiftId != null && shiftId.isNotEmpty) {
+      payload['shift_id'] = shiftId;
+    }
+    if (user != null) {
+      payload['cashier_id'] = user.id;
+      payload['user_id'] = user.id;
+    }
+    if (cashierName.isNotEmpty) {
+      payload['cashier_name'] = cashierName;
+      payload['user_name'] = cashierName;
+    }
+    if (notes != null && notes.isNotEmpty) {
+      payload['notes'] = notes;
+    }
+    // Hanya sertakan receipt_url jika ada nilainya, agar tidak error jika kolom belum ada di schema cache
+    if (receiptUrl != null && receiptUrl.isNotEmpty) {
+      payload['receipt_url'] = receiptUrl;
+    }
 
-    return CashFlowEntry.fromJson(res);
+    try {
+      final res = await _client
+          .from('cash_flow_entries')
+          .insert(payload)
+          .select()
+          .single();
+
+      return CashFlowEntry.fromJson(res);
+    } catch (e) {
+      // Jika skema database di cloud belum menambahkan receipt_url, coba sekali lagi tanpa receipt_url
+      if (payload.containsKey('receipt_url')) {
+        payload.remove('receipt_url');
+        final res = await _client
+            .from('cash_flow_entries')
+            .insert(payload)
+            .select()
+            .single();
+        return CashFlowEntry.fromJson(res);
+      }
+      rethrow;
+    }
   }
 
   /// Ambil riwayat mutasi kas
@@ -334,7 +433,7 @@ class CashFlowRepository {
 
       final res = await _client
           .from('orders')
-          .select('*, order_items(*), order_discounts(*), order_payments(*)')
+          .select('*, order_items(*), order_payments(*)')
           .eq('outlet_id', outletId)
           .gte('created_at', startIso)
           .lte('created_at', endIso)

@@ -36,10 +36,10 @@ class LocalDatabaseService {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
       final appSupportDir = await getApplicationSupportDirectory();
-      path = p.join(appSupportDir.path, 'mangga_pos_local.db');
+      path = p.join(appSupportDir.path, 'syupeo_local.db');
     } else {
       final dbPath = await getDatabasesPath();
-      path = p.join(dbPath, 'mangga_pos_local.db');
+      path = p.join(dbPath, 'syupeo_local.db');
     }
 
     return await openDatabase(
@@ -252,7 +252,7 @@ class LocalDatabaseService {
     }).toList();
   }
 
-  Future<void> updateLocalStock(String menuItemId, int newQuantity) async {
+  Future<void> updateLocalStock(String menuItemId, num newQuantity) async {
     final db = await database;
     await db.update(
       'local_menu_items',

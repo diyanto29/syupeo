@@ -132,7 +132,7 @@ class InventoryReportService {
         final isLow = (item.stockQuantity) < 10; // Threshold contoh
         return [
           item.name,
-          item.stockQuantity.toString(),
+          item.formattedStock,
           item.unit,
           isLow ? 'Stok Menipis' : 'Aman',
         ];

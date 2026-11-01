@@ -238,7 +238,7 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
                   ),
                   child: const Icon(
                     Icons.soup_kitchen_rounded,
-                    color: Color(0xFFEA580C),
+                    color: Color(0xFF005ECC),
                     size: 24,
                   ),
                 ),
@@ -319,7 +319,7 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
                     children: [
                       const Icon(
                         Icons.soup_kitchen_rounded,
-                        color: Color(0xFFEA580C),
+                        color: Color(0xFF005ECC),
                         size: 15,
                       ),
                       const SizedBox(width: 6),
@@ -364,7 +364,7 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircularProgressIndicator(color: Color(0xFFEA580C)),
+                    CircularProgressIndicator(color: Color(0xFF005ECC)),
                     SizedBox(height: 12),
                     Text(
                       'Memuat antrean dapur...',
@@ -488,7 +488,7 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
                                   label: 'Dimasak',
                                   count: cookingList.length,
                                   icon: Icons.local_fire_department_rounded,
-                                  color: const Color(0xFFEA580C),
+                                  color: const Color(0xFF005ECC),
                                   bgColor: const Color(0xFFFFF7ED),
                                   borderColor: const Color(0xFFFFEDD5),
                                   isActive: _activeTab == KitchenTabFilter.cooking,
@@ -498,7 +498,7 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
                                   label: 'Dimasak',
                                   count: cookingList.length,
                                   icon: Icons.local_fire_department_rounded,
-                                  color: const Color(0xFFEA580C),
+                                  color: const Color(0xFF005ECC),
                                   bgColor: const Color(0xFFFFF7ED),
                                   borderColor: const Color(0xFFFFEDD5),
                                   isActive: _activeTab == KitchenTabFilter.cooking,
@@ -1322,7 +1322,7 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
                         case KitchenStatus.pending:
                           return ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFEA580C),
+                              backgroundColor: const Color(0xFF005ECC),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               shape: RoundedRectangleBorder(
@@ -1585,7 +1585,7 @@ class _KitchenQueueScreenState extends ConsumerState<KitchenQueueScreen> {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFEA580C),
+                        color: Color(0xFF005ECC),
                       ),
                     ),
                 ],

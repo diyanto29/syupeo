@@ -419,7 +419,7 @@ export default function AnnouncementsPage() {
                     {editingItem ? 'Edit Pengumuman Broadcast' : 'Buat Pengumuman Baru'}
                   </h2>
                   <p className="text-[11px] text-slate-500">
-                    Atur pesan yang akan ditampilkan di aplikasi kasir DPOS
+                    Atur pesan yang akan ditampilkan di aplikasi Toko Retail & Kasir Syupeo
                   </p>
                 </div>
               </div>

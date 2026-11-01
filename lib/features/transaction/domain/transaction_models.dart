@@ -249,8 +249,46 @@ class TransactionItem {
   double get subtotal =>
       (rawSubtotal - discountApplied).clamp(0, double.infinity);
 
+  /// HPP efektif per satuan setelah mempertimbangkan fraksi varian (misal 1/2 kg, 250g, dsb)
+  double get effectiveCostPrice {
+    double itemCost = costPrice;
+    if (variantName != null && variantName!.isNotEmpty && itemCost > 0) {
+      final lower = variantName!.toLowerCase().replaceAll(' ', '');
+      double mult = 1.0;
+      if (lower.contains('1/4') ||
+          lower.contains('seperempat') ||
+          lower.contains('250g') ||
+          lower.contains('0.25')) {
+        mult = 0.25;
+      } else if (lower.contains('1/2') ||
+          lower.contains('setengah') ||
+          lower.contains('500g') ||
+          lower.contains('0.5')) {
+        mult = 0.5;
+      } else if (lower.contains('3/4') ||
+          lower.contains('750g') ||
+          lower.contains('0.75')) {
+        mult = 0.75;
+      } else if (lower.contains('1/10') ||
+          lower.contains('100g') ||
+          lower.contains('0.1')) {
+        mult = 0.1;
+      }
+      if (mult < 1.0 &&
+          itemCost >= unitPrice &&
+          (itemCost * mult) < unitPrice) {
+        itemCost = itemCost * mult;
+      }
+    }
+    // Safeguard anti rugi palsu: jika HPP melebihi harga jual karena anomali data satuan/varian eceran
+    if (unitPrice > 0 && itemCost >= unitPrice) {
+      itemCost = (unitPrice * 0.85).roundToDouble();
+    }
+    return itemCost;
+  }
+
   /// Total modal / HPP item.
-  double get totalCost => costPrice * quantity;
+  double get totalCost => effectiveCostPrice * quantity;
 
   /// Laba kotor item.
   double get itemProfit => subtotal - totalCost;
@@ -349,10 +387,15 @@ class TransactionItem {
 
   factory TransactionItem.fromJson(Map<String, dynamic> json) {
     double parsedCost = 0.0;
-    if (json['menu_items'] != null && json['menu_items'] is Map) {
-      parsedCost = (json['menu_items']['recipe_cost'] as num?)?.toDouble() ?? 0.0;
+    // Prioritaskan cost_price riil yang tersimpan di baris order_items saat transaksi terjadi
+    if (json['cost_price'] != null && (json['cost_price'] as num) > 0) {
+      parsedCost = (json['cost_price'] as num).toDouble();
+    } else if (json['menu_items'] != null && json['menu_items'] is Map) {
+      parsedCost =
+          (json['menu_items']['recipe_cost'] as num?)?.toDouble() ?? 0.0;
     } else if (json['menu_item'] != null && json['menu_item'] is Map) {
-      parsedCost = (json['menu_item']['recipe_cost'] as num?)?.toDouble() ?? 0.0;
+      parsedCost =
+          (json['menu_item']['recipe_cost'] as num?)?.toDouble() ?? 0.0;
     } else if (json['cost_price'] != null) {
       parsedCost = (json['cost_price'] as num?)?.toDouble() ?? 0.0;
     }
@@ -376,7 +419,8 @@ class TransactionItem {
       discountAmount: (json['discount_amount'] as num?)?.toDouble(),
       discountApplied: (json['discount_applied'] as num?)?.toDouble() ?? 0,
       isPackage: json['is_package'] as bool? ?? false,
-      packageComponents: (json['package_components'] as List<dynamic>?)
+      packageComponents:
+          (json['package_components'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
@@ -395,15 +439,16 @@ class TransactionItem {
       'name': name,
       'variant_name': variantName,
       'quantity': quantity,
-      'unit_price': unitPrice,
-      'subtotal': subtotal,
+      'unit_price': unitPrice.roundToDouble() == unitPrice
+          ? unitPrice.round()
+          : unitPrice,
+      'cost_price': costPrice.roundToDouble() == costPrice
+          ? costPrice.round()
+          : costPrice,
+      'subtotal': subtotal.roundToDouble() == subtotal
+          ? subtotal.round()
+          : subtotal,
       'notes': notes,
-      'discount_id': discountId,
-      'discount_name': discountName,
-      'discount_type': discountType?.dbValue,
-      'discount_percentage': discountPercentage,
-      'discount_amount': discountAmount,
-      'discount_applied': discountApplied,
     };
   }
 }
@@ -471,16 +516,36 @@ class TransactionDiscount {
   }
 
   Map<String, dynamic> toJson(String orderId) {
+    final validDiscountId =
+        discountId != null &&
+            RegExp(
+              r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+            ).hasMatch(discountId!)
+        ? discountId
+        : null;
+
     return {
       'id': id,
       'order_id': orderId,
-      'discount_id': discountId,
+      if (validDiscountId != null) 'discount_id': validDiscountId,
       'name': name,
       'type': type.dbValue,
-      'percentage_value': percentageValue,
-      'amount_value': amountValue,
-      'max_discount_amount': maxDiscountAmount,
-      'applied_amount': appliedAmount,
+      if (percentageValue != null)
+        'percentage_value': percentageValue!.roundToDouble() == percentageValue
+            ? percentageValue!.round()
+            : percentageValue,
+      if (amountValue != null)
+        'amount_value': amountValue!.roundToDouble() == amountValue
+            ? amountValue!.round()
+            : amountValue,
+      if (maxDiscountAmount != null)
+        'max_discount_amount':
+            maxDiscountAmount!.roundToDouble() == maxDiscountAmount
+            ? maxDiscountAmount!.round()
+            : maxDiscountAmount,
+      'applied_amount': appliedAmount.roundToDouble() == appliedAmount
+          ? appliedAmount.round()
+          : appliedAmount,
     };
   }
 }
@@ -514,23 +579,17 @@ class TransactionPayment {
     );
   }
 
-  static final RegExp _uuidRegex = RegExp(
-    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
-  );
-
   Map<String, dynamic> toJson(String orderId) {
-    final validPaymentMethodId = paymentMethodId != null && _uuidRegex.hasMatch(paymentMethodId!)
-        ? paymentMethodId
-        : null;
-
     return {
       'id': id,
       'order_id': orderId,
-      'payment_method_id': validPaymentMethodId,
+      'payment_method': methodName.isNotEmpty ? methodName : 'Tunai',
+      'payment_method_id': paymentMethodId,
       'method_name': methodName,
       'method_type': methodType,
-      'amount': amount,
-      'reference_number': referenceNumber,
+      'amount': amount.roundToDouble() == amount ? amount.round() : amount,
+      if (referenceNumber != null && referenceNumber!.isNotEmpty)
+        'reference_number': referenceNumber,
     };
   }
 }
@@ -622,16 +681,16 @@ class TransactionOrder {
             (json['notes']?.toString().contains('[TAKEAWAY]') == true
                 ? 'take_away'
                 : json['notes']?.toString().contains('[DELIVERY]') == true
-                    ? 'delivery'
-                    : json['notes']?.toString().contains('[GOFOOD]') == true
-                        ? 'gofood'
-                        : json['notes']?.toString().contains('[GRABFOOD]') == true
-                            ? 'grabfood'
-                            : json['notes']?.toString().contains('[SHOPEEFOOD]') == true
-                                ? 'shopeefood'
-                                : json['notes']?.toString().contains('[CUSTOM]') == true
-                                    ? 'custom'
-                                    : 'dine_in'),
+                ? 'delivery'
+                : json['notes']?.toString().contains('[GOFOOD]') == true
+                ? 'gofood'
+                : json['notes']?.toString().contains('[GRABFOOD]') == true
+                ? 'grabfood'
+                : json['notes']?.toString().contains('[SHOPEEFOOD]') == true
+                ? 'shopeefood'
+                : json['notes']?.toString().contains('[CUSTOM]') == true
+                ? 'custom'
+                : 'dine_in'),
       ),
       status: orderStatus,
       orderSource: OrderSource.fromDb(json['order_source'] as String?),
@@ -670,10 +729,12 @@ class TransactionOrder {
             (json['notes']?.toString().contains('[KITCHEN:COOKING]') == true
                 ? 'cooking'
                 : json['notes']?.toString().contains('[KITCHEN:READY]') == true
-                    ? 'ready'
-                    : json['notes']?.toString().contains('[KITCHEN:SERVED]') == true
-                        ? 'served'
-                        : (orderStatus == TransactionStatus.paid ? 'served' : 'pending')),
+                ? 'ready'
+                : json['notes']?.toString().contains('[KITCHEN:SERVED]') == true
+                ? 'served'
+                : (orderStatus == TransactionStatus.paid
+                      ? 'served'
+                      : 'pending')),
       ),
       createdAt: _parseDateTime(json['created_at']),
       updatedAt: _parseDateTime(json['updated_at']),
@@ -720,29 +781,50 @@ class TransactionOrder {
       'outlet_id': outletId,
       'business_id': businessId,
       'invoice_number': invoiceNumber,
-      'customer_name': customerName,
-      'customer_phone': customerPhone,
-      'customer_email': customerEmail,
-      'table_number': tableNumber,
+      if (customerName != null && customerName!.trim().isNotEmpty)
+        'customer_name': customerName!.trim(),
+      if (customerPhone != null && customerPhone!.trim().isNotEmpty)
+        'customer_phone': customerPhone!.trim(),
+      if (customerEmail != null && customerEmail!.trim().isNotEmpty)
+        'customer_email': customerEmail!.trim(),
+      if (tableNumber != null) 'table_number': tableNumber,
       'dining_option': diningOption.dbValue,
       'status': status.dbValue,
       'order_source': orderSource.dbValue,
       'notes': enrichedNotes,
-      'subtotal': subtotal,
-      'discount_total': discountTotal,
-      'tax_amount': taxAmount,
-      'grand_total': grandTotal,
-      'paid_amount': paidAmount,
-      'change_amount': changeAmount,
-      'cashier_id': cashierId,
-      'cashier_name': cashierName,
-      'waiter_id': waiterId,
-      'waiter_name': waiterName,
+      'subtotal': subtotal.roundToDouble() == subtotal
+          ? subtotal.round()
+          : subtotal,
+      'discount_total': discountTotal.roundToDouble() == discountTotal
+          ? discountTotal.round()
+          : discountTotal,
+      'tax_amount': taxAmount.roundToDouble() == taxAmount
+          ? taxAmount.round()
+          : taxAmount,
+      'grand_total': grandTotal.roundToDouble() == grandTotal
+          ? grandTotal.round()
+          : grandTotal,
+      'paid_amount': paidAmount.roundToDouble() == paidAmount
+          ? paidAmount.round()
+          : paidAmount,
+      'change_amount': changeAmount.roundToDouble() == changeAmount
+          ? changeAmount.round()
+          : changeAmount,
+      if (cashierId != null && cashierId!.trim().isNotEmpty)
+        'cashier_id': cashierId!.trim(),
+      if (cashierName != null && cashierName!.trim().isNotEmpty)
+        'cashier_name': cashierName!.trim(),
+      if (waiterId != null && waiterId!.trim().isNotEmpty)
+        'waiter_id': waiterId!.trim(),
+      if (waiterName != null && waiterName!.trim().isNotEmpty)
+        'waiter_name': waiterName!.trim(),
       'kitchen_status': kitchenStatus.dbValue,
       'paid_at': paidAt?.toUtc().toIso8601String(),
       'created_at': (createdAt ?? DateTime.now()).toUtc().toIso8601String(),
-      'void_reason': voidReason,
-      'voided_by': voidedBy,
+      if (voidReason != null && voidReason!.trim().isNotEmpty)
+        'void_reason': voidReason!.trim(),
+      if (voidedBy != null && voidedBy!.trim().isNotEmpty)
+        'voided_by': voidedBy!.trim(),
     };
   }
 

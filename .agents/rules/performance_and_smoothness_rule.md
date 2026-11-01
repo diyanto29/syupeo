@@ -1,4 +1,4 @@
-# Aturan Performa, Efisiensi Memori & Kelancaran UI (Smoothness) di DPOS
+# Aturan Performa, Efisiensi Memori & Kelancaran UI (Smoothness) di Syupeo
 
 Aplikasi POS sering dijalankan pada perangkat Android spesifikasi rendah (entry-level POS terminal dengan RAM 2GB-3GB). Aturan performa ini wajib dipatuhi untuk menjaga kecepatan respon 60 FPS dan mencegah aplikasi lag atau crash.
 

@@ -72,7 +72,7 @@ class ProductCatalogSyncService extends StateNotifier<CatalogSyncState> {
   bool _isRunning = false;
 
   static const String _selectFields =
-      '*, menu_category:menu_categories!menu_items_category_id_fkey(*), menu_item_variants(*), menu_item_tiered_prices(*), menu_package_items:menu_package_items!menu_package_items_package_menu_item_id_fkey(*, component:menu_items!menu_package_items_component_menu_item_id_fkey(name, price))';
+      '*, menu_category:menu_categories!menu_items_category_id_fkey(*), menu_item_variants(*), menu_item_tiered_prices(*)';
 
   /// Inisialisasi awal saat toko terbuka
   Future<void> initializeForBusiness(String businessId, [String? outletId]) async {
@@ -204,14 +204,27 @@ class ProductCatalogSyncService extends StateNotifier<CatalogSyncState> {
           downloadedCount: downloaded,
         );
 
-        final response = await _supabase
-            .from('menu_items')
-            .select(_selectFields)
-            .eq('business_id', businessId)
-            .order('name', ascending: true)
-            .range(from, to);
+        List<dynamic> rawRows;
+        try {
+          final response = await _supabase
+              .from('menu_items')
+              .select(_selectFields)
+              .eq('business_id', businessId)
+              .order('name', ascending: true)
+              .range(from, to);
+          rawRows = response as List<dynamic>;
+        } catch (e) {
+          debugPrint('[CatalogSync] Relational fetch failed ($e), falling back to simple select...');
+          final response = await _supabase
+              .from('menu_items')
+              .select('*')
+              .eq('business_id', businessId)
+              .order('name', ascending: true)
+              .range(from, to);
+          rawRows = response as List<dynamic>;
+        }
 
-        final items = (response as List<dynamic>)
+        final items = rawRows
             .map((json) => MenuItem.fromJson(json as Map<String, dynamic>))
             .toList();
 

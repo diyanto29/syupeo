@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useMerchant } from '@/components/merchant/MerchantShell';
 import { createClient } from '@/lib/supabase/client';
 import { MenuItem, MenuItemVariant, MenuItemTieredPrice, Category, InventoryIngredient, MenuItemRecipe } from '@/types/database';
+import UnitSelector from '@/components/UnitSelector';
 import * as XLSX from 'xlsx';
 import {
   Package,
@@ -82,6 +83,14 @@ export default function MerchantProductsPage() {
   const [formDescription, setFormDescription] = useState<string>('');
   const [formStockAvailable, setFormStockAvailable] = useState<boolean>(true);
   const [formTrackStock, setFormTrackStock] = useState<boolean>(true);
+
+  // Multi-UOM (Kemasan Karton / Dus)
+  const [formHasWholesale, setFormHasWholesale] = useState<boolean>(false);
+  const [formWholesaleUnit, setFormWholesaleUnit] = useState<string>('Karton');
+  const [formConversionRatio, setFormConversionRatio] = useState<number>(24);
+  const [formWholesaleBarcode, setFormWholesaleBarcode] = useState<string>('');
+  const [formWholesalePrice, setFormWholesalePrice] = useState<number>(0);
+  const [formWholesaleCostPrice, setFormWholesaleCostPrice] = useState<number>(0);
 
   // Variants State
   const [hasVariants, setHasVariants] = useState<boolean>(false);
@@ -330,7 +339,7 @@ export default function MerchantProductsPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Katalog Produk');
 
-    const fileName = `Katalog_Produk_${business?.name || 'DPOS'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const fileName = `Katalog_Produk_${business?.name || 'Syupeo'}_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 
@@ -369,7 +378,7 @@ export default function MerchantProductsPage() {
     const worksheet = XLSX.utils.json_to_sheet(templateData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Template_Import');
-    XLSX.writeFile(workbook, 'Template_Import_Produk_ManggaPOS.xlsx');
+    XLSX.writeFile(workbook, 'Template_Import_Produk_Syupeo.xlsx');
   };
 
   // Fast Batch Import
@@ -524,6 +533,14 @@ export default function MerchantProductsPage() {
       setFormStockAvailable(prod.stock_available !== false);
       setFormTrackStock(prod.track_stock_quantity !== false);
 
+      // Prefill Wholesale Multi-UOM
+      setFormHasWholesale(!!prod.wholesale_unit || (prod.conversion_ratio !== undefined && prod.conversion_ratio > 1));
+      setFormWholesaleUnit(prod.wholesale_unit || 'Karton');
+      setFormConversionRatio(prod.conversion_ratio || 24);
+      setFormWholesaleBarcode(prod.wholesale_barcode || '');
+      setFormWholesalePrice(prod.wholesale_price || 0);
+      setFormWholesaleCostPrice(prod.wholesale_cost_price || 0);
+
       // Prefill Variants
       const vList = prod.menu_item_variants || [];
       if (vList.length > 0) {
@@ -572,6 +589,12 @@ export default function MerchantProductsPage() {
       setFormDescription('');
       setFormStockAvailable(true);
       setFormTrackStock(true);
+      setFormHasWholesale(false);
+      setFormWholesaleUnit('Karton');
+      setFormConversionRatio(24);
+      setFormWholesaleBarcode('');
+      setFormWholesalePrice(0);
+      setFormWholesaleCostPrice(0);
       setHasVariants(false);
       setVariantsList([]);
       setHasTieredPrices(false);
@@ -689,6 +712,11 @@ export default function MerchantProductsPage() {
         category_id: targetCatId || null,
         barcode: formBarcode.trim() || null,
         description: formDescription.trim() || null,
+        wholesale_unit: formHasWholesale ? formWholesaleUnit.trim() : null,
+        conversion_ratio: formHasWholesale ? Math.max(Number(formConversionRatio) || 1, 1) : 1,
+        wholesale_barcode: formHasWholesale && formWholesaleBarcode.trim() ? formWholesaleBarcode.trim() : null,
+        wholesale_price: formHasWholesale ? Number(formWholesalePrice) || 0 : 0,
+        wholesale_cost_price: formHasWholesale ? Number(formWholesaleCostPrice) || 0 : 0,
       };
 
       let productId = editingProduct?.id;
@@ -1419,7 +1447,7 @@ export default function MerchantProductsPage() {
       {/* Modal Add / Edit Product (Full Detail: Basic, Variants, Tiered Pricing) */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white w-full max-w-3xl rounded-3xl border border-slate-200 shadow-2xl overflow-hidden my-6 flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white w-full max-w-3xl sm:max-w-4xl rounded-3xl border border-slate-200 shadow-2xl overflow-hidden my-6 flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-orange-50/60 to-slate-50/50">
               <div className="flex items-center gap-3">
@@ -1610,31 +1638,162 @@ export default function MerchantProductsPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">
-                        Satuan Unit
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={formUnit}
-                          onChange={(e) => setFormUnit(e.target.value)}
-                          placeholder="pcs, porsi, cup, kg..."
-                          className="w-full text-xs font-medium px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-orange-500"
-                        />
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                        {['pcs', 'porsi', 'cup', 'botol', 'pack', 'kg'].map((u) => (
-                          <button
-                            key={u}
-                            type="button"
-                            onClick={() => setFormUnit(u)}
-                            className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-medium"
-                          >
-                            {u}
-                          </button>
-                        ))}
-                      </div>
+                      <UnitSelector
+                        label="Satuan Unit"
+                        value={formUnit}
+                        onChange={setFormUnit}
+                        placeholder="Pilih satuan eceran..."
+                        categoryFilter="all"
+                        helperText="Satuan penjualan eceran di kasir"
+                      />
                     </div>
+                  </div>
+
+                  {/* KEMASAN GROSIR / DUS (MULTI-UOM) */}
+                  <div className="p-5 rounded-2xl bg-slate-50/90 border border-slate-200 space-y-4">
+                    <div className="flex items-center justify-between p-3.5 sm:p-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                          formHasWholesale ? 'bg-[#0070fc] text-white shadow-sm' : 'bg-slate-100 text-slate-400'
+                        }`}>
+                          <Package className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wide">
+                              Punya Kemasan Grosir / Karton / Dus?
+                            </span>
+                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider transition-colors ${
+                              formHasWholesale 
+                                ? 'bg-blue-100 text-[#0070fc] border border-blue-200' 
+                                : 'bg-slate-100 text-slate-500 border border-slate-200'
+                            }`}>
+                              {formHasWholesale ? 'Aktif' : 'Nonaktif'}
+                            </span>
+                          </div>
+                          <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+                            {formHasWholesale 
+                              ? 'Aktif — Sistem akan otomatis mengonversi stok karton/dus ke satuan eceran' 
+                              : 'Aktifkan jika produk ini dibeli/dijual dalam dus / karton / bal'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* High-Contrast Interactive Toggle Button */}
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={formHasWholesale}
+                        onClick={() => setFormHasWholesale(!formHasWholesale)}
+                        className={`relative inline-flex h-8 w-15 shrink-0 cursor-pointer rounded-full p-1 transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/30 ${
+                          formHasWholesale ? 'bg-[#0070fc]' : 'bg-slate-300'
+                        }`}
+                      >
+                        <span className="sr-only">Toggle kemasan grosir</span>
+                        <span
+                          className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                            formHasWholesale ? 'translate-x-7' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {formHasWholesale && (
+                      <div className="pt-3 border-t border-slate-200/80 space-y-4 animate-in fade-in duration-200">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <UnitSelector
+                              label="Satuan Grosir"
+                              value={formWholesaleUnit}
+                              onChange={setFormWholesaleUnit}
+                              placeholder="Pilih kemasan grosir..."
+                              categoryFilter="kemasan_besar"
+                              helperText="Kemasan dus/karton saat kulakan"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                              <span>Isi per {formWholesaleUnit || 'Dus'}</span>
+                              <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                Wajib Diisi
+                              </span>
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min="2"
+                                required={formHasWholesale}
+                                placeholder="cth: 24 atau 40"
+                                value={formConversionRatio}
+                                onChange={(e) => setFormConversionRatio(parseInt(e.target.value) || 1)}
+                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-bold text-slate-900"
+                              />
+                              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                                {formUnit || 'Pcs'} / {formWholesaleUnit || 'Dus'}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-1">
+                              Berapa {formUnit || 'Pcs'} di dalam 1 {formWholesaleUnit || 'Dus'}.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Harga Grosir per Dus */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                              Modal Beli per {formWholesaleUnit || 'Dus'}
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                value={formWholesaleCostPrice}
+                                onChange={(e) => setFormWholesaleCostPrice(Number(e.target.value) || 0)}
+                                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-semibold"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                              Harga Jual per {formWholesaleUnit || 'Dus'}
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                value={formWholesalePrice}
+                                onChange={(e) => setFormWholesalePrice(Number(e.target.value) || 0)}
+                                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-bold text-[#0070fc]"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                            <span>Barcode Dus Luar (Opsional)</span>
+                            <span className="text-[10px] text-slate-400 font-normal">Kosongkan jika tidak ada</span>
+                          </label>
+                          <div className="relative">
+                            <Barcode className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                            <input
+                              type="text"
+                              placeholder="cth: 8991234500000 (Barcode luar dus)"
+                              value={formWholesaleBarcode}
+                              onChange={(e) => setFormWholesaleBarcode(e.target.value)}
+                              className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#0070fc]/20 focus:border-[#0070fc] text-sm font-mono"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Barcode / SKU */}

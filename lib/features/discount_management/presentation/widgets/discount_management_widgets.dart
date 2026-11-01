@@ -1,4 +1,5 @@
 import 'package:dpos/core/utils/rupiah_input_helper.dart';
+import 'package:dpos/core/widgets/syupeo_shimmer.dart';
 import 'package:dpos/features/discount_management/domain/discount_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -152,7 +153,14 @@ class DiscountListSection extends StatelessWidget {
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        children: const [
+          GeneralCardSkeleton(),
+          GeneralCardSkeleton(),
+          GeneralCardSkeleton(),
+        ],
+      ),
       error: (error, _) => Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

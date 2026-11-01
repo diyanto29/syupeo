@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Syarat & Ketentuan Penggunaan — Syupeo</title>
+  <meta name="description" content="Syarat dan Ketentuan Penggunaan layanan Syupeo — platform kemitraan toko ritel, kulakan B2B, dan kasir POS UMKM Indonesia." />
+  <meta name="theme-color" content="#0070FC" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+
+  <style>
+    :root {
+      --blue:        #0070FC;
+      --blue-dark:   #0057C8;
+      --blue-light:  #EFF6FF;
+      --yellow:      #F7C900;
+      --yellow-dark: #D4A900;
+      --navy:        #0D1B40;
+      --navy-mid:    #132254;
+      --white:       #FFFFFF;
+      --slate-50:    #F8FAFC;
+      --slate-100:   #F1F5F9;
+      --slate-200:   #E2E8F0;
+      --slate-400:   #94A3B8;
+      --slate-500:   #64748B;
+      --slate-700:   #334155;
+      --slate-900:   #0F172A;
+      --green:       #10B981;
+      --red:         #EF4444;
+
+      --font-display: 'Plus Jakarta Sans', sans-serif;
+      --font-body:    'Plus Jakarta Sans', sans-serif;
+      --radius-sm:   8px;
+      --radius-md:   16px;
+      --radius-lg:   24px;
+      --radius-pill: 9999px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--white);
+      color: var(--slate-900);
+      overflow-x: hidden;
+      line-height: 1.7;
+    }
+
+    /* ── NAVBAR ─────────────────────────────────────── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0,112,252,.10);
+      box-shadow: 0 2px 16px rgba(0,0,0,.06);
+    }
+    .navbar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .navbar-logo img { height: 36px; border-radius: 8px; }
+    .navbar-logo span {
+      font-family: var(--font-display);
+      font-weight: 900; font-size: 20px;
+      color: var(--blue);
+    }
+    .navbar-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      text-decoration: none; color: var(--slate-700);
+      font-weight: 600; font-size: 14px;
+      padding: 8px 16px; border-radius: var(--radius-pill);
+      border: 1.5px solid var(--slate-200);
+      transition: all .2s;
+    }
+    .navbar-back:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+
+    /* ── HERO HEADER ─────────────────────────────────── */
+    .page-header {
+      margin-top: 72px;
+      background: linear-gradient(135deg, #0D2B1F 0%, #0A4028 60%, #063020 100%);
+      padding: 64px 24px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .page-header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.04) 1px, transparent 0);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+    .page-header-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(16,185,129,.2); color: #6EE7B7;
+      border: 1px solid rgba(16,185,129,.35);
+      border-radius: var(--radius-pill);
+      padding: 6px 16px; font-size: 13px; font-weight: 600;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .page-header h1 {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--white);
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .page-header p {
+      color: rgba(255,255,255,.7);
+      font-size: 16px;
+      max-width: 540px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .effective-date {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 20px;
+      background: rgba(247,201,0,.15);
+      color: var(--yellow);
+      border: 1px solid rgba(247,201,0,.3);
+      border-radius: var(--radius-pill);
+      padding: 6px 16px; font-size: 13px; font-weight: 600;
+      position: relative;
+    }
+
+    /* ── LAYOUT ──────────────────────────────────────── */
+    .content-wrap {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 64px 24px 80px;
+    }
+
+    /* Table of Contents */
+    .toc {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: 28px 32px;
+      margin-bottom: 48px;
+    }
+    .toc h2 {
+      font-family: var(--font-display);
+      font-size: 16px; font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .toc ol {
+      list-style: none;
+      display: flex; flex-direction: column; gap: 8px;
+      counter-reset: toc;
+    }
+    .toc ol li { counter-increment: toc; }
+    .toc ol li a {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--slate-700); text-decoration: none;
+      font-size: 14px; font-weight: 500;
+      transition: color .2s;
+    }
+    .toc ol li a::before {
+      content: counter(toc);
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 24px; height: 24px;
+      background: var(--blue-light); color: var(--blue);
+      border-radius: 6px; font-size: 12px; font-weight: 700;
+    }
+    .toc ol li a:hover { color: var(--blue); }
+
+    /* Section */
+    .section {
+      margin-bottom: 52px;
+      scroll-margin-top: 90px;
+    }
+    .section-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px;
+      background: var(--blue); color: var(--white);
+      border-radius: 8px; font-weight: 800; font-size: 14px;
+      margin-bottom: 12px;
+    }
+    .section h2 {
+      font-family: var(--font-display);
+      font-size: clamp(18px, 3vw, 22px);
+      font-weight: 700;
+      letter-spacing: -0.3px; color: var(--navy);
+      margin-bottom: 16px;
+    }
+    .section h3 {
+      font-size: 16px; font-weight: 700;
+      color: var(--slate-900);
+      margin: 20px 0 10px;
+    }
+    .section p {
+      color: var(--slate-700);
+      font-size: 15px;
+      margin-bottom: 14px;
+    }
+    .section ul, .section ol {
+      padding-left: 0;
+      list-style: none;
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 14px;
+    }
+    .section ul li {
+      display: flex; align-items: flex-start; gap: 12px;
+      color: var(--slate-700); font-size: 15px;
+    }
+    .section ul li::before {
+      content: '';
+      display: inline-block;
+      min-width: 7px; height: 7px;
+      background: var(--blue);
+      border-radius: 50%;
+      margin-top: 7px;
+    }
+    .section ul.red-list li::before { background: var(--red); }
+    .section ol { counter-reset: list; }
+    .section ol li {
+      counter-increment: list;
+      display: flex; align-items: flex-start; gap: 10px;
+      color: var(--slate-700); font-size: 15px;
+    }
+    .section ol li::before {
+      content: counter(list) ".";
+      min-width: 22px;
+      color: var(--blue); font-weight: 700; font-size: 13px;
+      padding-top: 1px;
+    }
+
+    /* Info boxes */
+    .info-box {
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      display: flex; gap: 16px;
+      align-items: flex-start;
+    }
+    .info-box.blue {
+      background: var(--blue-light);
+      border: 1px solid rgba(0,112,252,.2);
+    }
+    .info-box.green {
+      background: #F0FDF4;
+      border: 1px solid rgba(16,185,129,.2);
+    }
+    .info-box.yellow {
+      background: #FFFBEB;
+      border: 1px solid rgba(247,201,0,.3);
+    }
+    .info-box.red {
+      background: #FEF2F2;
+      border: 1px solid rgba(239,68,68,.2);
+    }
+    .info-box i { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+    .info-box.blue i { color: var(--blue); }
+    .info-box.green i { color: var(--green); }
+    .info-box.yellow i { color: #D97706; }
+    .info-box.red i { color: var(--red); }
+    .info-box-content h3 {
+      font-weight: 700; font-size: 14px; margin-bottom: 6px;
+      color: var(--slate-900);
+    }
+    .info-box-content p {
+      font-size: 14px; margin-bottom: 0;
+      color: var(--slate-700);
+    }
+
+    /* Rule card (for terms highlights) */
+    .rule-card {
+      background: var(--slate-50);
+      border-left: 4px solid var(--blue);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+    }
+    .rule-card.red { border-left-color: var(--red); }
+    .rule-card.green { border-left-color: var(--green); }
+    .rule-card p { font-size: 14px; color: var(--slate-700); margin: 0; }
+    .rule-card strong { color: var(--slate-900); }
+
+    /* Divider */
+    .divider {
+      height: 1px; background: var(--slate-200);
+      margin: 40px 0;
+    }
+
+    /* Contact card */
+    .contact-card {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+      border-radius: var(--radius-lg);
+      padding: 36px 40px;
+      text-align: center;
+      margin-top: 48px;
+    }
+    .contact-card h2 {
+      font-family: var(--font-display);
+      font-size: 24px; font-weight: 800;
+      color: var(--white); margin-bottom: 10px;
+    }
+    .contact-card p { color: rgba(255,255,255,.75); font-size: 15px; margin-bottom: 24px; }
+    .contact-links {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+    }
+    .contact-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; border-radius: var(--radius-pill);
+      font-weight: 700; font-size: 14px;
+      text-decoration: none; transition: all .2s;
+    }
+    .contact-link.primary {
+      background: var(--blue); color: var(--white);
+    }
+    .contact-link.primary:hover { background: var(--blue-dark); transform: translateY(-2px); }
+    .contact-link.outline {
+      background: rgba(255,255,255,.1); color: var(--white);
+      border: 1px solid rgba(255,255,255,.25);
+    }
+    .contact-link.outline:hover { background: rgba(255,255,255,.2); transform: translateY(-2px); }
+
+    /* ── FOOTER ──────────────────────────────────────── */
+    footer {
+      background: var(--slate-900);
+      padding: 40px 24px;
+      text-align: center;
+    }
+    footer p { color: var(--slate-400); font-size: 13px; margin-bottom: 12px; }
+    .footer-links {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;
+      margin-bottom: 16px;
+    }
+    .footer-links a {
+      color: var(--slate-400); text-decoration: none;
+      font-size: 13px; font-weight: 500;
+      transition: color .2s;
+    }
+    .footer-links a:hover { color: var(--white); }
+    .footer-links a.active { color: var(--blue); }
+
+    /* ── RESPONSIVE ──────────────────────────────────── */
+    @media (max-width: 600px) {
+      .content-wrap { padding: 40px 16px 60px; }
+      .toc { padding: 20px; }
+      .contact-card { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">
+    <img src="logo.png" alt="Syupeo" />
+    <span>Syupeo</span>
+  </a>
+  <a href="index.html" class="navbar-back">
+    <i class="ph ph-arrow-left"></i>
+    Kembali ke Beranda
+  </a>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-badge">
+    <i class="ph ph-file-text"></i>
+    Dokumen Legal
+  </div>
+  <h1>Syarat & Ketentuan Penggunaan</h1>
+  <p>Harap baca dengan seksama. Dengan menggunakan Syupeo, Anda menyetujui seluruh syarat dan ketentuan ini.</p>
+  <div class="effective-date">
+    <i class="ph ph-calendar-check"></i>
+    Berlaku efektif: 1 November 2026
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content-wrap">
+
+  <!-- TOC -->
+  <nav class="toc" aria-label="Daftar Isi">
+    <h2><i class="ph ph-list-bullets"></i> Daftar Isi</h2>
+    <ol>
+      <li><a href="#s1">Definisi & Pihak yang Terlibat</a></li>
+      <li><a href="#s2">Pendaftaran & Kelayakan Akun</a></li>
+      <li><a href="#s3">Layanan Kasir POS (Gratis)</a></li>
+      <li><a href="#s4">Layanan Kulakan B2B</a></li>
+      <li><a href="#s5">Kewajiban Mitra Toko</a></li>
+      <li><a href="#s6">Hak Kekayaan Intelektual</a></li>
+      <li><a href="#s7">Larangan Penggunaan</a></li>
+      <li><a href="#s8">Penghentian Layanan</a></li>
+      <li><a href="#s9">Batasan Tanggung Jawab</a></li>
+      <li><a href="#s10">Hukum yang Berlaku & Penyelesaian Sengketa</a></li>
+      <li><a href="#s11">Perubahan Syarat & Ketentuan</a></li>
+      <li><a href="#s12">Hubungi Kami</a></li>
+    </ol>
+  </nav>
+
+  <div class="info-box yellow">
+    <i class="ph ph-warning-circle"></i>
+    <div class="info-box-content">
+      <h3>Penting — Baca Sebelum Mendaftar</h3>
+      <p>Dokumen ini merupakan perjanjian yang mengikat secara hukum antara Anda (Mitra Toko / Pengguna) dengan PT Mudahkan Digital Indonesia selaku operator Syupeo. Dengan mendaftar atau menggunakan aplikasi Syupeo, Anda dianggap telah membaca, memahami, dan menyetujui seluruh ketentuan di bawah ini.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 1 -->
+  <section class="section" id="s1">
+    <div class="section-num">1</div>
+    <h2>Definisi & Pihak yang Terlibat</h2>
+    <p>Dalam dokumen ini, istilah berikut memiliki arti sebagaimana didefinisikan:</p>
+    <ul>
+      <li><strong>"Syupeo"</strong> — platform digital closed-loop supply chain yang dioperasikan oleh PT Mudahkan Digital Indonesia, mencakup aplikasi mobile, web portal, dan sistem backend.</li>
+      <li><strong>"Mitra Toko"</strong> — pelaku usaha ritel (toko kelontong, minimarket, kios, dll.) yang mendaftarkan diri dan menggunakan layanan Syupeo.</li>
+      <li><strong>"Kasir"</strong> — karyawan Mitra Toko yang menggunakan fitur POS kasir Syupeo untuk memproses transaksi penjualan.</li>
+      <li><strong>"Kulakan"</strong> — pemesanan produk dari gudang Syupeo ke Mitra Toko pada harga grosir/pabrik.</li>
+      <li><strong>"Gudang Syupeo"</strong> — fasilitas distribusi milik atau bermitra dengan PT Mudahkan Digital Indonesia.</li>
+      <li><strong>"Platform"</strong> — keseluruhan layanan, fitur, dan sistem yang tersedia melalui Syupeo.</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section class="section" id="s2">
+    <div class="section-num">2</div>
+    <h2>Pendaftaran & Kelayakan Akun</h2>
+    <h3>2.1 Persyaratan Usia & Kapasitas</h3>
+    <ul>
+      <li>Anda harus berusia minimal 18 tahun untuk mendaftar sebagai Mitra Toko atau Kasir di Syupeo</li>
+      <li>Jika mendaftar atas nama badan usaha, Anda menyatakan memiliki kewenangan untuk mengikat badan usaha tersebut</li>
+    </ul>
+    <h3>2.2 Data Pendaftaran</h3>
+    <ul>
+      <li>Anda wajib memberikan informasi yang akurat, lengkap, dan terkini saat mendaftar</li>
+      <li>Anda bertanggung jawab menjaga kerahasiaan kata sandi dan semua aktivitas yang terjadi di akun Anda</li>
+      <li>Segera laporkan kepada kami jika mengetahui akun Anda diakses tanpa izin</li>
+    </ul>
+    <h3>2.3 Verifikasi</h3>
+    <p>Syupeo berhak melakukan verifikasi identitas dan kelayakan usaha Mitra Toko sebelum mengaktifkan fitur kulakan B2B. Proses verifikasi dapat mencakup konfirmasi nomor telepon, foto toko, dan validasi lokasi GPS.</p>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section class="section" id="s3">
+    <div class="section-num">3</div>
+    <h2>Layanan Kasir POS (Gratis)</h2>
+
+    <div class="info-box green">
+      <i class="ph ph-check-fat"></i>
+      <div class="info-box-content">
+        <h3>Gratis Seumur Hidup — Tanpa Biaya Tersembunyi</h3>
+        <p>Seluruh fitur kasir POS Syupeo (transaksi, inventori, laporan, shift kasir, arus kas) tersedia 100% gratis tanpa batas waktu bagi semua Mitra Toko yang terdaftar.</p>
+      </div>
+    </div>
+
+    <ul>
+      <li>Layanan POS kasir diberikan secara gratis sebagai benefit kemitraan dalam ekosistem Syupeo</li>
+      <li>Syupeo berhak menambahkan, mengubah, atau menghapus fitur POS kapan saja dengan pemberitahuan sebelumnya</li>
+      <li>Aplikasi POS tidak boleh digunakan untuk keperluan selain operasional toko Mitra yang bersangkutan (tidak boleh dijual kembali, white-label, atau dimodifikasi)</li>
+      <li>Akses ke layanan kasir gratis dapat dicabut jika Mitra Toko melanggar syarat & ketentuan ini</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section class="section" id="s4">
+    <div class="section-num">4</div>
+    <h2>Layanan Kulakan B2B</h2>
+    <h3>4.1 Pemesanan Kulakan</h3>
+    <ul>
+      <li>Mitra Toko dapat memesan produk dari katalog Syupeo melalui aplikasi mobile</li>
+      <li>Harga kulakan adalah harga yang berlaku pada saat pemesanan dikonfirmasi</li>
+      <li>Syupeo berhak mengubah harga, ketersediaan produk, dan katalog tanpa pemberitahuan khusus</li>
+      <li>Minimum order berlaku sesuai ketentuan yang ditampilkan di aplikasi</li>
+    </ul>
+    <h3>4.2 Pengiriman</h3>
+    <ul>
+      <li>Pengiriman dilakukan ke alamat toko yang terdaftar sesuai jadwal distribusi Syupeo</li>
+      <li>Mitra Toko wajib menerima pengiriman dan melakukan konfirmasi penerimaan barang melalui aplikasi</li>
+      <li>Konfirmasi penerimaan akan otomatis memperbarui stok inventori toko di aplikasi</li>
+      <li>Jika terdapat ketidaksesuaian kuantitas atau kerusakan, laporkan dalam 24 jam sejak penerimaan</li>
+    </ul>
+    <h3>4.3 Pembayaran Kulakan</h3>
+    <ul>
+      <li>Tersedia metode pembayaran: tunai saat pengiriman (COD), transfer bank, atau tempo sesuai kesepakatan</li>
+      <li>Keterlambatan pembayaran dapat mengakibatkan penundaan atau pemblokiran pesanan berikutnya</li>
+      <li>Barang yang sudah dikonfirmasi diterima tidak dapat dikembalikan atau direfund kecuali terbukti rusak/cacat produksi</li>
+    </ul>
+
+    <div class="rule-card red">
+      <p><strong>Kebijakan Retur:</strong> Pengembalian barang hanya diterima untuk produk yang rusak akibat proses distribusi atau tidak sesuai pesanan (wrong item). Laporan harus disertai foto dan diajukan dalam 24 jam sejak penerimaan. Syupeo berhak menolak retur yang tidak memenuhi kriteria ini.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section class="section" id="s5">
+    <div class="section-num">5</div>
+    <h2>Kewajiban Mitra Toko</h2>
+    <p>Sebagai Mitra Toko Syupeo, Anda berkewajiban untuk:</p>
+    <ul>
+      <li>Menjaga kebenaran dan kelengkapan data toko yang terdaftar di aplikasi</li>
+      <li>Memastikan karyawan kasir menggunakan aplikasi sesuai peruntukan (tidak menyalahgunakan akses)</li>
+      <li>Membayar kewajiban kulakan tepat waktu sesuai metode pembayaran yang disepakati</li>
+      <li>Melakukan konfirmasi penerimaan barang kulakan secara jujur sesuai kondisi aktual</li>
+      <li>Tidak memberikan akses akun kepada pihak yang tidak berwenang</li>
+      <li>Mematuhi seluruh peraturan perundang-undangan yang berlaku dalam menjalankan usaha</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 6 -->
+  <section class="section" id="s6">
+    <div class="section-num">6</div>
+    <h2>Hak Kekayaan Intelektual</h2>
+    <ul>
+      <li>Seluruh konten Syupeo — termasuk nama merek, logo, desain, kode aplikasi, katalog produk, dan sistem — adalah milik eksklusif PT Mudahkan Digital Indonesia</li>
+      <li>Anda mendapatkan lisensi terbatas, tidak eksklusif, tidak dapat dialihkan untuk menggunakan Platform hanya untuk keperluan operasional usaha Anda</li>
+      <li>Dilarang menyalin, mendistribusikan, memodifikasi, membuat karya turunan, melakukan reverse-engineering, atau mengeksploitasi bagian manapun dari Platform tanpa izin tertulis</li>
+      <li>Data transaksi dan inventori toko Anda adalah milik Anda — Syupeo hanya menyimpan dan memproses data tersebut atas nama Anda</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 7 -->
+  <section class="section" id="s7">
+    <div class="section-num">7</div>
+    <h2>Larangan Penggunaan</h2>
+    <p>Pengguna dilarang menggunakan Syupeo untuk:</p>
+    <ul class="red-list">
+      <li>Memanipulasi data transaksi atau inventori untuk tujuan penipuan</li>
+      <li>Menggunakan akun Syupeo untuk menjual produk ilegal, palsu, atau berbahaya</li>
+      <li>Mencoba mengakses sistem, database, atau akun pengguna lain tanpa izin</li>
+      <li>Melakukan scraping, crawling, atau pengumpulan data otomatis dari Platform</li>
+      <li>Menjual kembali, menyewakan, atau mendistribusikan akses ke Platform kepada pihak ketiga</li>
+      <li>Membuat akun palsu atau menyalahgunakan proses verifikasi mitra</li>
+      <li>Melakukan tindakan yang mengganggu kinerja atau ketersediaan layanan Platform</li>
+      <li>Melanggar hak kekayaan intelektual atau privasi pengguna lain</li>
+    </ul>
+
+    <div class="info-box red">
+      <i class="ph ph-prohibit"></i>
+      <div class="info-box-content">
+        <h3>Konsekuensi Pelanggaran</h3>
+        <p>Pelanggaran terhadap larangan di atas dapat mengakibatkan penangguhan atau penghapusan akun secara permanen tanpa pemberitahuan sebelumnya, serta dapat dilaporkan kepada pihak berwajib jika melibatkan tindak pidana.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 8 -->
+  <section class="section" id="s8">
+    <div class="section-num">8</div>
+    <h2>Penghentian Layanan</h2>
+    <h3>8.1 Penghentian oleh Mitra Toko</h3>
+    <p>Anda dapat menghentikan penggunaan layanan Syupeo kapan saja dengan mengajukan permohonan penghapusan akun melalui halaman <a href="delete-account.html" style="color:var(--blue);font-weight:600;">Hapus Akun</a>. Semua kewajiban pembayaran kulakan yang belum diselesaikan tetap berlaku.</p>
+    <h3>8.2 Penghentian oleh Syupeo</h3>
+    <p>Syupeo berhak menangguhkan atau menghentikan akun Anda jika:</p>
+    <ul>
+      <li>Terdapat pelanggaran terhadap Syarat & Ketentuan ini</li>
+      <li>Terdapat tunggakan pembayaran kulakan yang belum diselesaikan</li>
+      <li>Terdapat indikasi penyalahgunaan akun atau penipuan</li>
+      <li>Diwajibkan oleh peraturan perundang-undangan atau perintah pengadilan</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 9 -->
+  <section class="section" id="s9">
+    <div class="section-num">9</div>
+    <h2>Batasan Tanggung Jawab</h2>
+    <ul>
+      <li>Layanan Syupeo disediakan "sebagaimana adanya" (<em>as-is</em>) tanpa garansi ketersediaan 100%</li>
+      <li>Syupeo tidak bertanggung jawab atas kerugian tidak langsung (kehilangan keuntungan, kehilangan data) akibat gangguan layanan</li>
+      <li>Syupeo tidak bertanggung jawab atas kerugian akibat penggunaan data login yang tidak sah oleh pihak ketiga jika disebabkan kelalaian pengguna</li>
+      <li>Total tanggung jawab Syupeo kepada Mitra Toko dalam satu kejadian tidak melebihi nilai kulakan terakhir yang diselesaikan</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 10 -->
+  <section class="section" id="s10">
+    <div class="section-num">10</div>
+    <h2>Hukum yang Berlaku & Penyelesaian Sengketa</h2>
+    <ul>
+      <li>Syarat & Ketentuan ini diatur oleh dan ditafsirkan sesuai hukum Republik Indonesia</li>
+      <li>Sengketa yang timbul diselesaikan terlebih dahulu melalui musyawarah dalam jangka waktu 30 hari</li>
+      <li>Jika musyawarah gagal, sengketa diselesaikan melalui Pengadilan Negeri yang berwenang di Indonesia</li>
+      <li>Bahasa Indonesia merupakan bahasa resmi yang mengikat dalam penafsiran dokumen ini</li>
+    </ul>
+  </section>
+
+  <!-- SECTION 11 -->
+  <section class="section" id="s11">
+    <div class="section-num">11</div>
+    <h2>Perubahan Syarat & Ketentuan</h2>
+    <p>Kami berhak mengubah Syarat & Ketentuan ini sewaktu-waktu. Perubahan material akan dikomunikasikan melalui:</p>
+    <ul>
+      <li>Notifikasi push di aplikasi Syupeo minimal 7 hari sebelum berlaku</li>
+      <li>Pemberitahuan di dalam aplikasi saat login</li>
+      <li>Pembaruan tanggal berlaku pada halaman ini</li>
+    </ul>
+    <p>Penggunaan layanan setelah perubahan berlaku dianggap sebagai persetujuan terhadap ketentuan yang diperbarui.</p>
+  </section>
+
+  <!-- SECTION 12 -->
+  <section class="section" id="s12">
+    <div class="section-num">12</div>
+    <h2>Hubungi Kami</h2>
+    <p>Pertanyaan atau keberatan terkait Syarat & Ketentuan ini dapat diajukan kepada:</p>
+    <ul>
+      <li><strong>Email:</strong> <a href="mailto:diyanto2911@gmail.com" style="color:var(--blue);">diyanto2911@gmail.com</a></li>
+      <li><strong>Operator:</strong> PT Mudahkan Digital Indonesia</li>
+      <li><strong>Aplikasi:</strong> online.mudahkan.syupeo (Google Play Store)</li>
+      <li><strong>Jam layanan:</strong> Senin–Jumat, 09.00–17.00 WIB</li>
+    </ul>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CONTACT CARD -->
+  <div class="contact-card">
+    <h2>Butuh Klarifikasi?</h2>
+    <p>Hubungi tim Syupeo untuk pertanyaan seputar hak dan kewajiban Anda sebagai Mitra Toko.</p>
+    <div class="contact-links">
+      <a href="mailto:diyanto2911@gmail.com" class="contact-link primary">
+        <i class="ph ph-envelope-simple"></i>
+        diyanto2911@gmail.com
+      </a>
+      <a href="privacy-policy.html" class="contact-link outline">
+        <i class="ph ph-shield-check"></i>
+        Kebijakan Privasi
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-links">
+    <a href="index.html">Beranda</a>
+    <a href="privacy-policy.html">Kebijakan Privasi</a>
+    <a href="terms-of-service.html" class="active">Syarat Penggunaan</a>
+    <a href="delete-account.html">Hapus Akun</a>
+  </div>
+  <p>© 2026 PT Mudahkan Digital Indonesia. Hak cipta dilindungi undang-undang.</p>
+  <p>Syupeo — Platform Kulakan & Kasir POS untuk UMKM Indonesia</p>
+</footer>
+
+</body>
+</html>
+

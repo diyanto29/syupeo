@@ -18,7 +18,7 @@ class App extends StatelessWidget {
       builder: (context, child) {
         return MaterialApp.router(
           key: InaRoutesApp.rootAppKey,
-          title: 'Mangga POS',
+          title: 'Syupeo',
           showSemanticsDebugger: false,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,

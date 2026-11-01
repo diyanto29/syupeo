@@ -1,6 +1,6 @@
-# Aturan Desain Responsif & Tata Letak Tablet / Desktop di DPOS
+# Aturan Desain Responsif & Tata Letak Tablet / Desktop di Syupeo
 
-Aplikasi **DPOS (Mangga POS)** berjalan pada beragam form-factor: Smartphone Android, Tablet POS kasir (landscape/portrait), serta Desktop Windows/macOS. Aturan ini memastikan tata letak selalu konsisten dan bebas dari `RenderFlex overflow`.
+Aplikasi **Syupeo** berjalan pada beragam form-factor: Smartphone Android, Tablet POS kasir (landscape/portrait), serta Desktop Windows/macOS. Aturan ini memastikan tata letak selalu konsisten dan bebas dari `RenderFlex overflow`.
 
 ---
 

@@ -268,7 +268,7 @@ class _CreatePurchaseOrderScreenState
                           'Rp ${totalAmount.toInt()}',
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w900,
-                            color: const Color(0xFFFF8A00),
+                            color: const Color(0xFF548CE0),
                           ),
                         ),
                       ],

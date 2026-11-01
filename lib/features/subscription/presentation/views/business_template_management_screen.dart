@@ -21,7 +21,7 @@ class BusinessTemplateManagementScreen extends ConsumerWidget {
       appBar: isTablet
           ? AppTabletHeader(
               title: const Text('Kelola Template Bisnis'),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
               actions: [
                 Padding(
                   padding: const EdgeInsets.only(right: 8),

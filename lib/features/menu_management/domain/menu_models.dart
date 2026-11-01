@@ -34,7 +34,7 @@ class MenuItem {
   final String? imageUrl;
   final bool stockAvailable;
   final bool trackStockQuantity;
-  final int stockQuantity;
+  final num stockQuantity;
   final List<String> ingredients;
   final double recipeCost;
   final String? sku;
@@ -60,6 +60,14 @@ class MenuItem {
     return trimmed.isEmpty ? 'pcs' : trimmed;
   }
 
+  /// Format kuantitas stok: jika bilangan bulat tampilkan bulat (2), jika desimal tampilkan bersih (1.5 atau 0.25)
+  String get formattedStock {
+    if (stockQuantity % 1 == 0) {
+      return '${stockQuantity.toInt()}';
+    }
+    return stockQuantity.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+  }
+
   bool get isOutOfTrackedStock => trackStockQuantity && stockQuantity <= 0;
 
   bool get isSellable => stockAvailable && !isOutOfTrackedStock;
@@ -69,7 +77,7 @@ class MenuItem {
       return 'Nonaktif';
     }
     if (trackStockQuantity) {
-      return 'Stok $stockQuantity $displayUnit';
+      return 'Stok $formattedStock $displayUnit';
     }
     return 'Tersedia';
   }
@@ -93,7 +101,6 @@ class MenuItem {
     return null;
   }
 
-
   MenuItem copyWith({
     String? id,
     String? name,
@@ -105,7 +112,7 @@ class MenuItem {
     String? imageUrl,
     bool? stockAvailable,
     bool? trackStockQuantity,
-    int? stockQuantity,
+    num? stockQuantity,
     List<String>? ingredients,
     double? recipeCost,
     String? sku,
@@ -141,21 +148,31 @@ class MenuItem {
   }
 
   factory MenuItem.fromJson(Map<String, dynamic> json) {
-    final categoryJson =
+    final rawCategory =
         json['menu_category'] ?? json['menu_categories'] ?? json['category'];
+    Map<String, dynamic>? categoryMap;
+    if (rawCategory is Map<String, dynamic>) {
+      categoryMap = rawCategory;
+    } else if (rawCategory is Map) {
+      categoryMap = Map<String, dynamic>.from(rawCategory);
+    } else if (rawCategory is List &&
+        rawCategory.isNotEmpty &&
+        rawCategory.first is Map) {
+      categoryMap = Map<String, dynamic>.from(rawCategory.first as Map);
+    }
 
     return MenuItem(
       id: json['id'] as String,
       name: json['name'] as String,
-      categoryId: json['category_id'] as String,
+      categoryId: json['category_id'] as String? ?? '',
       price: (json['price'] as num? ?? 0).toDouble(),
-      businessId: json['business_id'] as String,
+      businessId: json['business_id'] as String? ?? '',
       unit: _parseUnit(json['unit']),
       description: json['description'] as String? ?? '',
       imageUrl: json['image_url'] as String?,
       stockAvailable: json['stock_available'] as bool? ?? true,
       trackStockQuantity: json['track_stock_quantity'] as bool? ?? false,
-      stockQuantity: (json['stock_quantity'] as num? ?? 0).toInt(),
+      stockQuantity: (json['stock_quantity'] as num? ?? 0),
       ingredients:
           (json['ingredients'] as List<dynamic>?)
               ?.map((e) => e as String)
@@ -164,8 +181,8 @@ class MenuItem {
       recipeCost: (json['recipe_cost'] as num? ?? 0).toDouble(),
       sku: json['sku'] as String?,
       barcode: json['barcode'] as String?,
-      category: categoryJson is Map<String, dynamic>
-          ? MenuCatalogCategory.fromJson(categoryJson)
+      category: categoryMap != null
+          ? MenuCatalogCategory.fromJson(categoryMap)
           : null,
       variants:
           (json['menu_item_variants'] as List<dynamic>?)
@@ -186,24 +203,36 @@ class MenuItem {
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toDatabaseJson() {
     return {
       'id': id,
       'name': name,
       'category_id': categoryId,
-      'price': price,
+      'price': price.round(),
       'business_id': businessId,
       'unit': unit.trim().isEmpty ? 'pcs' : unit.trim(),
       'description': description,
       'image_url': imageUrl,
       'stock_available': stockAvailable,
       'track_stock_quantity': trackStockQuantity,
-      'stock_quantity': stockQuantity,
-      'ingredients': ingredients,
-      'recipe_cost': recipeCost,
-      'sku': sku,
-      'barcode': barcode,
+      'stock_quantity': stockQuantity.round(),
+      'recipe_cost': recipeCost.round(),
+      'cost_price': recipeCost.round(),
+      if (sku != null && sku!.trim().isNotEmpty) 'sku': sku!.trim(),
+      if (barcode != null && barcode!.trim().isNotEmpty)
+        'barcode': barcode!.trim(),
       'is_package': isPackage,
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      ...toDatabaseJson(),
+      'ingredients': ingredients,
+      if (category != null) 'menu_category': category!.toJson(),
+      'menu_item_variants': variants.map((v) => v.toJson()).toList(),
+      'menu_item_tiered_prices': tieredPrices.map((t) => t.toJson()).toList(),
+      'menu_package_items': packageItems.map((p) => p.toJson()).toList(),
     };
   }
 
@@ -223,6 +252,7 @@ class MenuItemVariant {
     this.sku,
     this.barcode,
     this.stockAvailable = true,
+    this.unitRatio,
   });
 
   final String id;
@@ -233,6 +263,46 @@ class MenuItemVariant {
   final String? sku;
   final String? barcode;
   final bool stockAvailable;
+  final double? unitRatio;
+
+  /// Multiplier/rasio konsumsi terhadap stok fisik induk (Opsi 1).
+  /// Contoh:
+  /// - Varian "1/4 kg" atau "250g" -> 0.25
+  /// - Varian "1/2 kg" atau "500g" -> 0.50
+  /// - Varian "3/4 kg" atau "750g" -> 0.75
+  /// - Varian "Ori 1 kg" atau "1 kg" -> 1.00
+  double get multiplier {
+    if (unitRatio != null && unitRatio! > 0) {
+      return unitRatio!;
+    }
+    final lower = name.toLowerCase().replaceAll(' ', '');
+    if (lower.contains('1/4') ||
+        lower.contains('seperempat') ||
+        lower.contains('250g') ||
+        lower.contains('0.25')) {
+      return 0.25;
+    }
+    if (lower.contains('1/2') ||
+        lower.contains('setengah') ||
+        lower.contains('500g') ||
+        lower.contains('0.5')) {
+      return 0.5;
+    }
+    if (lower.contains('3/4') ||
+        lower.contains('750g') ||
+        lower.contains('0.75')) {
+      return 0.75;
+    }
+    return 1.0;
+  }
+
+  /// Menghitung sisa kuota penjualan untuk varian ini secara dinamis dari sisa stok fisik induk.
+  int calculateAvailableQuota(num parentStockQuantity) {
+    if (parentStockQuantity <= 0) return 0;
+    final m = multiplier;
+    if (m <= 0) return 0;
+    return (parentStockQuantity / m).floor();
+  }
 
   MenuItemVariant copyWith({
     String? id,
@@ -243,6 +313,7 @@ class MenuItemVariant {
     String? sku,
     String? barcode,
     bool? stockAvailable,
+    double? unitRatio,
   }) {
     return MenuItemVariant(
       id: id ?? this.id,
@@ -253,52 +324,54 @@ class MenuItemVariant {
       sku: sku ?? this.sku,
       barcode: barcode ?? this.barcode,
       stockAvailable: stockAvailable ?? this.stockAvailable,
+      unitRatio: unitRatio ?? this.unitRatio,
     );
   }
 
   factory MenuItemVariant.fromJson(Map<String, dynamic> json) {
     return MenuItemVariant(
-      id: json['id'] as String,
-      menuItemId: json['menu_item_id'] as String,
-      name: json['name'] as String,
-      price: (json['price'] as num).toDouble(),
-      businessId: json['business_id'] as String,
+      id: (json['id'] as String?) ?? '',
+      menuItemId: (json['menu_item_id'] as String?) ?? '',
+      name: (json['name'] as String?) ?? '',
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      businessId: (json['business_id'] as String?) ?? '',
       sku: json['sku'] as String?,
       barcode: json['barcode'] as String?,
       stockAvailable: json['stock_available'] as bool? ?? true,
+      unitRatio: (json['unit_ratio'] as num?)?.toDouble(),
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toDatabaseJson() {
     return {
       'id': id,
       'menu_item_id': menuItemId,
       'name': name,
-      'price': price,
+      'price': price.round(),
       'business_id': businessId,
-      'sku': sku,
-      'barcode': barcode,
+      if (sku != null && sku!.trim().isNotEmpty) 'sku': sku!.trim(),
+      if (barcode != null && barcode!.trim().isNotEmpty)
+        'barcode': barcode!.trim(),
       'stock_available': stockAvailable,
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      ...toDatabaseJson(),
+      if (unitRatio != null) 'unit_ratio': unitRatio,
     };
   }
 }
 
 class TieredPrice {
-  const TieredPrice({
-    this.id,
-    required this.minQuantity,
-    required this.price,
-  });
+  const TieredPrice({this.id, required this.minQuantity, required this.price});
 
   final String? id;
   final int minQuantity;
   final double price;
 
-  TieredPrice copyWith({
-    String? id,
-    int? minQuantity,
-    double? price,
-  }) {
+  TieredPrice copyWith({String? id, int? minQuantity, double? price}) {
     return TieredPrice(
       id: id ?? this.id,
       minQuantity: minQuantity ?? this.minQuantity,
@@ -309,8 +382,8 @@ class TieredPrice {
   factory TieredPrice.fromJson(Map<String, dynamic> json) {
     return TieredPrice(
       id: json['id'] as String?,
-      minQuantity: (json['min_quantity'] as num).toInt(),
-      price: (json['price'] as num).toDouble(),
+      minQuantity: (json['min_quantity'] as num?)?.toInt() ?? 1,
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -318,7 +391,7 @@ class TieredPrice {
     return {
       if (id != null) 'id': id,
       'min_quantity': minQuantity,
-      'price': price,
+      'price': price.round(),
     };
   }
 }
@@ -427,8 +500,8 @@ class MenuPackageItem {
     final component = json['component'] is Map<String, dynamic>
         ? json['component'] as Map<String, dynamic>
         : (json['component_menu_item'] is Map<String, dynamic>
-            ? json['component_menu_item'] as Map<String, dynamic>
-            : null);
+              ? json['component_menu_item'] as Map<String, dynamic>
+              : null);
 
     return MenuPackageItem(
       id: json['id'] as String?,

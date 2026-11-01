@@ -298,7 +298,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
       appBar: isTablet
           ? AppTabletHeader(
               title: const Text('Edit Cabang Outlet'),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
               actions: [
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -316,7 +316,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
                         : const Icon(Icons.check_rounded, size: 18),
                     label: Text(_isSubmitting ? 'Menyimpan...' : 'Simpan Cabang'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF7A00),
+                      backgroundColor: const Color(0xFF0070FC),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -342,7 +342,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
                     _isSubmitting ? 'Menyimpan...' : 'Simpan',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFFFF7A00),
+                      color: const Color(0xFF0070FC),
                     ),
                   ),
                 ),
@@ -522,7 +522,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
                                 borderSide: const BorderSide(
-                                  color: Color(0xFFFF7A00),
+                                  color: Color(0xFF0070FC),
                                   width: 1.8,
                                 ),
                               ),
@@ -569,7 +569,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
                                 padding: EdgeInsets.only(bottom: 24),
                                 child: Icon(
                                   Icons.location_on_rounded,
-                                  color: Color(0xFFFF7A00),
+                                  color: Color(0xFF0070FC),
                                   size: 20,
                                 ),
                               ),
@@ -590,7 +590,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
                                 borderSide: const BorderSide(
-                                  color: Color(0xFFFF7A00),
+                                  color: Color(0xFF0070FC),
                                   width: 1.8,
                                 ),
                               ),
@@ -677,7 +677,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
                             child: FilledButton(
                               onPressed: _isSubmitting ? null : _save,
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF7A00),
+                                backgroundColor: const Color(0xFF0070FC),
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -808,7 +808,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
             decoration: InputDecoration(
               hintText: 'Cari nama jalan, mall, atau gedung cabang...',
               hintStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFA1A1AA)),
-              prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFFFF7A00)),
+              prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF0070FC)),
               suffixIcon: _isSearchingLocation
                   ? const Padding(
                       padding: EdgeInsets.all(12),
@@ -817,7 +817,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF7A00)),
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0070FC)),
                         ),
                       ),
                     )
@@ -843,7 +843,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFFF7A00), width: 1.5),
+                borderSide: const BorderSide(color: Color(0xFF0070FC), width: 1.5),
               ),
             ),
           ),
@@ -874,7 +874,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
                   final place = _locationSearchResults[idx];
                   return ListTile(
                     dense: true,
-                    leading: const Icon(Icons.place_rounded, size: 18, color: Color(0xFFFF7A00)),
+                    leading: const Icon(Icons.place_rounded, size: 18, color: Color(0xFF0070FC)),
                     title: Text(
                       place.title,
                       style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700),
@@ -900,8 +900,8 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
             child: OutlinedButton.icon(
               onPressed: _isDetectingGps ? null : _detectCurrentGps,
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFFF7A00),
-                side: const BorderSide(color: Color(0xFFFF7A00)),
+                foregroundColor: const Color(0xFF0070FC),
+                side: const BorderSide(color: Color(0xFF0070FC)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
@@ -911,7 +911,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
                       height: 14,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF7A00)),
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0070FC)),
                       ),
                     )
                   : const Icon(Icons.my_location_rounded, size: 16),
@@ -941,7 +941,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
                 return ChoiceChip(
                   label: Text(label),
                   selected: isSelected,
-                  selectedColor: const Color(0xFFFF7A00),
+                  selectedColor: const Color(0xFF0070FC),
                   labelStyle: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -993,7 +993,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
       ),
       prefixIcon: Icon(
         icon,
-        color: const Color(0xFFFF7A00),
+        color: const Color(0xFF0070FC),
         size: 20,
       ),
       filled: true,
@@ -1013,7 +1013,7 @@ class _OutletEditScreenState extends ConsumerState<OutletEditScreen> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(
-          color: Color(0xFFFF7A00),
+          color: Color(0xFF0070FC),
           width: 1.8,
         ),
       ),

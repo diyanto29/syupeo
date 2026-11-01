@@ -193,8 +193,12 @@ class CartState {
           ? null
           : (customerId ?? this.customerId),
       customerName: clearCustomer ? null : (customerName ?? this.customerName),
-      customerPhone: clearCustomer ? null : (customerPhone ?? this.customerPhone),
-      customerEmail: clearCustomer ? null : (customerEmail ?? this.customerEmail),
+      customerPhone: clearCustomer
+          ? null
+          : (customerPhone ?? this.customerPhone),
+      customerEmail: clearCustomer
+          ? null
+          : (customerEmail ?? this.customerEmail),
       tableNumber: clearTableNumber ? null : (tableNumber ?? this.tableNumber),
       diningOption: diningOption ?? this.diningOption,
       notes: notes ?? this.notes,
@@ -265,7 +269,9 @@ class CartNotifier extends Notifier<CartState> {
     ref.listen(buyXGetYPromosProvider, (previous, next) {
       final promos = next.valueOrNull;
       if (promos != null && state.items.isNotEmpty) {
-        state = state.copyWith(items: _evaluateBxgy(state.items, customPromos: promos));
+        state = state.copyWith(
+          items: _evaluateBxgy(state.items, customPromos: promos),
+        );
       }
     });
 
@@ -350,9 +356,9 @@ class CartNotifier extends Notifier<CartState> {
       final targetQty = currentQty + 1;
       for (final pkgComp in menuItem.packageItems) {
         final compItem = allMenuItems.cast<MenuItem?>().firstWhere(
-              (m) => m?.id == pkgComp.componentMenuItemId,
-              orElse: () => null,
-            );
+          (m) => m?.id == pkgComp.componentMenuItemId,
+          orElse: () => null,
+        );
         if (compItem != null && compItem.trackStockQuantity) {
           final neededStock = pkgComp.quantity * targetQty;
           if (compItem.stockQuantity < neededStock) {
@@ -365,10 +371,31 @@ class CartNotifier extends Notifier<CartState> {
         }
       }
     } else if (menuItem.trackStockQuantity) {
-      final currentQty = existingIndex >= 0 ? items[existingIndex].quantity : 0;
-      if (currentQty >= menuItem.stockQuantity) {
+      // Kalkulasi kuota stok induk dinamis (Opsi 1 - Parent Stock & Fractional Variants)
+      final currentMultiplier = variant?.multiplier ?? 1.0;
+      double alreadyConsumed = 0.0;
+      for (final ci in items) {
+        if (ci.menuItemId == menuItem.id) {
+          final v = menuItem.variants.cast<MenuItemVariant?>().firstWhere(
+            (varObj) => varObj?.id == ci.variantId,
+            orElse: () => null,
+          );
+          final m = v?.multiplier ?? 1.0;
+          alreadyConsumed += ci.quantity * m;
+        }
+      }
+
+      final needed = alreadyConsumed + currentMultiplier;
+      if (needed > menuItem.stockQuantity) {
+        final remaining = menuItem.stockQuantity - alreadyConsumed;
+        final displayRemaining = remaining > 0
+            ? (remaining % 1 == 0
+                  ? '${remaining.toInt()}'
+                  : remaining.toStringAsFixed(2))
+            : '0';
         state = state.copyWith(
-          error: 'Stok untuk ${menuItem.name} tidak mencukupi (Tersedia: ${menuItem.stockQuantity})',
+          error:
+              'Sisa stok fisik ${menuItem.name} tidak cukup (tersisa $displayRemaining ${menuItem.displayUnit}) untuk varian ${variant?.name ?? "ini"}.',
         );
         return;
       }
@@ -392,6 +419,9 @@ class CartNotifier extends Notifier<CartState> {
       final resolvedPrice = (state.useTieredPricing && !forceNormalPrice)
           ? menuItem.resolvePrice(1, basePrice: price)
           : price;
+      final effectiveCostPrice = variant != null
+          ? (menuItem.recipeCost * variant.multiplier)
+          : menuItem.recipeCost;
       items.add(
         TransactionItem(
           id: _uuid.v4(),
@@ -401,7 +431,7 @@ class CartNotifier extends Notifier<CartState> {
           variantName: variant?.name,
           quantity: 1,
           unitPrice: resolvedPrice,
-          costPrice: menuItem.recipeCost,
+          costPrice: effectiveCostPrice,
           forceBasePrice: forceNormalPrice,
           isPackage: menuItem.isPackage,
           packageComponents: menuItem.packageItems
@@ -434,17 +464,17 @@ class CartNotifier extends Notifier<CartState> {
     final menuItems = ref.read(menuItemsProvider).valueOrNull ?? [];
     final item = state.items.firstWhere((i) => i.id == itemId);
     final menuItem = menuItems.cast<MenuItem?>().firstWhere(
-          (m) => m?.id == item.menuItemId,
-          orElse: () => null,
-        );
+      (m) => m?.id == item.menuItemId,
+      orElse: () => null,
+    );
 
     if (menuItem != null) {
       if (menuItem.isPackage && menuItem.packageItems.isNotEmpty) {
         for (final pkgComp in menuItem.packageItems) {
           final compItem = menuItems.cast<MenuItem?>().firstWhere(
-                (m) => m?.id == pkgComp.componentMenuItemId,
-                orElse: () => null,
-              );
+            (m) => m?.id == pkgComp.componentMenuItemId,
+            orElse: () => null,
+          );
           if (compItem != null && compItem.trackStockQuantity) {
             final neededStock = pkgComp.quantity * quantity;
             if (compItem.stockQuantity < neededStock) {
@@ -457,9 +487,38 @@ class CartNotifier extends Notifier<CartState> {
           }
         }
       } else if (menuItem.trackStockQuantity) {
-        if (quantity > menuItem.stockQuantity) {
+        // Dynamic Parent Stock quota calculation
+        double otherConsumed = 0.0;
+        for (final ci in state.items) {
+          if (ci.id != itemId && ci.menuItemId == menuItem.id) {
+            final v = menuItem.variants.cast<MenuItemVariant?>().firstWhere(
+              (varObj) => varObj?.id == ci.variantId,
+              orElse: () => null,
+            );
+            final m = v?.multiplier ?? 1.0;
+            otherConsumed += ci.quantity * m;
+          }
+        }
+
+        final thisVariant = menuItem.variants
+            .cast<MenuItemVariant?>()
+            .firstWhere(
+              (varObj) => varObj?.id == item.variantId,
+              orElse: () => null,
+            );
+        final thisMultiplier = thisVariant?.multiplier ?? 1.0;
+        final totalNeeded = otherConsumed + (quantity * thisMultiplier);
+
+        if (totalNeeded > menuItem.stockQuantity) {
+          final remaining = menuItem.stockQuantity - otherConsumed;
+          final displayRemaining = remaining > 0
+              ? (remaining % 1 == 0
+                    ? '${remaining.toInt()}'
+                    : remaining.toStringAsFixed(2))
+              : '0';
           state = state.copyWith(
-            error: 'Stok untuk ${menuItem.name} tidak mencukupi (Tersedia: ${menuItem.stockQuantity})',
+            error:
+                'Stok fisik ${menuItem.name} tidak cukup (tersisa $displayRemaining ${menuItem.displayUnit}) untuk kuantitas tersebut.',
           );
           return;
         }
@@ -478,9 +537,10 @@ class CartNotifier extends Notifier<CartState> {
       if (menuItem != null) {
         double? basePrice;
         if (item.variantId != null) {
-          final variant = menuItem.variants
-              .cast<MenuItemVariant?>()
-              .firstWhere((v) => v?.id == item.variantId, orElse: () => null);
+          final variant = menuItem.variants.cast<MenuItemVariant?>().firstWhere(
+            (v) => v?.id == item.variantId,
+            orElse: () => null,
+          );
           basePrice = variant?.price ?? item.unitPrice;
         } else {
           basePrice = menuItem.price;
@@ -517,13 +577,16 @@ class CartNotifier extends Notifier<CartState> {
       return i;
     }).toList();
 
-    final promos = customPromos ?? ref.read(buyXGetYPromosProvider).valueOrNull ?? [];
+    final promos =
+        customPromos ?? ref.read(buyXGetYPromosProvider).valueOrNull ?? [];
     final activePromos = promos.where((p) => p.isCurrentlyActive()).toList();
     if (activePromos.isEmpty) return items;
 
     for (final promo in activePromos) {
       final triggerQty = items
-          .where((i) => i.menuItemId == promo.triggerMenuItemId && !i.isTebusMurah)
+          .where(
+            (i) => i.menuItemId == promo.triggerMenuItemId && !i.isTebusMurah,
+          )
           .fold<int>(0, (sum, i) => sum + i.quantity);
 
       if (triggerQty < promo.minBuyQty) continue;
@@ -537,8 +600,10 @@ class CartNotifier extends Notifier<CartState> {
         );
         if (idx >= 0) {
           final item = items[idx];
-          final discountAmount =
-              (rewardUnits * item.unitPrice).clamp(0.0, item.rawSubtotal);
+          final discountAmount = (rewardUnits * item.unitPrice).clamp(
+            0.0,
+            item.rawSubtotal,
+          );
           items[idx] = item.copyWith(
             clearDiscountId: true,
             discountName: 'BOGO: ${promo.name}',
@@ -549,7 +614,9 @@ class CartNotifier extends Notifier<CartState> {
       } else if (promo.mode == BuyXGetYMode.crossProduct &&
           promo.rewardMenuItemId != null) {
         final rewardQty = items
-            .where((i) => i.menuItemId == promo.rewardMenuItemId && !i.isTebusMurah)
+            .where(
+              (i) => i.menuItemId == promo.rewardMenuItemId && !i.isTebusMurah,
+            )
             .fold<int>(0, (sum, i) => sum + i.quantity);
         final rewardUnits = promo.calculateRewardUnits(triggerQty);
         if (rewardUnits <= 0 || rewardQty <= 0) continue;
@@ -560,8 +627,10 @@ class CartNotifier extends Notifier<CartState> {
         if (idx >= 0) {
           final item = items[idx];
           final unitsToFree = rewardUnits.clamp(0, item.quantity);
-          final discountAmount =
-              (unitsToFree * item.unitPrice).clamp(0.0, item.rawSubtotal);
+          final discountAmount = (unitsToFree * item.unitPrice).clamp(
+            0.0,
+            item.rawSubtotal,
+          );
           items[idx] = item.copyWith(
             clearDiscountId: true,
             discountName: 'BOGO: ${promo.name}',
@@ -575,8 +644,11 @@ class CartNotifier extends Notifier<CartState> {
     return items;
   }
 
-  List<BuyXGetYPromo> getEligibleBxgyOffers({List<BuyXGetYPromo>? customPromos}) {
-    final promos = customPromos ?? ref.read(buyXGetYPromosProvider).valueOrNull ?? [];
+  List<BuyXGetYPromo> getEligibleBxgyOffers({
+    List<BuyXGetYPromo>? customPromos,
+  }) {
+    final promos =
+        customPromos ?? ref.read(buyXGetYPromosProvider).valueOrNull ?? [];
     if (promos.isEmpty) return [];
 
     return promos.where((p) {
@@ -592,8 +664,10 @@ class CartNotifier extends Notifier<CartState> {
         final rewardQty = state.items
             .where((i) => i.menuItemId == p.rewardMenuItemId && !i.isTebusMurah)
             .fold<int>(0, (sum, i) => sum + i.quantity);
-        final pending =
-            p.pendingRewardUnits(triggerQty, rewardQtyInCart: rewardQty);
+        final pending = p.pendingRewardUnits(
+          triggerQty,
+          rewardQtyInCart: rewardQty,
+        );
         return pending > 0;
       }
     }).toList();
@@ -614,9 +688,9 @@ class CartNotifier extends Notifier<CartState> {
         promo.rewardMenuItemId != null) {
       final allMenuItems = ref.read(menuItemsProvider).valueOrNull ?? [];
       final rewardMenuItem = allMenuItems.cast<MenuItem?>().firstWhere(
-            (m) => m?.id == promo.rewardMenuItemId,
-            orElse: () => null,
-          );
+        (m) => m?.id == promo.rewardMenuItemId,
+        orElse: () => null,
+      );
       if (rewardMenuItem != null) {
         final existingRewardIdx = items.indexWhere(
           (i) => i.menuItemId == rewardMenuItem.id && !i.isTebusMurah,
@@ -646,8 +720,11 @@ class CartNotifier extends Notifier<CartState> {
     state = state.copyWith(items: evaluatedItems, clearError: true);
   }
 
-  List<TebusMurahPromo> getEligibleTebusMurahPromos({List<TebusMurahPromo>? customPromos}) {
-    final promos = customPromos ?? ref.read(tebusMurahPromosProvider).valueOrNull ?? [];
+  List<TebusMurahPromo> getEligibleTebusMurahPromos({
+    List<TebusMurahPromo>? customPromos,
+  }) {
+    final promos =
+        customPromos ?? ref.read(tebusMurahPromosProvider).valueOrNull ?? [];
     if (promos.isEmpty) return [];
 
     final cleanSubtotal = state.items
@@ -802,7 +879,12 @@ class CartNotifier extends Notifier<CartState> {
 
   // ── Customer / Table Info ───────────────────────────────────
 
-  void setCustomerInfo({String? id, String? name, String? phone, String? email}) {
+  void setCustomerInfo({
+    String? id,
+    String? name,
+    String? phone,
+    String? email,
+  }) {
     state = state.copyWith(
       customerId: id,
       customerName: name,
@@ -978,7 +1060,7 @@ class CartNotifier extends Notifier<CartState> {
         tableNumber: state.tableNumber,
         diningOption: state.diningOption,
         status: status,
-        kitchenStatus: state.kitchenStatus ?? KitchenStatus.pending,
+        kitchenStatus: state.kitchenStatus ?? KitchenStatus.served,
         orderSource: resolvedOrderSource,
         notes: state.notes,
         subtotal: state.subtotal,
@@ -1011,19 +1093,21 @@ class CartNotifier extends Notifier<CartState> {
         try {
           final menuRepo = ref.read(menuRepositoryProvider);
           final menuItems = ref.read(menuItemsProvider).valueOrNull ?? [];
+          final parentDeductions = <String, double>{};
+
           for (final item in state.items) {
             final menuItem = menuItems.cast<MenuItem?>().firstWhere(
-                  (m) => m?.id == item.menuItemId,
-                  orElse: () => null,
-                );
+              (m) => m?.id == item.menuItemId,
+              orElse: () => null,
+            );
             if (menuItem != null) {
               if (menuItem.isPackage && menuItem.packageItems.isNotEmpty) {
                 // Potong stok masing-masing komponen paket!
                 for (final pkgItem in menuItem.packageItems) {
                   final comp = menuItems.cast<MenuItem?>().firstWhere(
-                        (m) => m?.id == pkgItem.componentMenuItemId,
-                        orElse: () => null,
-                      );
+                    (m) => m?.id == pkgItem.componentMenuItemId,
+                    orElse: () => null,
+                  );
                   if (comp != null && comp.trackStockQuantity) {
                     final needed = pkgItem.quantity * item.quantity;
                     final newQty = comp.stockQuantity - needed;
@@ -1038,15 +1122,63 @@ class CartNotifier extends Notifier<CartState> {
                   }
                 }
               } else if (menuItem.trackStockQuantity) {
-                final newQty = menuItem.stockQuantity - item.quantity;
-                await menuRepo.adjustMenuItemStock(
-                  menuItemId: menuItem.id,
-                  outletId: outletId,
-                  newQuantity: newQty >= 0 ? newQty : 0,
-                  note: 'Penjualan Invoice ${saved.invoiceNumber}',
-                  referenceType: 'sale',
+                // Grouping konsumsi varian/eceran terhadap stok induk yang sama (Opsi 1)
+                final v = menuItem.variants.cast<MenuItemVariant?>().firstWhere(
+                  (varObj) =>
+                      varObj?.id == item.variantId ||
+                      (item.variantName != null &&
+                          varObj?.name.toLowerCase() ==
+                              item.variantName!.toLowerCase()),
+                  orElse: () => null,
                 );
+                double multiplier = v?.multiplier ?? 1.0;
+                if (v == null && item.variantName != null) {
+                  final lower =
+                      item.variantName!.toLowerCase().replaceAll(' ', '');
+                  if (lower.contains('1/4') ||
+                      lower.contains('seperempat') ||
+                      lower.contains('250g') ||
+                      lower.contains('0.25')) {
+                    multiplier = 0.25;
+                  } else if (lower.contains('1/2') ||
+                      lower.contains('setengah') ||
+                      lower.contains('500g') ||
+                      lower.contains('0.5')) {
+                    multiplier = 0.5;
+                  } else if (lower.contains('3/4') ||
+                      lower.contains('750g') ||
+                      lower.contains('0.75')) {
+                    multiplier = 0.75;
+                  }
+                }
+                final deduction = item.quantity * multiplier;
+                parentDeductions[menuItem.id] =
+                    (parentDeductions[menuItem.id] ?? 0.0) + deduction;
               }
+            }
+          }
+
+          // Potong stok induk secara atomik untuk produk non-paket
+          for (final entry in parentDeductions.entries) {
+            final targetMenu = menuItems.cast<MenuItem?>().firstWhere(
+              (m) => m?.id == entry.key,
+              orElse: () => null,
+            );
+            if (targetMenu != null) {
+              final newStockVal = targetMenu.stockQuantity - entry.value;
+              final effectiveQty = newStockVal > 0
+                  ? (newStockVal % 1 == 0
+                        ? newStockVal.toInt()
+                        : double.parse(newStockVal.toStringAsFixed(2)))
+                  : 0;
+              await menuRepo.adjustMenuItemStock(
+                menuItemId: targetMenu.id,
+                outletId: outletId,
+                newQuantity: effectiveQty,
+                note:
+                    'Penjualan Invoice ${saved.invoiceNumber} (Dipotong ${entry.value} ${targetMenu.displayUnit})',
+                referenceType: 'sale',
+              );
             }
           }
           ref.invalidate(menuItemsProvider);

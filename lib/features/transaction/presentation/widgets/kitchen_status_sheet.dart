@@ -45,7 +45,7 @@ class _KitchenStatusSheetState extends ConsumerState<KitchenStatusSheet> {
     if (createdAt == null) return const Color(0xFF64748B);
     final minutes = DateTime.now().difference(createdAt).inMinutes;
     if (minutes >= 20) return const Color(0xFFDC2626); // Merah bahaya (>20 mnt)
-    if (minutes >= 10) return const Color(0xFFEA580C); // Oranye peringatan (>10 mnt)
+    if (minutes >= 10) return const Color(0xFF005ECC); // Oranye peringatan (>10 mnt)
     return const Color(0xFF16A34A); // Hijau aman (<10 mnt)
   }
 
@@ -97,7 +97,7 @@ class _KitchenStatusSheetState extends ConsumerState<KitchenStatusSheet> {
                     ),
                     child: const Icon(
                       Icons.soup_kitchen_rounded,
-                      color: Color(0xFFEA580C),
+                      color: Color(0xFF005ECC),
                       size: 22,
                     ),
                   ),
@@ -165,7 +165,7 @@ class _KitchenStatusSheetState extends ConsumerState<KitchenStatusSheet> {
                               const SizedBox(width: 6),
                               _buildFilterChip(
                                 label: 'Menunggu ($pendingCount)',
-                                color: const Color(0xFFEA580C),
+                                color: const Color(0xFF005ECC),
                                 isSelected: _selectedFilter == KitchenStatus.pending,
                                 onTap: () => setState(
                                   () => _selectedFilter = KitchenStatus.pending,
@@ -352,7 +352,7 @@ class _KitchenStatusSheetState extends ConsumerState<KitchenStatusSheet> {
     };
 
     final statusFg = switch (status) {
-      KitchenStatus.pending => const Color(0xFFEA580C),
+      KitchenStatus.pending => const Color(0xFF005ECC),
       KitchenStatus.cooking => const Color(0xFF2563EB),
       KitchenStatus.ready => const Color(0xFF16A34A),
       KitchenStatus.served => const Color(0xFF64748B),
@@ -503,7 +503,7 @@ class _KitchenStatusSheetState extends ConsumerState<KitchenStatusSheet> {
                               style: GoogleFonts.manrope(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFFEA580C),
+                                color: const Color(0xFF005ECC),
                               ),
                             ),
                         ],

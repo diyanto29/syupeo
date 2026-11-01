@@ -30,9 +30,13 @@ import 'package:dpos/features/waiter/presentation/screens/table_qr_generator_scr
 import 'package:dpos/features/inventory/presentation/views/inventory_dashboard_view.dart';
 import 'package:dpos/features/kitchen/presentation/kitchen_queue_screen.dart';
 
-import 'package:dpos/core/widgets/ad_banner_widget.dart';
 import 'package:dpos/core/widgets/announcement_banner_widget.dart';
+import 'package:dpos/core/services/notification_service.dart';
+import 'package:dpos/core/services/soundbox_tts_service.dart';
+import 'package:dpos/features/dashboard/presentation/widgets/store_activated_dialog.dart';
 import 'package:dpos/features/subscription/presentation/views/subscription_screen.dart';
+import 'package:dpos/features/subscription/presentation/views/starter_kit_orders_sheet.dart';
+import 'package:dpos/features/subscription/presentation/views/restock_catalog_screen.dart';
 import 'package:dpos/features/settings/presentation/views/help_support_screen.dart';
 import 'package:dpos/features/cash_flow/presentation/views/cash_flow_screen.dart';
 import 'package:dpos/features/customer_debt/presentation/customer_debt_screen.dart';
@@ -40,6 +44,10 @@ import 'package:dpos/features/ai_assistant/presentation/screens/ai_assistant_scr
 import 'package:dpos/core/widgets/app_tablet_nav.dart';
 
 final _printerConnectionNoticeShownProvider = StateProvider<bool>(
+  (ref) => false,
+);
+
+final _seenPendingStoreActivationProvider = StateProvider<bool>(
   (ref) => false,
 );
 
@@ -57,6 +65,65 @@ class HomeScreen extends ConsumerWidget {
       bootstrap: bootstrapAsync.value,
       ref: ref,
     );
+
+    // Track jika saat ini sedang dalam status pending
+    final currentBiz = bootstrapAsync.valueOrNull?.business;
+    if (currentBiz != null && currentBiz.isPendingActivation) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (ref.read(_seenPendingStoreActivationProvider) != true) {
+          ref.read(_seenPendingStoreActivationProvider.notifier).state = true;
+        }
+      });
+    }
+
+    // Realtime listener untuk mendeteksi aktivasi toko oleh Admin Web
+    ref.listen<AsyncValue<OwnerBootstrap>>(homeBootstrapProvider, (previous, next) {
+      final prevBiz = previous?.valueOrNull?.business;
+      final nextBiz = next.valueOrNull?.business;
+
+      final hadSeenPending = ref.read(_seenPendingStoreActivationProvider);
+      final wasPending = prevBiz?.isPendingActivation ?? hadSeenPending;
+      final isNowActive = nextBiz != null && !nextBiz.isPendingActivation && nextBiz.status == 'active';
+
+      if (wasPending && isNowActive) {
+        ref.read(_seenPendingStoreActivationProvider.notifier).state = false;
+
+        // 1. Notifikasi lokal foreground
+        NotificationService.instance.showInstantAlert(
+          title: 'Toko Telah Aktif! 🎉',
+          body: 'Toko "${nextBiz.name}" berhasil diaktifkan oleh Admin Syupeo. Selamat berjualan!',
+        );
+
+        // 2. Pengumuman suara via Soundbox TTS
+        try {
+          ref.read(soundboxTtsServiceProvider).speak(
+            'Selamat! Toko ${nextBiz.name} telah aktif dan siap digunakan untuk berjualan.',
+          );
+        } catch (_) {}
+
+        // 3. Tampilkan dialog selebrasi interaktif
+        if (context.mounted) {
+          StoreActivatedDialog.show(
+            context,
+            nextBiz,
+            onStartSelling: () {
+              OwnerDashboardNavigation.selectMenu(
+                ref,
+                OwnerMenu.transaction,
+                bootstrap: next.valueOrNull,
+              );
+            },
+            onCheckShipping: () {
+              OwnerDashboardNavigation.selectMenu(
+                ref,
+                OwnerMenu.starterKitOrder,
+                bootstrap: next.valueOrNull,
+              );
+            },
+          );
+        }
+      }
+    });
 
     Future<void> handleLogout() async {
       showDialog<void>(
@@ -197,7 +264,7 @@ class HomeScreen extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              const AppTabletBadge(label: 'Mangga POS'),
+                              const AppTabletBadge(label: 'Syupeo'),
                               const Spacer(),
                               IconButton(
                                 tooltip: 'Tanya Asisten AI',
@@ -359,6 +426,7 @@ class HomeScreen extends ConsumerWidget {
             final isOutletManagement =
                 effectiveMenu == OwnerMenu.outletManagement;
             final isMenuManagement = effectiveMenu == OwnerMenu.menuManagement;
+            final isRestockCatalog = effectiveMenu == OwnerMenu.restockCatalog;
             final isBusinessProfile =
                 effectiveMenu == OwnerMenu.businessProfile;
             final isSettings = effectiveMenu == OwnerMenu.settings;
@@ -369,6 +437,8 @@ class HomeScreen extends ConsumerWidget {
             final isCustomerDebt = effectiveMenu == OwnerMenu.customerDebt;
             final isTransactionHistory =
                 effectiveMenu == OwnerMenu.checkoutVoid;
+            final isStarterKitOrder =
+                effectiveMenu == OwnerMenu.starterKitOrder;
             final isOrderManagement =
                 effectiveMenu == OwnerMenu.orderManagement;
             final isTableSession = effectiveMenu == OwnerMenu.tableSession;
@@ -393,7 +463,9 @@ class HomeScreen extends ConsumerWidget {
 
             final content = Container(
               color: const Color(0xFFF8FAFC),
-              child: isTransaction
+              child: isStarterKitOrder
+                  ? const StarterKitOrdersSheet(isEmbedded: true)
+                  : isTransaction
                   ? TransactionScreen(
                       padding: isTablet
                           ? const EdgeInsets.fromLTRB(20, 8, 20, 0)
@@ -426,6 +498,8 @@ class HomeScreen extends ConsumerWidget {
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                       profile: profile,
                     )
+                  : isRestockCatalog
+                  ? const RestockCatalogScreen()
                   : isBusinessProfile
                   ? BusinessProfileDashboardView(
                       bootstrap: bootstrap,
@@ -510,8 +584,6 @@ class HomeScreen extends ConsumerWidget {
                           selectedMenu: effectiveMenu,
                         ),
                         const AnnouncementBannerWidget(),
-                        const SizedBox(height: 12),
-                        const AdBannerWidget(),
                         const SizedBox(height: 16),
                         ..._buildMenuSections(
                           context,
@@ -598,7 +670,7 @@ class HomeScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 10),
-                                const AppTabletBadge(label: 'Mangga POS'),
+                                const AppTabletBadge(label: 'Syupeo'),
                                 const Spacer(),
                                 IconButton(
                                   tooltip: 'Tanya Asisten AI',
@@ -786,9 +858,11 @@ class HomeScreen extends ConsumerWidget {
         ),
       ],
       OwnerMenu.transaction => const [],
+      OwnerMenu.starterKitOrder => const [],
       OwnerMenu.outletManagement => const [],
       OwnerMenu.businessProfile => const [],
       OwnerMenu.menuManagement => const [],
+      OwnerMenu.restockCatalog => const [],
       OwnerMenu.tableSession => [
         const _SectionCard(
           title: 'Table Session',

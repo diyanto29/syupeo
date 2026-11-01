@@ -89,7 +89,7 @@ export default function AiBusinessCopilotPage() {
       const welcome: ChatMessage = {
         id: 'welcome-1',
         role: 'model',
-        content: `Halo, **Owner ${business.name}**! 👋 Saya **AI Business Copilot Mangga POS** siap membantu Anda menganalisis performa toko, memprediksi stok habis, hingga merancang strategi promo yang terbukti menghasilkan omzet.\n\nAnda bisa mengetik atau menekan tombol **Mikrofon 🎙️** untuk bertanya langsung. Fitur suara otomatis menyala agar Anda bisa mendengarkan analisis sambil mengerjakan hal lain.`,
+        content: `Halo, **Owner ${business.name}**! 👋 Saya **AI Business Copilot Syupeo** siap membantu Anda menganalisis performa toko, memprediksi stok habis, hingga merancang strategi promo yang terbukti menghasilkan omzet.\n\nAnda bisa mengetik atau menekan tombol **Mikrofon 🎙️** untuk bertanya langsung. Fitur suara otomatis menyala agar Anda bisa mendengarkan analisis sambil mengerjakan hal lain.`,
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages([welcome]);
@@ -399,7 +399,7 @@ export default function AiBusinessCopilotPage() {
           : 'Semua stok produk saat ini dalam batas aman.';
 
       const systemPrompt = `
-Kamu adalah "AI Business Copilot Mangga POS", asisten eksekutif & konsultan analitik bisnis toko untuk Owner "${business?.name || 'Toko'}".
+Kamu adalah "AI Business Copilot Syupeo", asisten eksekutif & konsultan analitik bisnis toko untuk Owner "${business?.name || 'Toko'}".
 Outlet Terpilih: ${selectedOutletId === 'all' ? 'Semua Cabang' : 'Outlet Aktif'}
 
 DATA PERFORMA BISNIS REAL-TIME (DARI DATABASE SUPABASE):

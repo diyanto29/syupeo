@@ -25,7 +25,7 @@ class CashFlowScreen extends ConsumerWidget {
         appBar: isTablet
             ? const AppTabletHeader(
                 title: Text('Arus Kas & Shift Kasir'),
-                badge: AppTabletBadge(label: 'Mangga POS'),
+                badge: AppTabletBadge(label: 'Syupeo'),
               )
             : null,
         body: Center(

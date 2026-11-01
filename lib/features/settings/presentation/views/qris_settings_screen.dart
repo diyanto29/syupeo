@@ -256,7 +256,7 @@ class _QrisSettingsScreenState extends ConsumerState<QrisSettingsScreen> {
       appBar: isTablet
           ? const AppTabletHeader(
               title: Text('Pengaturan QRIS Toko'),
-              badge: AppTabletBadge(label: 'Mangga POS'),
+              badge: AppTabletBadge(label: 'Syupeo'),
             )
           : AppBar(
               title: Text(

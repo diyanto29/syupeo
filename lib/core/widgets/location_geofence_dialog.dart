@@ -339,7 +339,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                     ),
                     child: const Icon(
                       Icons.radar_rounded,
-                      color: Color(0xFFFF7A00),
+                      color: Color(0xFF0070FC),
                       size: 22,
                     ),
                   ),
@@ -436,7 +436,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                               ),
                               prefixIcon: const Icon(
                                 Icons.search_rounded,
-                                color: Color(0xFFFF7A00),
+                                color: Color(0xFF0070FC),
                                 size: 20,
                               ),
                               suffixIcon: _searchController.text.isNotEmpty
@@ -466,7 +466,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
-                                  color: Color(0xFFFF7A00),
+                                  color: Color(0xFF0070FC),
                                   width: 1.6,
                                 ),
                               ),
@@ -478,7 +478,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                           onPressed: _isDetectingGps ? null : _detectCurrentGps,
                           style: OutlinedButton.styleFrom(
                             backgroundColor: const Color(0xFFFFF7ED),
-                            foregroundColor: const Color(0xFFFF7A00),
+                            foregroundColor: const Color(0xFF0070FC),
                             side: const BorderSide(color: Color(0xFFFFD8A8)),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -494,7 +494,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                                   height: 16,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Color(0xFFFF7A00),
+                                    color: Color(0xFF0070FC),
                                   ),
                                 )
                               : const Icon(Icons.my_location_rounded, size: 20),
@@ -513,7 +513,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                             height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF7A00)),
+                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0070FC)),
                             ),
                           ),
                         ),
@@ -544,7 +544,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                             return ListTile(
                               leading: const Icon(
                                 Icons.place_rounded,
-                                color: Color(0xFFFF7A00),
+                                color: Color(0xFF0070FC),
                                 size: 20,
                               ),
                               title: Text(
@@ -652,7 +652,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                         const Icon(
                           Icons.radar_rounded,
                           size: 18,
-                          color: Color(0xFFFF7A00),
+                          color: Color(0xFF0070FC),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -667,7 +667,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                         ),
                         Switch.adaptive(
                           value: _isGeofenceActive,
-                          activeColor: const Color(0xFFFF7A00),
+                          activeColor: const Color(0xFF0070FC),
                           onChanged: (val) {
                             setState(() => _isGeofenceActive = val);
                           },
@@ -696,7 +696,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                               color: isSelected
-                                  ? const Color(0xFFFF7A00)
+                                  ? const Color(0xFF0070FC)
                                   : const Color(0xFF52525B),
                             ),
                           ),
@@ -705,7 +705,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                           backgroundColor: const Color(0xFFFAFAFA),
                           side: BorderSide(
                             color: isSelected
-                                ? const Color(0xFFFF7A00)
+                                ? const Color(0xFF0070FC)
                                 : const Color(0xFFE4E4E7),
                           ),
                           onSelected: (selected) {
@@ -730,7 +730,7 @@ class _LocationGeofenceDialogState extends State<LocationGeofenceDialog> {
                 child: FilledButton(
                   onPressed: _submitSelection,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF7A00),
+                    backgroundColor: const Color(0xFF0070FC),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),

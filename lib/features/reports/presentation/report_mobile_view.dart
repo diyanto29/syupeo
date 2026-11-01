@@ -14,6 +14,7 @@ import 'package:dpos/features/reports/presentation/widgets/report_daily_tab.dart
 import 'package:dpos/features/reports/presentation/widgets/report_waiters_tab.dart';
 import 'package:dpos/features/reports/presentation/widgets/report_cash_flow_tab.dart';
 import 'package:dpos/features/reports/presentation/widgets/report_outlets_tab.dart';
+import 'package:dpos/core/theme/app_theme.dart';
 import 'package:dpos/core/widgets/pro_feature_dialog.dart';
 import 'package:dpos/core/providers/feature_gate_provider.dart';
 import 'package:dpos/core/services/excel_export_service.dart';
@@ -55,7 +56,8 @@ class ReportMobileView extends ConsumerWidget {
                     Text(
                       'Analisis performa bisnis Anda',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.outline,
+                        color: AppTheme.textMuted,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],

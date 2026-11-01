@@ -1,6 +1,6 @@
-# Riverpod State Management Architecture Rule di DPOS
+# Riverpod State Management Architecture Rule di Syupeo
 
-Seluruh manajemen state di aplikasi Flutter **DPOS (Mangga POS)** menggunakan **Flutter Riverpod** (`flutter_riverpod`). Dokumen ini mengatur pola desain, lifecycle provider, dan optimasi rebuild widget.
+Seluruh manajemen state di aplikasi Flutter **Syupeo** menggunakan **Flutter Riverpod** (`flutter_riverpod`). Dokumen ini mengatur pola desain, lifecycle provider, dan optimasi rebuild widget.
 
 ---
 

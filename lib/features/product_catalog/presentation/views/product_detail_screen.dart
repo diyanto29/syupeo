@@ -378,7 +378,7 @@ class _ProductDetailScaffold extends StatelessWidget {
       appBar: isTablet
           ? AppTabletHeader(
               title: const Text('Detail Produk'),
-              badge: const AppTabletBadge(label: 'Mangga POS'),
+              badge: const AppTabletBadge(label: 'Syupeo'),
               actions: actions,
             )
           : AppBar(
@@ -536,7 +536,7 @@ class _ProductDetailMobileBody extends StatelessWidget {
               Expanded(
                 child: _MiniStatCard(
                   icon: Icons.inventory_2_outlined,
-                  iconColor: const Color(0xFFFF8A00),
+                  iconColor: const Color(0xFF548CE0),
                   value: _inventoryPrimaryValue(item),
                   label: _inventoryPrimaryLabel(item),
                 ),
@@ -807,7 +807,7 @@ class _MobileIntroCard extends StatelessWidget {
         Text(
           _priceRangeLabel(item),
           style: theme.textTheme.headlineSmall?.copyWith(
-            color: const Color(0xFFFF8A00),
+            color: const Color(0xFF548CE0),
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -858,7 +858,7 @@ class _PricingSummaryCard extends StatelessWidget {
         Text(
           _priceRangeLabel(item),
           style: theme.textTheme.headlineSmall?.copyWith(
-            color: const Color(0xFFFF8A00),
+            color: const Color(0xFF548CE0),
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -1933,12 +1933,25 @@ int _activeVariantCount(MenuItem item) {
 
 String? _marginPercentLabel(MenuItem item) {
   final baseCost = item.recipeCost;
-  final minPrice = _minPrice(item);
-  if (baseCost <= 0 || minPrice <= 0 || baseCost >= minPrice) {
+  if (baseCost <= 0) return null;
+
+  // Jika produk memiliki varian, hitung margin berdasarkan harga induk atau varian ber-rasio
+  double comparePrice = item.price;
+  double compareCost = baseCost;
+
+  if (item.variants.isNotEmpty) {
+    final bestVariant = item.variants.first;
+    if (bestVariant.price > 0) {
+      comparePrice = bestVariant.price;
+      compareCost = baseCost * bestVariant.multiplier;
+    }
+  }
+
+  if (comparePrice <= 0 || compareCost <= 0 || compareCost >= comparePrice) {
     return null;
   }
 
-  final margin = ((minPrice - baseCost) / minPrice) * 100;
+  final margin = ((comparePrice - compareCost) / comparePrice) * 100;
   return '${margin.round()}% Margin';
 }
 
@@ -1972,7 +1985,7 @@ String _latestStockMovementText(
 
 String _inventoryPrimaryValue(MenuItem item) {
   if (item.trackStockQuantity) {
-    return '${item.stockQuantity}';
+    return item.formattedStock;
   }
   if (item.variants.isNotEmpty) {
     return '${_activeVariantCount(item)}';

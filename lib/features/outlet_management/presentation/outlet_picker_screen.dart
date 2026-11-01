@@ -1,5 +1,6 @@
 import 'package:dpos/core/routes/routes_name.dart';
 import 'package:dpos/core/theme/app_theme.dart';
+import 'package:dpos/core/widgets/syupeo_shimmer.dart';
 import 'package:dpos/core/domain/bootstrap_models.dart';
 import 'package:dpos/core/domain/outlet_models.dart';
 import 'package:dpos/core/providers/bootstrap_provider.dart';
@@ -60,7 +61,13 @@ class _OutletPickerScreenState extends ConsumerState<OutletPickerScreen> {
               : _buildMobileLayout(context, bootstrap),
           error: (error, _) =>
               Center(child: Text('Gagal memuat outlet: $error')),
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => ListView(
+            padding: EdgeInsets.all(isTablet ? 40 : 20),
+            children: List.generate(
+              isTablet ? 4 : 3,
+              (_) => const OutletCardSkeleton(),
+            ),
+          ),
         ),
       ),
     );
@@ -96,7 +103,7 @@ class _OutletPickerScreenState extends ConsumerState<OutletPickerScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Selamat Datang di ${bootstrap.business?.name ?? 'Mangga POS'}',
+                'Selamat Datang di ${bootstrap.business?.name ?? 'Syupeo'}',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: scheme.secondary,

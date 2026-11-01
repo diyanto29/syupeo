@@ -34,7 +34,7 @@ class _BusinessAccountManagementScreenState
           appBar: isTablet
               ? AppTabletHeader(
                   title: const Text('Manajemen Akun Bisnis'),
-                  badge: const AppTabletBadge(label: 'Mangga POS'),
+                  badge: const AppTabletBadge(label: 'Syupeo'),
                   actions: [
                     SizedBox(
                       width: 280,
