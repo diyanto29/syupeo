@@ -1,7 +1,7 @@
 name: dpos
 description: "A new Flutter project."
 publish_to: 'none'
-version: 1.0.20+31
+version: 1.0.20+32
 
 environment:
   sdk: ^3.10.4
@@ -46,7 +46,6 @@ dependencies:
   pdf: ^3.11.2
   printing: ^5.13.4
   mobile_scanner: ^7.2.0
-  google_mobile_ads: ^8.0.0
   qr_flutter: ^4.1.0
   share_plus: ^12.0.2
   url_launcher: ^6.3.1

@@ -356,11 +356,22 @@ class _MasterCatalogPickerSheetState
                       color: AppTheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                     ),
-                    child: const Icon(
-                      Icons.content_copy_rounded,
-                      color: AppTheme.primary,
-                      size: 20,
-                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: item.imageUrl != null && item.imageUrl!.trim().isNotEmpty
+                        ? Image.network(
+                            item.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.content_copy_rounded,
+                              color: AppTheme.primary,
+                              size: 20,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.content_copy_rounded,
+                            color: AppTheme.primary,
+                            size: 20,
+                          ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

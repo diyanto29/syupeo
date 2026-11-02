@@ -25,12 +25,7 @@ BEGIN
     'slug', b.slug,
     'phone', b.phone,
     'address', b.address,
-    'logo_url', b.logo_url,
-    'banner_url', b.banner_url,
-    'business_type', b.business_type,
-    'district', b.district,
-    'regency', b.regency,
-    'province', b.province
+    'business_type', b.business_type
   ) INTO v_result
   FROM public.businesses b
   WHERE b.slug = p_slug

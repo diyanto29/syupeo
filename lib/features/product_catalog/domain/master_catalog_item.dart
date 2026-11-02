@@ -8,6 +8,7 @@ class MasterCatalogItem {
     this.basePrice = 0,
     this.sellingPrice = 0,
     this.unit,
+    this.imageUrl,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class MasterCatalogItem {
   final double basePrice;
   final double sellingPrice;
   final String? unit;
+  final String? imageUrl;
 
   String get subtitle {
     final parts = [
@@ -38,6 +40,7 @@ class MasterCatalogItem {
       basePrice: (json['base_price'] as num? ?? 0).toDouble(),
       sellingPrice: (json['selling_price'] as num? ?? 0).toDouble(),
       unit: json['unit'] as String?,
+      imageUrl: json['image_url'] as String?,
     );
   }
 }

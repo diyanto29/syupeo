@@ -863,6 +863,14 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       copiedCount++;
     }
 
+    if (sample.imageUrl != null &&
+        sample.imageUrl!.trim().isNotEmpty &&
+        _selectedPhoto == null &&
+        (_currentRemoteImageUrl == null || _currentRemoteImageUrl!.isEmpty)) {
+      _currentRemoteImageUrl = sample.imageUrl!.trim();
+      copiedCount++;
+    }
+
     setState(() {
       _selectedSample = sample;
     });

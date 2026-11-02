@@ -202,40 +202,60 @@ export default function AdminManagementPage() {
 
       const cleanEmail = formEmail.trim().toLowerCase();
 
-      if (editingAdmin) {
-        // Edit existing admin
-        const { error } = await supabase
-          .from('admin_users')
-          .update({
+      // Coba panggil RPC manage_admin_user (SECURITY DEFINER) terlebih dahulu
+      const { data: rpcData, error: rpcError } = await supabase.rpc('manage_admin_user', {
+        p_id: editingAdmin ? editingAdmin.id : null,
+        p_email: cleanEmail,
+        p_name: formName.trim() || null,
+        p_role: formRole,
+        p_partner_id: formRole === 'partner' ? formPartnerId : null,
+        p_is_active: formIsActive,
+        p_can_manage_licenses: formRole === 'super_admin' ? true : formCanManageLicenses,
+      });
+
+      if (!rpcError) {
+        setActionSuccess(
+          editingAdmin
+            ? `Data admin ${cleanEmail} berhasil diperbarui.`
+            : `Akun ${cleanEmail} (${formRole === 'partner' ? 'Mitra' : 'Admin'}) berhasil ditambahkan!`
+        );
+      } else {
+        // Fallback ke direct table query jika RPC belum di-apply
+        if (editingAdmin) {
+          // Edit existing admin
+          const { error } = await supabase
+            .from('admin_users')
+            .update({
+              name: formName.trim() || null,
+              role: formRole,
+              partner_id: formRole === 'partner' ? formPartnerId : null,
+              is_active: formIsActive,
+              can_manage_licenses: formRole === 'super_admin' ? true : formCanManageLicenses,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', editingAdmin.id);
+
+          if (error) throw error;
+          setActionSuccess(`Data admin ${cleanEmail} berhasil diperbarui.`);
+        } else {
+          // Add new admin
+          const { error } = await supabase.from('admin_users').insert({
+            email: cleanEmail,
             name: formName.trim() || null,
             role: formRole,
             partner_id: formRole === 'partner' ? formPartnerId : null,
             is_active: formIsActive,
-            can_manage_licenses: formRole === "super_admin" ? true : formCanManageLicenses,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', editingAdmin.id);
+            can_manage_licenses: formRole === 'super_admin' ? true : formCanManageLicenses,
+          });
 
-        if (error) throw error;
-        setActionSuccess(`Data admin ${cleanEmail} berhasil diperbarui.`);
-      } else {
-        // Add new admin
-        const { error } = await supabase.from('admin_users').insert({
-          email: cleanEmail,
-          name: formName.trim() || null,
-          role: formRole,
-          partner_id: formRole === 'partner' ? formPartnerId : null,
-          is_active: formIsActive,
-          can_manage_licenses: formRole === "super_admin" ? true : formCanManageLicenses,
-        });
-
-        if (error) {
-          if (error.code === '23505') {
-            throw new Error(`Email ${cleanEmail} sudah terdaftar sebagai admin.`);
+          if (error) {
+            if (error.code === '23505') {
+              throw new Error(`Email ${cleanEmail} sudah terdaftar sebagai admin.`);
+            }
+            throw error;
           }
-          throw error;
+          setActionSuccess(`Akun ${cleanEmail} (${formRole === 'partner' ? 'Mitra' : 'Admin'}) berhasil ditambahkan!`);
         }
-        setActionSuccess(`Akun ${cleanEmail} (${formRole === 'partner' ? 'Mitra' : 'Admin'}) berhasil ditambahkan!`);
       }
 
       setIsModalOpen(false);
@@ -302,14 +322,25 @@ export default function AdminManagementPage() {
 
     try {
       setSaving(true);
-      const { error } = await supabase
-        .from('admin_users')
-        .delete()
-        .eq('id', deletingAdmin.id);
+      
+      // Coba panggil RPC delete_admin_user
+      const { error: rpcError } = await supabase.rpc('delete_admin_user', {
+        p_id: deletingAdmin.id,
+      });
 
-      if (error) throw error;
+      if (!rpcError) {
+        setActionSuccess(`Akses admin untuk ${deletingAdmin.email} berhasil dicabut/dihapus.`);
+      } else {
+        // Fallback ke direct delete
+        const { error } = await supabase
+          .from('admin_users')
+          .delete()
+          .eq('id', deletingAdmin.id);
 
-      setActionSuccess(`Akses admin untuk ${deletingAdmin.email} berhasil dicabut/dihapus.`);
+        if (error) throw error;
+        setActionSuccess(`Akses admin untuk ${deletingAdmin.email} berhasil dicabut/dihapus.`);
+      }
+
       setDeletingAdmin(null);
       fetchAdmins();
     } catch (err: any) {

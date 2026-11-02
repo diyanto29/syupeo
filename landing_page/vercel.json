@@ -1,4 +1,16 @@
 {
   "name": "syupeo",
-  "cleanUrls": true
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/s/:slug*",
+      "destination": "https://syupeo-admin.mudahkan.online/s/:slug*",
+      "permanent": false
+    },
+    {
+      "source": "/:slug(toko-[a-zA-Z0-9_-]+)",
+      "destination": "https://syupeo-admin.mudahkan.online/s/:slug",
+      "permanent": false
+    }
+  ]
 }

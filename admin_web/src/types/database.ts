@@ -206,6 +206,7 @@ export interface MasterCatalogItem {
   base_price: number;
   selling_price: number;
   unit?: string | null;
+  image_url?: string | null;
   wholesale_unit?: string | null;
   conversion_ratio?: number;
   wholesale_barcode?: string | null;

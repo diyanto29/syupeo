@@ -25,7 +25,12 @@ import {
   FileSpreadsheet,
   Download,
   Info,
+  ImageIcon,
+  UploadCloud,
+  ImagePlus,
+  Sparkles,
 } from 'lucide-react';
+import { compressImage, formatBytes } from '@/lib/imageCompression';
 
 const PAGE_SIZE = 25;
 
@@ -36,6 +41,7 @@ interface ParsedProduct {
   unit: string;
   base_price: number;
   selling_price: number;
+  image_url?: string | null;
 }
 
 export default function MasterCatalogPage() {
@@ -70,6 +76,59 @@ export default function MasterCatalogPage() {
   const [formWholesaleBarcode, setFormWholesaleBarcode] = useState<string>('');
   const [formWholesaleBasePrice, setFormWholesaleBasePrice] = useState<string>('0');
   const [formWholesaleSellingPrice, setFormWholesaleSellingPrice] = useState<string>('0');
+
+  // Photo & Compression States (Supply Chain Master Product)
+  const masterImageInputRef = useRef<HTMLInputElement | null>(null);
+  const [formImageUrl, setFormImageUrl] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [compressionStats, setCompressionStats] = useState<{
+    original: number;
+    compressed: number;
+    ratio: number;
+  } | null>(null);
+  const [compressingImage, setCompressingImage] = useState<boolean>(false);
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setCompressingImage(true);
+      const result = await compressImage(file, {
+        maxWidth: 1024,
+        maxHeight: 1024,
+        quality: 0.82,
+        mimeType: 'image/webp',
+      });
+
+      setImageFile(result.file);
+      setImagePreview(result.dataUrl);
+      setCompressionStats({
+        original: result.originalSize,
+        compressed: result.compressedSize,
+        ratio: result.compressionRatio,
+      });
+    } catch (err: any) {
+      console.error('Compress error:', err);
+      alert(err.message || 'Gagal memproses gambar');
+    } finally {
+      setCompressingImage(false);
+      if (masterImageInputRef.current) {
+        masterImageInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setFormImageUrl(null);
+    setCompressionStats(null);
+    if (masterImageInputRef.current) {
+      masterImageInputRef.current.value = '';
+    }
+  };
 
   const [saving, setSaving] = useState<boolean>(false);
   const [copiedBarcode, setCopiedBarcode] = useState<string | null>(null);
@@ -181,6 +240,10 @@ export default function MasterCatalogPage() {
     setFormWholesaleBarcode('');
     setFormWholesaleBasePrice('0');
     setFormWholesaleSellingPrice('0');
+    setFormImageUrl(null);
+    setImagePreview(null);
+    setImageFile(null);
+    setCompressionStats(null);
     setIsModalOpen(true);
   };
 
@@ -198,6 +261,10 @@ export default function MasterCatalogPage() {
     setFormWholesaleBarcode(item.wholesale_barcode || '');
     setFormWholesaleBasePrice(String(item.wholesale_base_price || 0));
     setFormWholesaleSellingPrice(String(item.wholesale_selling_price || 0));
+    setFormImageUrl(item.image_url || null);
+    setImagePreview(item.image_url || null);
+    setImageFile(null);
+    setCompressionStats(null);
     setIsModalOpen(true);
   };
 
@@ -216,6 +283,32 @@ export default function MasterCatalogPage() {
       const sellingPriceNum = parseFloat(formSellingPrice) || 0;
       const cleanBarcode = formBarcode.trim() || null;
 
+      // 0. Upload image jika ada file baru yang dipilih
+      let finalImageUrl = formImageUrl;
+
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop() || 'webp';
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+        const filePath = `master-catalog/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('menu-item-images')
+          .upload(filePath, imageFile, {
+            contentType: imageFile.type,
+            upsert: true,
+          });
+
+        if (uploadError) {
+          console.error('Storage upload error for master catalog:', uploadError);
+          alert('Peringatan: Gagal mengunggah foto produk (' + uploadError.message + '). Data produk tetap disimpan tanpa foto baru.');
+        } else {
+          const { data: publicData } = supabase.storage
+            .from('menu-item-images')
+            .getPublicUrl(filePath);
+          finalImageUrl = publicData.publicUrl;
+        }
+      }
+
       const payload: any = {
         barcode: cleanBarcode,
         name: formName.trim(),
@@ -223,6 +316,7 @@ export default function MasterCatalogPage() {
         unit: formUnit.trim() || 'Pcs',
         base_price: basePriceNum,
         selling_price: sellingPriceNum,
+        image_url: finalImageUrl,
         wholesale_unit: formHasWholesale ? formWholesaleUnit.trim() : null,
         conversion_ratio: formHasWholesale ? Math.max(Number(formConversionRatio) || 1, 1) : 1,
         wholesale_barcode: formHasWholesale && formWholesaleBarcode.trim() ? formWholesaleBarcode.trim() : null,
@@ -358,6 +452,9 @@ export default function MasterCatalogPage() {
         const sellingPriceIdx = headers.findIndex((h) =>
           ['selling_price', 'harga', 'harga_jual', 'price'].includes(h)
         );
+        const imageIdx = headers.findIndex((h) =>
+          ['image', 'image_url', 'foto', 'foto_url', 'photo', 'photo_url', 'gambar'].includes(h)
+        );
 
         const productsMap = new Map<string, ParsedProduct>();
 
@@ -371,6 +468,7 @@ export default function MasterCatalogPage() {
           const unit = (unitIdx >= 0 ? values[unitIdx] : 'PCs').trim() || 'PCs';
           const base_price = parseFloat(basePriceIdx >= 0 ? values[basePriceIdx] : '0') || 0;
           const selling_price = parseFloat(sellingPriceIdx >= 0 ? values[sellingPriceIdx] : '0') || 0;
+          const image_url = (imageIdx >= 0 ? values[imageIdx] : '')?.trim() || null;
 
           if (barcode && name && !productsMap.has(barcode)) {
             productsMap.set(barcode, {
@@ -380,6 +478,7 @@ export default function MasterCatalogPage() {
               unit,
               base_price,
               selling_price,
+              image_url,
             });
           }
         }
@@ -689,10 +788,26 @@ export default function MasterCatalogPage() {
 
                     {/* Name */}
                     <td className="py-4 px-6">
-                      <div className="font-bold text-slate-900 leading-snug">{item.name}</div>
-                      {item.brand && (
-                        <div className="text-xs text-slate-400 mt-0.5">Brand: {item.brand}</div>
-                      )}
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200/80 shrink-0 flex items-center justify-center shadow-2xs">
+                          {item.image_url ? (
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <Package className="w-4 h-4 text-slate-300" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900 leading-snug">{item.name}</div>
+                          {item.brand && (
+                            <div className="text-xs text-slate-400 mt-0.5">Brand: {item.brand}</div>
+                          )}
+                        </div>
+                      </div>
                     </td>
 
                     {/* Category */}
@@ -1048,6 +1163,142 @@ export default function MasterCatalogPage() {
             </div>
 
             <form onSubmit={handleSaveProduct} className="p-6 sm:p-8 space-y-5">
+              {/* Foto Produk Master (Supply Chain) */}
+              <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-[#0070fc]" />
+                    <label className="text-xs font-bold text-slate-800">
+                      Foto Produk Master (Katalog Nasional)
+                    </label>
+                    <span className="text-[10px] bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-full border border-emerald-200/60 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-emerald-600" />
+                      Auto-Compress WebP
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400">JPG, PNG, WebP (Maks 15MB)</span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  {/* Preview Thumbnail */}
+                  <div className="relative group w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl border-2 border-dashed border-slate-300 bg-white overflow-hidden flex items-center justify-center shadow-2xs">
+                    {imagePreview ? (
+                      <>
+                        <img
+                          src={imagePreview}
+                          alt="Preview Master"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => masterImageInputRef.current?.click()}
+                            className="p-1.5 bg-white text-slate-700 rounded-lg hover:bg-slate-100 shadow-xs"
+                            title="Ganti Foto"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRemoveImage}
+                            className="p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-xs"
+                            title="Hapus Foto"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div
+                        onClick={() => masterImageInputRef.current?.click()}
+                        className="cursor-pointer text-center p-2 flex flex-col items-center justify-center text-slate-400 hover:text-[#0070fc] transition-colors h-full w-full"
+                      >
+                        {compressingImage ? (
+                          <RefreshCw className="w-6 h-6 animate-spin text-[#0070fc] mb-1" />
+                        ) : (
+                          <ImagePlus className="w-7 h-7 mb-1 text-slate-400" />
+                        )}
+                        <span className="text-[10px] font-bold leading-tight">
+                          {compressingImage ? 'Mengompres...' : 'Pilih Foto'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info & Action Buttons */}
+                  <div className="flex-1 w-full space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <input
+                        type="file"
+                        ref={masterImageInputRef}
+                        onChange={handleImageSelect}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => masterImageInputRef.current?.click()}
+                        disabled={compressingImage}
+                        className="text-xs font-bold px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-2xs flex items-center gap-1.5"
+                      >
+                        {compressingImage ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#0070fc]" />
+                        ) : (
+                          <UploadCloud className="w-3.5 h-3.5 text-[#0070fc]" />
+                        )}
+                        <span>{imagePreview ? 'Ganti Foto' : 'Pilih / Ambil Foto'}</span>
+                      </button>
+
+                      {imagePreview && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          className="text-xs font-semibold px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Hapus Foto</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Compression Result Indicator */}
+                    {compressionStats && (
+                      <div className="p-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200 text-emerald-800 text-[11px] flex items-center gap-2 animate-in fade-in duration-200">
+                        <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <div>
+                          <span className="font-bold">Foto Berhasil Dikecilkan: </span>
+                          <span className="line-through text-emerald-600/80 mr-1">
+                            {formatBytes(compressionStats.original)}
+                          </span>
+                          &rarr;
+                          <span className="font-bold text-emerald-900 ml-1">
+                            {formatBytes(compressionStats.compressed)}
+                          </span>
+                          <span className="ml-1.5 bg-emerald-200/80 text-emerald-900 font-extrabold text-[10px] px-1.5 py-0.2 rounded">
+                            Hemat {compressionStats.ratio}%
+                          </span>
+                          <p className="text-[10px] text-emerald-700/80 mt-0.5">
+                            Foto master otomatis terdistribusi ke seluruh mitra kasir saat barcode discan.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {!compressionStats && !imagePreview && (
+                      <p className="text-[11px] text-slate-500 leading-relaxed">
+                        Foto master produk ini akan otomatis menjadi acuan visual bagi seluruh toko & mitra retail Syupeo saat kulakan maupun scan barcode di kasir POS.
+                      </p>
+                    )}
+
+                    {imagePreview && !compressionStats && (
+                      <p className="text-[11px] text-slate-500">
+                        Foto tersimpan di cloud storage pusat. Klik "Ganti Foto" untuk memperbarui.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Barcode & Nama Barang */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-1">

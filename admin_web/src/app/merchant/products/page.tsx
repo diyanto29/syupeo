@@ -37,7 +37,11 @@ import {
   Info,
   ChefHat,
   UtensilsCrossed,
+  ImageIcon,
+  UploadCloud,
+  ImagePlus,
 } from 'lucide-react';
+import { compressImage, formatBytes } from '@/lib/imageCompression';
 
 interface VariantFormItem {
   id?: string;
@@ -83,6 +87,59 @@ export default function MerchantProductsPage() {
   const [formDescription, setFormDescription] = useState<string>('');
   const [formStockAvailable, setFormStockAvailable] = useState<boolean>(true);
   const [formTrackStock, setFormTrackStock] = useState<boolean>(true);
+
+  // Product Photo State (with client-side canvas compression)
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [formImageUrl, setFormImageUrl] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [compressionStats, setCompressionStats] = useState<{
+    original: number;
+    compressed: number;
+    ratio: number;
+  } | null>(null);
+  const [compressingImage, setCompressingImage] = useState<boolean>(false);
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setCompressingImage(true);
+      const result = await compressImage(file, {
+        maxWidth: 1024,
+        maxHeight: 1024,
+        quality: 0.82,
+        mimeType: 'image/webp',
+      });
+
+      setImageFile(result.file);
+      setImagePreview(result.dataUrl);
+      setCompressionStats({
+        original: result.originalSize,
+        compressed: result.compressedSize,
+        ratio: result.compressionRatio,
+      });
+    } catch (err: any) {
+      console.error('Compress error:', err);
+      alert(err.message || 'Gagal memproses gambar');
+    } finally {
+      setCompressingImage(false);
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setFormImageUrl(null);
+    setCompressionStats(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
+  };
 
   // Multi-UOM (Kemasan Karton / Dus)
   const [formHasWholesale, setFormHasWholesale] = useState<boolean>(false);
@@ -533,6 +590,12 @@ export default function MerchantProductsPage() {
       setFormStockAvailable(prod.stock_available !== false);
       setFormTrackStock(prod.track_stock_quantity !== false);
 
+      // Prefill Photo
+      setFormImageUrl(prod.image_url || null);
+      setImagePreview(prod.image_url || null);
+      setImageFile(null);
+      setCompressionStats(null);
+
       // Prefill Wholesale Multi-UOM
       setFormHasWholesale(!!prod.wholesale_unit || (prod.conversion_ratio !== undefined && prod.conversion_ratio > 1));
       setFormWholesaleUnit(prod.wholesale_unit || 'Karton');
@@ -599,6 +662,10 @@ export default function MerchantProductsPage() {
       setVariantsList([]);
       setHasTieredPrices(false);
       setTieredPricesList([]);
+      setFormImageUrl(null);
+      setImagePreview(null);
+      setImageFile(null);
+      setCompressionStats(null);
     }
     setIsCreatingCategory(false);
     setFormNewCategoryName('');
@@ -701,6 +768,33 @@ export default function MerchantProductsPage() {
         }
       }
 
+      // 0. Upload image jika ada file baru yang dipilih
+      let finalImageUrl = formImageUrl;
+
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop() || 'webp';
+        const sanitizedBizId = business.id.trim().toLowerCase().replace(/[^a-z0-9-]/g, '_');
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+        const filePath = `${sanitizedBizId}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('menu-item-images')
+          .upload(filePath, imageFile, {
+            contentType: imageFile.type,
+            upsert: true,
+          });
+
+        if (uploadError) {
+          console.error('Storage upload error:', uploadError);
+          alert('Peringatan upload foto: ' + uploadError.message + '. Data produk tetap disimpan.');
+        } else {
+          const { data: publicData } = supabase.storage
+            .from('menu-item-images')
+            .getPublicUrl(filePath);
+          finalImageUrl = publicData.publicUrl;
+        }
+      }
+
       const payload = {
         name: formName.trim(),
         price: Number(formPrice),
@@ -712,6 +806,7 @@ export default function MerchantProductsPage() {
         category_id: targetCatId || null,
         barcode: formBarcode.trim() || null,
         description: formDescription.trim() || null,
+        image_url: finalImageUrl,
         wholesale_unit: formHasWholesale ? formWholesaleUnit.trim() : null,
         conversion_ratio: formHasWholesale ? Math.max(Number(formConversionRatio) || 1, 1) : 1,
         wholesale_barcode: formHasWholesale && formWholesaleBarcode.trim() ? formWholesaleBarcode.trim() : null,
@@ -1156,35 +1251,51 @@ export default function MerchantProductsPage() {
                           )}
                         </td>
 
-                        {/* Nama Produk */}
+                        {/* Nama Produk & Foto */}
                         <td className="py-3.5 px-4">
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                                {p.name}
-                              </span>
-                              {p.stock_available === false && (
-                                <span className="bg-red-50 text-red-600 border border-red-200 px-1.5 py-0.2 rounded text-[9px] font-bold">
-                                  Non-Aktif
-                                </span>
+                          <div className="flex items-center gap-3">
+                            {/* Thumbnail Foto Produk */}
+                            <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200/80 shrink-0 flex items-center justify-center shadow-2xs">
+                              {p.image_url ? (
+                                <img
+                                  src={p.image_url}
+                                  alt={p.name}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <Package className="w-4 h-4 text-slate-300" />
                               )}
                             </div>
-                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                              {p.barcode ? (
-                                <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
-                                  <Barcode className="w-3 h-3 text-slate-400" />
-                                  {p.barcode}
+
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-slate-900 text-xs sm:text-sm">
+                                  {p.name}
                                 </span>
-                              ) : null}
-                              {p.unit && (
-                                <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded font-medium">
-                                  Satuan: {p.unit}
-                                </span>
+                                {p.stock_available === false && (
+                                  <span className="bg-red-50 text-red-600 border border-red-200 px-1.5 py-0.2 rounded text-[9px] font-bold">
+                                    Non-Aktif
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {p.barcode ? (
+                                  <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                                    <Barcode className="w-3 h-3 text-slate-400" />
+                                    {p.barcode}
+                                  </span>
+                                ) : null}
+                                {p.unit && (
+                                  <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded font-medium">
+                                    Satuan: {p.unit}
+                                  </span>
+                                )}
+                              </div>
+                              {p.description && (
+                                <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{p.description}</p>
                               )}
                             </div>
-                            {p.description && (
-                              <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{p.description}</p>
-                            )}
                           </div>
                         </td>
 
@@ -1526,6 +1637,142 @@ export default function MerchantProductsPage() {
               {/* TAB 1: INFO DASAR & STOK */}
               {modalTab === 'basic' && (
                 <div className="space-y-4">
+                  {/* Foto Produk dengan Auto-Compress */}
+                  <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4 text-orange-600" />
+                        <label className="text-xs font-bold text-slate-800">
+                          Foto Produk
+                        </label>
+                        <span className="text-[10px] bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-full border border-emerald-200/60 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-emerald-600" />
+                          Auto-Compress WebP
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400">JPG, PNG, WebP (Maks 15MB)</span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {/* Preview Thumbnail */}
+                      <div className="relative group w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl border-2 border-dashed border-slate-300 bg-white overflow-hidden flex items-center justify-center shadow-2xs">
+                        {imagePreview ? (
+                          <>
+                            <img
+                              src={imagePreview}
+                              alt="Preview Produk"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => imageInputRef.current?.click()}
+                                className="p-1.5 bg-white text-slate-700 rounded-lg hover:bg-slate-100 shadow-sm"
+                                title="Ganti Foto"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleRemoveImage}
+                                className="p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-sm"
+                                title="Hapus Foto"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div
+                            onClick={() => imageInputRef.current?.click()}
+                            className="cursor-pointer text-center p-2 flex flex-col items-center justify-center text-slate-400 hover:text-orange-600 transition-colors h-full w-full"
+                          >
+                            {compressingImage ? (
+                              <RefreshCw className="w-6 h-6 animate-spin text-orange-500 mb-1" />
+                            ) : (
+                              <ImagePlus className="w-7 h-7 mb-1 text-slate-400" />
+                            )}
+                            <span className="text-[10px] font-bold leading-tight">
+                              {compressingImage ? 'Mengompres...' : 'Pilih Foto'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info & Action Buttons */}
+                      <div className="flex-1 w-full space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <input
+                            type="file"
+                            ref={imageInputRef}
+                            onChange={handleImageSelect}
+                            accept="image/*"
+                            className="hidden"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => imageInputRef.current?.click()}
+                            disabled={compressingImage}
+                            className="text-xs font-bold px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-2xs flex items-center gap-1.5"
+                          >
+                            {compressingImage ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin text-orange-500" />
+                            ) : (
+                              <UploadCloud className="w-3.5 h-3.5 text-orange-600" />
+                            )}
+                            <span>{imagePreview ? 'Ganti Foto' : 'Pilih / Ambil Foto'}</span>
+                          </button>
+
+                          {imagePreview && (
+                            <button
+                              type="button"
+                              onClick={handleRemoveImage}
+                              className="text-xs font-semibold px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Hapus Foto</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Compression Result Indicator */}
+                        {compressionStats && (
+                          <div className="p-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200 text-emerald-800 text-[11px] flex items-center gap-2 animate-in fade-in duration-200">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <div>
+                              <span className="font-bold">Foto Berhasil Dikecilkan: </span>
+                              <span className="line-through text-emerald-600/80 mr-1">
+                                {formatBytes(compressionStats.original)}
+                              </span>
+                              &rarr;
+                              <span className="font-bold text-emerald-900 ml-1">
+                                {formatBytes(compressionStats.compressed)}
+                              </span>
+                              <span className="ml-1.5 bg-emerald-200/80 text-emerald-900 font-extrabold text-[10px] px-1.5 py-0.2 rounded">
+                                Hemat {compressionStats.ratio}%
+                              </span>
+                              <p className="text-[10px] text-emerald-700/80 mt-0.5">
+                                Dioptimalkan ke WebP HD 1024px. Kasir & Toko Online memuat secepat kilat tanpa boros kuota.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {!compressionStats && !imagePreview && (
+                          <p className="text-[11px] text-slate-500 leading-relaxed">
+                            Foto otomatis dikompres ke format <strong>WebP ultra-ringan</strong>. Resolusi tetap tajam di HP pembeli & aplikasi kasir, namun ukuran file berkurang hingga 95%.
+                          </p>
+                        )}
+
+                        {imagePreview && !compressionStats && (
+                          <p className="text-[11px] text-slate-500">
+                            Foto aktif tersimpan di cloud. Klik "Ganti Foto" untuk mengunggah foto baru.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Nama Produk */}
                   <div>
                     <label className="text-xs font-bold text-slate-700 block mb-1">
