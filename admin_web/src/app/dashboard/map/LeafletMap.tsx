@@ -253,3 +253,4 @@ export default function LeafletMap({
 
   return <div ref={mapContainerRef} className="w-full h-full" style={{ minHeight: '100%' }} />;
 }
+
