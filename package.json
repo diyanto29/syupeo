@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "npm run dev --prefix admin_web",
-    "build": "npm run build --prefix admin_web",
+    "build": "npm run build --prefix admin_web && rm -rf .next && cp -R admin_web/.next .next && (cp -R admin_web/public ./public 2>/dev/null || true)",
     "start": "npm run start --prefix admin_web",
     "lint": "npm run lint --prefix admin_web"
   },
