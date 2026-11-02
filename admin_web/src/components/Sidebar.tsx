@@ -29,6 +29,7 @@ import {
   Megaphone,
   Truck,
   X,
+  MapPin,
 } from 'lucide-react';
 
 const navItems = [
@@ -55,6 +56,12 @@ const navItems = [
     href: '/dashboard/warehouses',
     icon: Truck,
     description: 'Multi-Node Agen & Pengiriman',
+  },
+  {
+    name: 'Peta Sebaran',
+    href: '/dashboard/map',
+    icon: MapPin,
+    description: 'Sebaran Gudang & Mitra di Peta',
   },
   {
     name: 'Master Katalog Produk',
