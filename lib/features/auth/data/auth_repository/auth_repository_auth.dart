@@ -223,6 +223,17 @@ extension AuthRepositoryAuthContext on AuthRepository {
     }
   }
 
+  Future<void> signInWithEmailPassword({
+    required String email,
+    required String password,
+  }) async {
+    await _client.auth.signInWithPassword(
+      email: email.trim(),
+      password: password,
+    );
+    await fetchCurrentProfile();
+  }
+
   Future<void> signInWithStaffCredentials({
     required String identifier,
     required String password,

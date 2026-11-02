@@ -2,6 +2,7 @@ import 'package:dpos/core/routes/routes_name.dart';
 import 'package:dpos/core/theme/app_theme.dart';
 import 'package:dpos/features/auth/data/auth_repository.dart';
 import 'package:dpos/core/providers/bootstrap_provider.dart';
+import 'package:dpos/core/supabase/supabase_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,69 @@ class GoogleOwnerSignInScreen extends ConsumerStatefulWidget {
 class _GoogleOwnerSignInScreenState
     extends ConsumerState<GoogleOwnerSignInScreen> {
   bool _isSubmitting = false;
+  bool _showDemoLogin = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkDemoLoginConfig();
+  }
+
+  Future<void> _checkDemoLoginConfig() async {
+    try {
+      final res = await SupabaseService.client
+          .from('app_configurations')
+          .select('value')
+          .eq('key', 'show_demo_login')
+          .maybeSingle();
+      if (res != null && res['value'] != null) {
+        final val = res['value'];
+        if (mounted) {
+          setState(() {
+            _showDemoLogin = val == true || val == 'true';
+          });
+        }
+      }
+    } catch (_) {
+      // Default tetap true saat peninjauan Google Play
+    }
+  }
+
+  Future<void> _submitDemoLogin() async {
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
+    try {
+      await ref.read(authRepositoryProvider).signInWithEmailPassword(
+        email: 'reviewer@syupeo.com',
+        password: 'DemoReviewer2026!',
+      );
+      final bootstrap = await ref.refresh(homeBootstrapProvider.future);
+      if (!mounted) {
+        return;
+      }
+      context.goNamed(
+        bootstrap.needsOwnerOnboarding
+            ? RouteNames.ownerOnboarding
+            : bootstrap.needsOutletSelection
+            ? RouteNames.outletPicker
+            : RouteNames.dashboard,
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_resolveLoginError(error, source: 'Demo Reviewer')),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
 
   Future<void> _submitGoogle() async {
     if (_isSubmitting) return;
@@ -534,6 +598,57 @@ class _GoogleOwnerSignInScreenState
               ),
             ),
           ),
+          if (_showDemoLogin) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Divider(
+                    color: scheme.outlineVariant.withValues(alpha: 0.5),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'PENGUJIAN REVIEWER',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.4),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(
+                    color: scheme.outlineVariant.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: _isSubmitting ? null : _submitDemoLogin,
+                icon: const Icon(Icons.storefront_rounded, size: 20),
+                label: const Text(
+                  'Masuk Akun Demo (Google Play Reviewer)',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF0070FC),
+                  side: const BorderSide(color: Color(0xFF0070FC), width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Center(
             child: Text(
