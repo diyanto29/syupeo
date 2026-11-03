@@ -36,6 +36,8 @@ import {
   FileText,
   CheckSquare,
   Square,
+  Calendar,
+  RotateCcw,
 } from 'lucide-react';
 
 interface OrderManifestItem {
@@ -95,6 +97,11 @@ export default function WarehousesPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [datePreset, setDatePreset] = useState<
+    'ALL' | 'today' | 'yesterday' | '7days' | '30days' | 'this_month' | 'custom'
+  >('ALL');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   // Modal States
   const [isWarehouseModalOpen, setIsWarehouseModalOpen] = useState(false);
@@ -405,16 +412,101 @@ export default function WarehousesPage() {
     }
   };
 
+  // Helper filter tanggal
+  const isOrderInDateRange = (createdAt?: string): boolean => {
+    if (datePreset === 'ALL' && !startDate && !endDate) return true;
+    if (!createdAt) return false;
+
+    const orderDate = new Date(createdAt);
+    if (isNaN(orderDate.getTime())) return true;
+
+    const now = new Date();
+    const startOfDay = (d: Date) =>
+      new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+    const endOfDay = (d: Date) =>
+      new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+
+    if (datePreset === 'today') {
+      return orderDate >= startOfDay(now) && orderDate <= endOfDay(now);
+    }
+
+    if (datePreset === 'yesterday') {
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      return (
+        orderDate >= startOfDay(yesterday) && orderDate <= endOfDay(yesterday)
+      );
+    }
+
+    if (datePreset === '7days') {
+      const past7 = new Date(now);
+      past7.setDate(past7.getDate() - 7);
+      return orderDate >= startOfDay(past7) && orderDate <= endOfDay(now);
+    }
+
+    if (datePreset === '30days') {
+      const past30 = new Date(now);
+      past30.setDate(past30.getDate() - 30);
+      return orderDate >= startOfDay(past30) && orderDate <= endOfDay(now);
+    }
+
+    if (datePreset === 'this_month') {
+      const firstDay = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1,
+        0,
+        0,
+        0,
+        0
+      );
+      return orderDate >= firstDay && orderDate <= endOfDay(now);
+    }
+
+    if (datePreset === 'custom') {
+      if (startDate) {
+        const s = new Date(`${startDate}T00:00:00`);
+        if (orderDate < s) return false;
+      }
+      if (endDate) {
+        const e = new Date(`${endDate}T23:59:59.999`);
+        if (orderDate > e) return false;
+      }
+      return true;
+    }
+
+    return true;
+  };
+
+  const resetAllFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('ALL');
+    setDatePreset('ALL');
+    setStartDate('');
+    setEndDate('');
+  };
+
+  const isAnyFilterActive =
+    searchQuery !== '' ||
+    statusFilter !== 'ALL' ||
+    datePreset !== 'ALL' ||
+    startDate !== '' ||
+    endDate !== '';
+
   // Filtered Orders
   const filteredOrders = orders.filter((o) => {
     const matchesSearch =
       o.order_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.recipient_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.kit_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.shipping_city.toLowerCase().includes(searchQuery.toLowerCase());
+      o.shipping_city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (o.tracking_number &&
+        o.tracking_number.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesStatus = statusFilter === 'ALL' || o.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesDate = isOrderInDateRange(o.created_at);
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   return (
@@ -548,43 +640,137 @@ export default function WarehousesPage() {
           ======================================================== */}
       {activeTab === 'dispatch' && (
         <div className="space-y-4">
-          {/* Filter Bar */}
-          <div className="bg-white p-3.5 rounded-[12px] border border-[rgba(26,26,26,0.12)] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Cari no resi, nama penerima, kota, atau nama paket..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs rounded-[8px] border border-slate-200 focus:outline-none focus:border-[#0070fc] focus:ring-1 focus:ring-[#0070fc]"
-              />
+          {/* Filter Bar Lengkap (Pencarian, Status, & Rentang Tanggal) */}
+          <div className="bg-white p-4 rounded-[12px] border border-[rgba(26,26,26,0.12)] shadow-xs space-y-3">
+            {/* Baris 1: Pencarian & Filter Status */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Cari no resi, nama penerima, kota, atau nama paket..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 text-xs rounded-[8px] border border-slate-200 focus:outline-none focus:border-[#0070fc] focus:ring-1 focus:ring-[#0070fc]"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+                <span className="text-[11px] font-bold text-slate-400 whitespace-nowrap mr-1">Status:</span>
+                {[
+                  { id: 'ALL', label: 'Semua' },
+                  { id: 'pending_dispatch', label: 'Menunggu' },
+                  { id: 'packing', label: 'Packing' },
+                  { id: 'in_transit', label: 'Diantar' },
+                  { id: 'delivered', label: 'Terkirim' },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    onClick={() => setStatusFilter(st.id)}
+                    className={`px-3 py-1.5 rounded-[6px] text-[11px] font-bold tracking-tight whitespace-nowrap transition-all ${
+                      statusFilter === st.id
+                        ? 'bg-[#0070fc] text-white shadow-2xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
-              <span className="text-[11px] font-bold text-slate-400 whitespace-nowrap">Filter Status:</span>
-              {['ALL', 'pending_dispatch', 'packing', 'in_transit', 'delivered'].map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1.5 rounded-[6px] text-[11px] font-bold tracking-tight whitespace-nowrap transition-all ${
-                    statusFilter === st
-                      ? 'bg-[#0070fc] text-white'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                  }`}
-                >
-                  {st === 'ALL'
-                    ? 'Semua'
-                    : st === 'pending_dispatch'
-                    ? 'Menunggu'
-                    : st === 'packing'
-                    ? 'Packing'
-                    : st === 'in_transit'
-                    ? 'Diantar'
-                    : 'Terkirim'}
-                </button>
-              ))}
+            {/* Baris 2: Filter Tanggal Pengiriman */}
+            <div className="pt-2.5 border-t border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex items-center gap-1.5 text-slate-500 font-bold text-[11px] mr-1">
+                  <Calendar className="w-3.5 h-3.5 text-[#0070fc]" />
+                  <span>Tanggal:</span>
+                </div>
+
+                {[
+                  { id: 'ALL', label: 'Semua' },
+                  { id: 'today', label: 'Hari Ini' },
+                  { id: 'yesterday', label: 'Kemarin' },
+                  { id: '7days', label: '7 Hari Terakhir' },
+                  { id: '30days', label: '30 Hari Terakhir' },
+                  { id: 'this_month', label: 'Bulan Ini' },
+                  { id: 'custom', label: 'Rentang Kustom' },
+                ].map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => {
+                      setDatePreset(preset.id as any);
+                      if (preset.id !== 'custom') {
+                        setStartDate('');
+                        setEndDate('');
+                      }
+                    }}
+                    className={`px-2.5 py-1 rounded-[6px] text-[11px] font-bold transition-all ${
+                      datePreset === preset.id
+                        ? 'bg-[#0070fc] text-white shadow-2xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Status & Match Counter */}
+              <div className="flex items-center gap-2 self-end lg:self-center">
+                <span className="text-[11px] text-slate-500 font-medium">
+                  Menampilkan <strong className="text-slate-900 font-bold">{filteredOrders.length}</strong> dari {orders.length} order
+                </span>
+
+                {isAnyFilterActive && (
+                  <button
+                    onClick={resetAllFilters}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[11px] transition-colors"
+                    title="Reset semua filter pencarian"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset Filter</span>
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Input Rentang Tanggal Kustom (Muncul jika Kustom dipilih) */}
+            {datePreset === 'custom' && (
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-[8px] flex flex-wrap items-center gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 font-semibold text-[11px]">Dari:</span>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="px-2.5 py-1.5 rounded-[6px] border border-slate-300 text-slate-800 text-xs bg-white focus:outline-none focus:border-[#0070fc] focus:ring-1 focus:ring-[#0070fc]"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 font-semibold text-[11px]">Sampai:</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="px-2.5 py-1.5 rounded-[6px] border border-slate-300 text-slate-800 text-xs bg-white focus:outline-none focus:border-[#0070fc] focus:ring-1 focus:ring-[#0070fc]"
+                  />
+                </div>
+
+                {(startDate || endDate) && (
+                  <button
+                    onClick={() => {
+                      setStartDate('');
+                      setEndDate('');
+                    }}
+                    className="text-[11px] font-bold text-slate-500 hover:text-slate-800 underline ml-auto"
+                  >
+                    Bersihkan Rentang
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Orders List */}
@@ -636,6 +822,16 @@ export default function WarehousesPage() {
                           <span className="text-[11px] font-bold text-[#0070fc] bg-blue-50 px-2 py-0.5 rounded-full">
                             📦 {manifestItems.length} Jenis Barang
                           </span>
+                          {order.created_at && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
+                              <Calendar className="w-3 h-3 text-slate-400" />
+                              {new Date(order.created_at).toLocaleDateString('id-ID', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </span>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
