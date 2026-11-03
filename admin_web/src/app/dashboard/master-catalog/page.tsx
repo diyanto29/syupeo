@@ -31,6 +31,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { compressImage, formatBytes } from '@/lib/imageCompression';
+import SmartImage from '@/components/SmartImage';
 
 const PAGE_SIZE = 25;
 
@@ -789,17 +790,14 @@ export default function MasterCatalogPage() {
                     {/* Name */}
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200/80 shrink-0 flex items-center justify-center shadow-2xs">
-                          {item.image_url ? (
-                            <img
-                              src={item.image_url}
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <Package className="w-4 h-4 text-slate-300" />
-                          )}
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200/80 shrink-0 shadow-2xs">
+                          <SmartImage
+                            src={item.image_url}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            containerClassName="w-full h-full"
+                            fallbackIcon={<Package className="w-4 h-4 text-slate-300" />}
+                          />
                         </div>
                         <div>
                           <div className="font-bold text-slate-900 leading-snug">{item.name}</div>
@@ -1184,10 +1182,11 @@ export default function MasterCatalogPage() {
                   <div className="relative group w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl border-2 border-dashed border-slate-300 bg-white overflow-hidden flex items-center justify-center shadow-2xs">
                     {imagePreview ? (
                       <>
-                        <img
+                        <SmartImage
                           src={imagePreview}
                           alt="Preview Master"
                           className="w-full h-full object-cover"
+                          containerClassName="w-full h-full"
                         />
                         <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                           <button

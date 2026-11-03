@@ -22,6 +22,7 @@ import {
   Layers,
   CheckCircle2,
 } from 'lucide-react';
+import SmartImage from '@/components/SmartImage';
 
 export interface MenuItemVariant {
   id: string;
@@ -364,17 +365,19 @@ export default function OnlineStoreClient({ store, items, categories }: Props) {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {store.logo_url ? (
-              <img
+            <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 shadow-2xs shrink-0">
+              <SmartImage
                 src={store.logo_url}
                 alt={store.name}
-                className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-2xs"
+                className="w-full h-full object-cover"
+                containerClassName="w-full h-full"
+                fallbackIcon={
+                  <div className="w-full h-full bg-gradient-to-tr from-[#005ecc] to-[#0070fc] flex items-center justify-center text-white font-bold">
+                    <Store className="w-5 h-5 text-white" />
+                  </div>
+                }
               />
-            ) : (
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#005ecc] to-[#0070fc] flex items-center justify-center text-white font-bold shadow-2xs">
-                <Store className="w-5 h-5 text-white" />
-              </div>
-            )}
+            </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <h1 className="font-black text-slate-900 text-base leading-tight truncate max-w-[200px] sm:max-w-md">
@@ -516,21 +519,20 @@ export default function OnlineStoreClient({ store, items, categories }: Props) {
                       hasVariants ? 'cursor-pointer' : ''
                     }`}
                   >
-                    {item.image_url ? (
-                      <img
-                        src={item.image_url}
-                        alt={item.name}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 text-slate-400">
-                        <Store className="w-8 h-8 stroke-1 text-slate-300 mb-1" />
-                        <span className="text-[10px] font-semibold text-slate-400">
-                          {store.name}
-                        </span>
-                      </div>
-                    )}
+                    <SmartImage
+                      src={item.image_url}
+                      alt={item.name}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      containerClassName="w-full h-full"
+                      fallbackIcon={
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 text-slate-400">
+                          <Store className="w-8 h-8 stroke-1 text-slate-300 mb-1" />
+                          <span className="text-[10px] font-semibold text-slate-400">
+                            {store.name}
+                          </span>
+                        </div>
+                      }
+                    />
 
                     {/* Cart Quantity Badge on Image */}
                     {totalInCartForThisItem > 0 && (
@@ -665,17 +667,19 @@ export default function OnlineStoreClient({ store, items, categories }: Props) {
             <div className="p-4 overflow-y-auto space-y-4 flex-1 text-xs">
               {/* Product Info Bar */}
               <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3">
-                {variantModalItem.image_url ? (
-                  <img
+                <div className="w-14 h-14 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                  <SmartImage
                     src={variantModalItem.image_url}
                     alt={variantModalItem.name}
-                    className="w-14 h-14 rounded-xl object-cover border border-slate-200"
+                    className="w-full h-full object-cover"
+                    containerClassName="w-full h-full"
+                    fallbackIcon={
+                      <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#0070fc]">
+                        <Store className="w-6 h-6" />
+                      </div>
+                    }
                   />
-                ) : (
-                  <div className="w-14 h-14 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0070fc]">
-                    <Store className="w-6 h-6" />
-                  </div>
-                )}
+                </div>
                 <div>
                   <h4 className="font-bold text-slate-900 text-sm">
                     {variantModalItem.name}

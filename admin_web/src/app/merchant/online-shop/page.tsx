@@ -19,6 +19,7 @@ import {
   AlertCircle,
   Download,
 } from 'lucide-react';
+import SmartImage from '@/components/SmartImage';
 
 export default function MerchantOnlineShopPage() {
   const { business, refreshData, loading: shellLoading } = useMerchant();
@@ -173,19 +174,19 @@ export default function MerchantOnlineShopPage() {
             </p>
 
             {/* QR Image */}
-            {qrUrl ? (
-              <div className="p-3 bg-white border-2 border-slate-100 rounded-2xl shadow-xs inline-block mb-3">
-                <img
-                  src={qrUrl}
-                  alt="QR Code Toko"
-                  className="w-40 h-40 object-contain mx-auto"
-                />
-              </div>
-            ) : (
-              <div className="w-40 h-40 bg-slate-100 rounded-2xl flex items-center justify-center text-xs text-slate-400 mb-3 mx-auto">
-                QR Code Belum Tersedia
-              </div>
-            )}
+            <div className="p-3 bg-white border-2 border-slate-100 rounded-2xl shadow-xs inline-block mb-3">
+              <SmartImage
+                src={qrUrl}
+                alt="QR Code Toko"
+                className="w-40 h-40 object-contain mx-auto"
+                containerClassName="w-40 h-40"
+                fallbackIcon={
+                  <div className="w-40 h-40 bg-slate-100 rounded-xl flex items-center justify-center text-xs text-slate-400">
+                    QR Code Belum Tersedia
+                  </div>
+                }
+              />
+            </div>
           </div>
 
           {qrUrl && (
