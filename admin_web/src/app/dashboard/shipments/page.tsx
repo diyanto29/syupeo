@@ -114,6 +114,7 @@ export default function ShipmentsPage() {
   // Calendar State
   const [calendarDate, setCalendarDate] = useState<Date>(new Date());
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
+  const [isDatePopupOpen, setIsDatePopupOpen] = useState(false);
 
   // Form Dispatch
   const [driverName, setDriverName] = useState('');
@@ -1313,7 +1314,10 @@ export default function ShipmentsPage() {
           {/* Monthly Grid */}
           <div className="bg-white rounded-[12px] border border-[rgba(0,0,0,0.08)] shadow-xs overflow-hidden">
             {/* Day Header (Sen s/d Min) */}
-            <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-bold text-slate-500 py-2.5">
+            <div
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}
+              className="calendar-grid-7 grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-bold text-slate-500 py-2.5"
+            >
               <span>Sen</span>
               <span>Sel</span>
               <span>Rab</span>
@@ -1324,7 +1328,10 @@ export default function ShipmentsPage() {
             </div>
 
             {/* Days Cells */}
-            <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-slate-100">
+            <div
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}
+              className="calendar-grid-7 grid grid-cols-7 auto-rows-fr divide-x divide-y divide-slate-100"
+            >
               {calendarDays.map((day, idx) => {
                 const isToday = day.dateString === new Date().toISOString().split('T')[0];
                 const isSelected = day.dateString === selectedCalendarDate;
@@ -1333,12 +1340,15 @@ export default function ShipmentsPage() {
                 return (
                   <div
                     key={idx}
-                    onClick={() => setSelectedCalendarDate(day.dateString)}
-                    className={`min-h-[96px] sm:min-h-[110px] p-2 transition-all cursor-pointer flex flex-col justify-between ${
+                    onClick={() => {
+                      setSelectedCalendarDate(day.dateString);
+                      setIsDatePopupOpen(true);
+                    }}
+                    className={`min-h-[96px] sm:min-h-[110px] p-2 transition-all cursor-pointer flex flex-col justify-between hover:bg-blue-50/40 relative group ${
                       !day.isCurrentMonth
                         ? 'bg-slate-50/50 text-slate-400'
                         : isSelected
-                        ? 'bg-blue-50/70 ring-2 ring-inset ring-[#0070fc]'
+                        ? 'bg-blue-50/80 ring-2 ring-inset ring-[#0070fc]'
                         : 'bg-white hover:bg-slate-50 text-slate-800'
                     }`}
                   >
@@ -1388,72 +1398,141 @@ export default function ShipmentsPage() {
             </div>
           </div>
 
-          {/* Drawer / Detail Panel Pesanan di Tanggal yang Dipilih */}
-          {selectedCalendarDate && (
-            <div className="bg-white p-5 rounded-[12px] border border-[rgba(0,0,0,0.08)] shadow-xs space-y-4 animate-in slide-in-from-top-2 duration-200">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-[#0070fc]" />
-                  <h4 className="font-bold text-slate-900 text-xs">
-                    Jadwal Pengiriman: {new Date(`${selectedCalendarDate}T00:00:00`).toLocaleDateString('id-ID', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </h4>
-                </div>
-                <button
-                  onClick={() => setSelectedCalendarDate(null)}
-                  className="text-slate-400 hover:text-slate-700 text-xs"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {calendarSelectedOrders.length === 0 ? (
-                <p className="text-xs text-slate-500 py-3 text-center">
-                  Tidak ada pengiriman yang dijadwalkan pada tanggal ini.
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {calendarSelectedOrders.map((ord) => (
-                    <div
-                      key={ord.id}
-                      className="p-3 rounded-[10px] border border-slate-200 bg-slate-50/60 flex items-center justify-between gap-3 text-xs"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-[#0070fc]">{ord.order_code}</span>
-                          <span
-                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                              ord.status === 'delivered'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : ord.status === 'in_transit'
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}
-                          >
-                            {ord.status.replace('_', ' ')}
-                          </span>
-                        </div>
-                        <p className="font-bold text-slate-900 mt-1 truncate">{ord.recipient_name}</p>
-                        <p className="text-[11px] text-slate-500 truncate">{ord.shipping_address}, {ord.shipping_city}</p>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          setSelectedOrder(ord);
-                          setIsDispatchModalOpen(true);
-                        }}
-                        className="px-3 py-1.5 rounded-[6px] bg-[#0070fc] hover:bg-[#005ecc] text-white font-bold text-xs shrink-0 shadow-2xs"
-                      >
-                        Kelola
-                      </button>
+          {/* ========================================================
+              POPUP MODAL: DETAIL PESANAN DI TANGGAL TERPILIH
+              ======================================================== */}
+          {isDatePopupOpen && selectedCalendarDate && (
+            <div
+              className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+              onClick={() => setIsDatePopupOpen(false)}
+            >
+              <div
+                className="bg-white w-full max-w-xl rounded-[16px] shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 max-h-[85vh] flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#0070fc]">
+                      <CalendarDays className="w-5 h-5" />
                     </div>
-                  ))}
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm">
+                        {new Date(`${selectedCalendarDate}T00:00:00`).toLocaleDateString('id-ID', {
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </h3>
+                      <p className="text-[11px] text-slate-500">
+                        {calendarSelectedOrders.length} order pengiriman tercatat
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsDatePopupOpen(false)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-              )}
+
+                {/* Body */}
+                <div className="p-5 overflow-y-auto space-y-3 flex-1 text-xs">
+                  {calendarSelectedOrders.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
+                        <CalendarDays className="w-6 h-6" />
+                      </div>
+                      <p className="font-bold text-slate-700 text-sm">Tidak Ada Jadwal Pengiriman</p>
+                      <p className="text-slate-400 text-xs mt-1">
+                        Belum ada order pasokan gudang yang tercatat pada tanggal ini.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {calendarSelectedOrders.map((ord) => (
+                        <div
+                          key={ord.id}
+                          className="p-4 rounded-[12px] border border-slate-200 hover:border-blue-200 bg-white hover:bg-slate-50/50 transition-all space-y-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-[#0070fc] text-sm">
+                                  {ord.order_code}
+                                </span>
+                                <span
+                                  className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                                    ord.status === 'delivered'
+                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                      : ord.status === 'in_transit'
+                                      ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                      : ord.status === 'packing'
+                                      ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                      : 'bg-slate-100 text-slate-700'
+                                  }`}
+                                >
+                                  {ord.status.replace('_', ' ')}
+                                </span>
+                              </div>
+                              <h4 className="font-bold text-slate-900 mt-1">{ord.recipient_name}</h4>
+                              <p className="text-slate-500 text-[11px]">{ord.recipient_phone}</p>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                onClick={() => {
+                                  setSelectedOrder(ord);
+                                  setIsPrintModalOpen(true);
+                                }}
+                                className="px-2.5 py-1.5 rounded-[8px] border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1 transition-colors"
+                                title="Cetak Surat Jalan"
+                              >
+                                <Printer className="w-3.5 h-3.5 text-slate-500" />
+                                <span>Surat Jalan</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedOrder(ord);
+                                  setIsDispatchModalOpen(true);
+                                }}
+                                className="px-3 py-1.5 rounded-[8px] bg-[#0070fc] hover:bg-[#005ecc] text-white font-bold text-xs flex items-center gap-1 transition-colors shadow-2xs"
+                              >
+                                <Truck className="w-3.5 h-3.5" />
+                                <span>Kelola</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-50 p-2.5 rounded-[8px] text-[11px] space-y-1 text-slate-600">
+                            <p className="truncate">
+                              <strong className="text-slate-700">Tujuan:</strong> {ord.shipping_address}, {ord.shipping_city}
+                            </p>
+                            <div className="flex items-center justify-between text-slate-500">
+                              <span>Paket: <strong className="text-slate-700">{ord.kit_name}</strong></span>
+                              {ord.driver_name && (
+                                <span>Kurir: <strong className="text-slate-700">{ord.driver_name}</strong> {ord.tracking_number ? `(${ord.tracking_number})` : ''}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="p-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end shrink-0">
+                  <button
+                    onClick={() => setIsDatePopupOpen(false)}
+                    className="px-4 py-2 rounded-[8px] bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs transition-colors"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1706,3 +1785,4 @@ export default function ShipmentsPage() {
     </div>
   );
 }
+

@@ -174,3 +174,9 @@
 .animate-shimmer {
   animation: shimmer 1.5s infinite linear;
 }
+
+/* 7-Column Calendar Grid */
+.calendar-grid-7 {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
