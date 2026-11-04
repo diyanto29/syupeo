@@ -52,10 +52,16 @@ const navItems = [
     description: '4 Paket Awal @ Rp200.000',
   },
   {
-    name: 'Gudang & Dispatch',
-    href: '/dashboard/warehouses',
+    name: 'Logistik & Pengiriman',
+    href: '/dashboard/shipments',
     icon: Truck,
-    description: 'Multi-Node Agen & Pengiriman',
+    description: 'Timeline, Kalender & Dispatch',
+  },
+  {
+    name: 'Jaringan Gudang & Agen',
+    href: '/dashboard/warehouses',
+    icon: Building2,
+    description: 'Multi-Node Agen & Pabrik',
   },
   {
     name: 'Peta Sebaran',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { createClient } from '@/lib/supabase/client';
 import { Warehouse, PackageFulfillmentOrder } from '@/types/database';
@@ -37,6 +38,7 @@ import {
   CheckSquare,
   Square,
   Calendar,
+  CalendarDays,
   RotateCcw,
 } from 'lucide-react';
 
@@ -617,6 +619,14 @@ export default function WarehousesPage() {
             <Building2 className="w-4 h-4" />
             <span>Jaringan Gudang & Agen ({warehouses.length})</span>
           </button>
+
+          <Link
+            href="/dashboard/shipments"
+            className="px-3.5 py-2 rounded-[8px] bg-blue-50 border border-blue-200 hover:bg-blue-100 text-[#0070fc] font-bold text-xs transition-all flex items-center gap-1.5"
+          >
+            <CalendarDays className="w-3.5 h-3.5 text-[#0070fc]" />
+            <span>Mode Timeline & Kalender ➔</span>
+          </Link>
         </div>
 
         <div>
